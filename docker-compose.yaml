@@ -1,0 +1,16 @@
+services:
+  api:
+    network_mode: "host"
+    expose:
+      - "8000"
+    build:
+      context: ./src/
+      dockerfile: ../docker/api/Dockerfile
+    restart: on-failure
+  redis:
+    # will use docker hub's redis prebuilt image from here:
+    # https://hub.docker.com/_/redis/
+    image: "redis:alpine"
+    network_mode: "host"
+    expose:
+      - "6379"
