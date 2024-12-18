@@ -38,6 +38,7 @@ sentry-sdk = {extras = ["django"], version = "~=1.29.2"}
 # Server
 gunicorn = "~=20.1.0"
 uvicorn = "*"
+mailjet-rest = "*"
 
 [dev-packages]
 # Testing

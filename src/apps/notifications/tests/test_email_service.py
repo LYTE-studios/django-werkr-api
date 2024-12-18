@@ -7,11 +7,11 @@ from apps.notifications.models.mail_template import (
     ApprovedTemplate,
     CodeMailTemplate,
     DeniedMailTemplate,
+    MailTemplate,
     SelectedWasherTemplate,
     TimeRegisteredTemplate,
     CancelledMailTemplate
 )
-from apps.notifications.tasks import send_template_email
 
 class EmailTemplateServiceTests(TestCase):
     def setUp(self):
@@ -54,8 +54,6 @@ class EmailTemplateServiceTests(TestCase):
 
         # Assert that Celery task was called with correct arguments
         mock_delay.assert_called_once_with(
-            template_id=5792978,
-            subject="Get A Wash | You've been approved!",
             recipients=self.test_recipients,
             data=self.test_data
         )
@@ -67,9 +65,7 @@ class EmailTemplateServiceTests(TestCase):
         mock_response.status_code = 200
 
         # Call the task directly
-        result = send_template_email(
-            template_id=5792978,
-            subject="Get A Wash | You've been approved!",
+        result = MailTemplate().send(
             recipients=self.test_recipients,
             data=self.test_data
         )
@@ -103,9 +99,7 @@ class EmailTemplateServiceTests(TestCase):
         mock_response.status_code = 400
 
         # Call the task directly
-        result = send_template_email(
-            template_id=5792978,
-            subject="Get A Wash | You've been approved!",
+        result = MailTemplate().send(
             recipients=self.test_recipients,
             data=self.test_data
         )

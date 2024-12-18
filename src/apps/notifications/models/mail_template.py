@@ -7,52 +7,45 @@ class MailTemplate:
     template_id: int = 5794325
     subject: str = 'Get A Wash | New message'
 
-    api_key = settings.MAILJET_API_KEY
-    api_secret = settings.MAILJET_API_SECRET
-
-    def __init__(self, template_id: int, subject: str):
-        self.template_id = template_id
-        self.subject = subject  
-
     def send(self, recipients: list[str], data: dict):
         """Sends email asynchronously"""
-        self.send_task.delay(
-            template_id=self.template_id,
+        send_task.delay(
             subject=self.subject,
+            template_id=self.template_id,
             recipients=recipients,
             data=data
         )
 
-    @shared_task
-    def send_task(self, recipients: list[str], data: dict):
-        """Celery task to send emails asynchronously"""
-        try: 
-            mailjet = Client(auth=(self.api_key, self.api_secret), version='v3.1')
+@shared_task
+def send_task(subject: str, template_id: int, recipients: list[str], data: dict):
+    """Celery task to send emails asynchronously"""
+    try: 
+        mailjet = Client(auth=(settings.MAILJET_API_KEY, settings.MAILJET_API_SECRET), version='v3.1')
 
-            response = mailjet.send.create(
-                data={
-                    'Messages': [
-                        {
-                            "From": {
-                                "Email": settings.DEFAULT_FROM_EMAIL,
-                                "Name": settings.DEFAULT_FROM_NAME
-                            },
-                            "To": recipients,
-                            "Subject": self.subject,
-                            "TemplateID": self.template_id,
-                            "TemplateLanguage": True,
-                            "Variables": data,
+        response = mailjet.send.create(
+            data={
+                'Messages': [
+                    {
+                        "From": {
+                            "Email": settings.DEFAULT_FROM_EMAIL,
+                            "Name": settings.DEFAULT_FROM_NAME
                         },
-                    ],
-                },
-            )
+                        "To": recipients,
+                        "Subject": subject,
+                        "TemplateID": template_id,
+                        "TemplateLanguage": True,
+                        "Variables": data,
+                    },
+                ],
+            },
+        )
 
-            return response.status_code == 200
-        
-        except Exception as e:
-            # Log the error but don't raise it
-            print(f"Error sending email: {str(e)}")
-            return False
+        return response.status_code == 200
+    
+    except Exception as e:
+        # Log the error but don't raise it
+        print(f"Error sending email: {str(e)}")
+        return False
 
 
 class ApprovedTemplate(MailTemplate):
