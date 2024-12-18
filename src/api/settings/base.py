@@ -28,10 +28,10 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-    'apps.core.apps.CoreConfig',
-    'apps.authentication.apps.AuthenticationConfig',
-    'apps.trades.apps.TradesConfig',
-    'apps.users.apps.UsersConfig',
+    'apps.core',
+    'apps.authentication',
+    'apps.jobs',
+    'apps.notifications',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -83,9 +83,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Custom user model
-AUTH_USER_MODEL = 'users.User'
-
 # Rest Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -131,9 +128,6 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
-# Meta API Configuration
-META_API_KEY = config('META_API_KEY')
-
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = config(
@@ -155,3 +149,8 @@ SWAGGER_SETTINGS = {
     'REFETCH_SCHEMA_WITH_AUTH': True,
     'REFETCH_SCHEMA_ON_LOGOUT': True,
 }
+
+MAILJET_API_KEY = config('MAILJET_API_KEY')
+MAILJET_API_SECRET = config('MAILJET_API_SECRET')
+DEFAULT_FROM_EMAIL = 'hello@getawash.be'
+DEFAULT_FROM_NAME = 'Get A Wash'
