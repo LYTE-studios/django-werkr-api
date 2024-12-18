@@ -2,7 +2,6 @@ from django.db import models
 from rest_framework.exceptions import *
 
 
-
 class Address(models.Model):
     """
     Generic model for creating addresses.

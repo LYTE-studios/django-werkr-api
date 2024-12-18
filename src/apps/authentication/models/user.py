@@ -24,7 +24,7 @@ class User(AbstractUser):
 
     description = models.CharField(max_length=256, null=True, blank=True)
 
-    # profile_picture = models.ImageField(upload_to='users/{}/profile_picture'.format(id), null=True)
+    profile_picture = models.ImageField(upload_to='users/{}/profile_picture'.format(id), null=True)
 
     initials = models.CharField(max_length=16, null=True)
 
