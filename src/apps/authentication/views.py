@@ -65,17 +65,17 @@ class ProfileMeView(APIView):
         except Exception as e:
             return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        request.user.first_name = first_name
-        request.user.last_name = last_name
-        request.user.email = email
-        request.user.tax_number = tax_number
-        request.user.date_of_birth = date_of_birth
-        request.user.phone_number = phone_number
-        address.save()
-        request.user.address = address
-        billing_address.save()
-        request.user.billing_address = billing_address
+        request.user.first_name = first_name or request.user.first_name
+        request.user.last_name = last_name or request.user.last_name
+        request.user.email = email or request.user.email
+        request.user.tax_number = tax_number or request.user.tax_number
+        request.user.date_of_birth = date_of_birth or request.user.date_of_birth
+        request.user.phone_number = phone_number or request.user.phone_number
+        request.user.address = address or request.user.address
+        request.user.billing_address = billing_address or request.user.billing_address
 
+        request.user.address.save()
+        request.user.billing_address.save()
         request.user.save()
 
         return Response({'user_id': request.user.id})
