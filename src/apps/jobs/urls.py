@@ -16,20 +16,21 @@ from .views import (
 
 urlpatterns = [
     # Jobs
-    path('details/<str:id>', JobView.as_view()),
-    path('create', CreateJobView.as_view()),
-    path('upcoming', UpcomingJobsView.as_view()),
-    path('upcoming/all', AllUpcomingJobsView.as_view()),
-    path('upcoming/all/<int:start>/<int:end>', AllUpcomingJobsView.as_view()),
-    path('history', HistoryJobsView.as_view()),
-    path('history/<int:start>/<int:end>', HistoryJobsView.as_view()),
-    path('get', GetJobsBasedOnUserView.as_view()),
-    path('timeregistration', TimeRegistrationView.as_view()),
-    path('timeregistration/<str:user_id>', TimeRegistrationView.as_view()),
-    path('timeregistration/sign', SignTimeRegistrationView.as_view()),
-    path('active', ActiveJobList.as_view()),
-    path('done', DoneJobList.as_view()),
-    path('done/<int:start>/<int:end>', DoneJobList.as_view()),
-    path('drafts', DraftJobList.as_view()),
+    path('jobs/details/<str:id>', JobView.as_view()),
+    path('jobs/create', CreateJobView.as_view()),
+    path('jobs/upcoming', UpcomingJobsView.as_view()),
+    path('jobs/upcoming/all', AllUpcomingJobsView.as_view()),
+    path('jobs/upcoming/all/<int:start>/<int:end>', AllUpcomingJobsView.as_view()),
+    path('jobs/history', HistoryJobsView.as_view()),
+    path('jobs/history/<int:start>/<int:end>', HistoryJobsView.as_view()),
+    path('jobs/get', GetJobsBasedOnUserView.as_view()),
+    path('jobs/timeregistration', TimeRegistrationView.as_view()),
+    path('jobs/timeregistration/<str:user_id>', TimeRegistrationView.as_view()),
+    path('jobs/timeregistration/sign', SignTimeRegistrationView.as_view()),
+    path('jobs/active', ActiveJobList.as_view()),
+    path('jobs/done', DoneJobList.as_view()),
+    path('jobs/done/<int:start>/<int:end>', DoneJobList.as_view()),
+    path('jobs/drafts', DraftJobList.as_view()),
+
 ]
 
