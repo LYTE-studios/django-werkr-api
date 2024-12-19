@@ -4,11 +4,11 @@ from django.http import HttpRequest, HttpResponseNotFound
 from django.shortcuts import get_object_or_404
 from django.db.models import F
 from rest_framework.response import Response
+from apps.authentication.models.user import User
 from apps.authentication.views import JWTBaseAuthView
 from .models import Job, JobApplication, JobApplicationState, JobState, TimeRegistration
 from .utils.job_util import JobUtil
 from apps.notifications.managers.notification_manager import NotificationManager
-from apps.notifications.managers.mail_service_manager import MailServiceManager
 from apps.core.utils.formatters import FormattingUtil
 from apps.core.utils.wire_names import *
 from apps.notifications.models.mail_template import CancelledMailTemplate, TimeRegisteredTemplate
@@ -49,9 +49,8 @@ class JobView(JWTBaseAuthView):
             NotificationManager.create_notification_for_user(
                 application.worker, 'Your job got cancelled!', application.job.title, send_mail=False, image_url=None
             )
-            MailServiceManager.send_template(application.worker, CancelledMailTemplate(), data={
-                "job_title": application.job.title,
-            })
+            CancelledMailTemplate().send(recipients=[{'Email': application.worker.email}], 
+                                         data={"job_title": application.job.title,})
 
         return Response()
 
@@ -420,11 +419,8 @@ class TimeRegistrationView(JWTBaseAuthView):
         time_registration.save()
 
         # Customer email
-        MailServiceManager.send_template(job.customer, TimeRegisteredTemplate(), {
-            "title": job.title,
-            "interval": FormattingUtil.to_time_interval(start_time, end_time),
-            "worker": self.user.get_full_name(),
-        })
+        TimeRegisteredTemplate().send(recipients=[{'Email': job.customer.email}], 
+                                      data={"title": job.title, "interval": FormattingUtil.to_time_interval(start_time, end_time), "worker": self.user.get_full_name(),})
 
         application = JobApplication.objects.filter(job_id=job_id, worker_id=worker.id).first()
 
