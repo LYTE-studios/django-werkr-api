@@ -1,0 +1,16 @@
+from django.db import models
+from django.contrib.auth import get_user_model
+from apps.core.models.geo import Address
+
+User = get_user_model()
+
+
+class WorkerProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='worker_profile')
+    iban = models.CharField(max_length=64, null=True)
+    ssn = models.CharField(max_length=64, null=True)
+    address = models.ForeignKey(Address, null=True, on_delete=models.CASCADE, related_name='worker_address')
+    date_of_birth = models.DateField(null=True)
+    place_of_birth = models.CharField(max_length=30, null=True)
+    accepted = models.BooleanField(default=True, null=False)
+    hours = models.FloatField(default=0, null=True)

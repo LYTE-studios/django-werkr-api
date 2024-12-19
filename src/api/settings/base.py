@@ -28,8 +28,8 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-    'apps.core',
     'apps.authentication',
+    'apps.core',
     'apps.jobs',
     'apps.notifications',
 ]
