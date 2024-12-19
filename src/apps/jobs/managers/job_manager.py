@@ -9,7 +9,6 @@ from itertools import chain
 from django.core.files import File
 from apps.core.utils.formatters import FormattingUtil
 from apps.jobs.models import JobApplication, Job, JobApplicationState
-from apps.notifications.managers.mail_service_manager import MailServiceManager
 from apps.notifications.managers.notification_manager import NotificationManager, create_global_notification
 from apps.notifications.models import ApprovedMailTemplate, DeniedMailTemplate, SelectedWorkerTemplate
 
@@ -32,7 +31,7 @@ class JobManager(models.Manager):
         if (job.max_workers - selected_workers) > 0 and send_new_push:
             JobManager._send_job_notification(job=job, title='New spot available!', )
 
-        MailServiceManager.send_template(application.worker, DeniedMailTemplate(), {
+        DeniedMailTemplate.send([application.worker], {
             "job_title": job.title,
             "city": job.address.city or 'Belgium',
         })
@@ -57,7 +56,7 @@ class JobManager(models.Manager):
         end = job.end_time
 
         # Worker email
-        MailServiceManager.send_template(application.worker, ApprovedMailTemplate(), {
+        ApprovedMailTemplate.send([application.worker], {
             "job_title": job.title,
             "weekday": FormattingUtil.to_day_of_the_week(start),
             "date": FormattingUtil.to_date(start),
@@ -75,7 +74,7 @@ class JobManager(models.Manager):
                                                          send_mail=False, )
 
         # Customer email
-        MailServiceManager.send_template(application.job.customer, SelectedWorkerTemplate(), {
+        SelectedWorkerTemplate.send([application.job.customer], {
             "title": job.title,
             "weekday": FormattingUtil.to_day_of_the_week(start),
             "date": FormattingUtil.to_date(start),

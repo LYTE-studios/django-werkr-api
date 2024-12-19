@@ -8,7 +8,6 @@ from apps.authentication.views import JWTBaseAuthView
 from .models import Job, JobApplication, JobApplicationState, JobState, TimeRegistration
 from .utils.job_util import JobUtil
 from apps.notifications.managers.notification_manager import NotificationManager
-from apps.notifications.managers.mail_service_manager import MailServiceManager
 from apps.core.utils.formatters import FormattingUtil
 from apps.core.utils.wire_names import *
 from apps.notifications.models.mail_template import CancelledMailTemplate, TimeRegisteredTemplate
@@ -49,7 +48,7 @@ class JobView(JWTBaseAuthView):
             NotificationManager.create_notification_for_user(
                 application.worker, 'Your job got cancelled!', application.job.title, send_mail=False, image_url=None
             )
-            MailServiceManager.send_template(application.worker, CancelledMailTemplate(), data={
+            CancelledMailTemplate.send([application.worker], data={
                 "job_title": application.job.title,
             })
 
@@ -420,7 +419,7 @@ class TimeRegistrationView(JWTBaseAuthView):
         time_registration.save()
 
         # Customer email
-        MailServiceManager.send_template(job.customer, TimeRegisteredTemplate(), {
+        TimeRegisteredTemplate.send([job.customer], {
             "title": job.title,
             "interval": FormattingUtil.to_time_interval(start_time, end_time),
             "worker": self.user.get_full_name(),
