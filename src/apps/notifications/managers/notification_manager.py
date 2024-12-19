@@ -7,7 +7,6 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 from apps.authentication.user_exceptions import UserNotFoundException
 from apps.core.utils.formatters import FormattingUtil
-from apps.notifications.managers.mail_service_manager import MailServiceManager
 from apps.notifications.models.mail_template import MailTemplate
 from apps.notifications.models.notification import Notification
 from apps.notifications.models.notification_status import NotificationStatus
@@ -62,13 +61,13 @@ class NotificationManager:
             NotificationManager.send_push_notification(user.fcm_token, notification)
 
         if send_mail:
-            MailServiceManager.send_template(user, MailTemplate(), data={
+            MailTemplate().send(recipients=[{'Email': user.email}], data={
                 "title": notification.title,
                 "description": notification.description,
             }, )
 
         # Return the status
-        return notification_status
+        return notification_status  
 
     @staticmethod
     def create_notification(title: str, description: str, image_url, ):
@@ -141,7 +140,7 @@ def create_global_mail(title: str, description: str, user_id: str = None, group_
         try:
             user = User.objects.get(id=user_id)
 
-            MailServiceManager.send_template(user, MailTemplate(), data={
+            MailTemplate().send(recipients=[{'Email': user.email}], data={
                     "title": title,
                     "description": description,
                 }, )
@@ -157,7 +156,7 @@ def create_global_mail(title: str, description: str, user_id: str = None, group_
         if user.archived:
             continue
 
-        MailServiceManager.send_template(user, MailTemplate(), data={
+        MailTemplate().send(recipients=[{'Email': user.email}], data={
                 "title": title,
                 "description": description,
             }, )
