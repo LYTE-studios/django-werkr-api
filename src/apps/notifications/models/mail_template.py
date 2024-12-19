@@ -10,10 +10,6 @@ class MailTemplate:
     api_key = settings.MAILJET_API_KEY
     api_secret = settings.MAILJET_API_SECRET
 
-    def __init__(self, template_id: int, subject: str):
-        self.template_id = template_id
-        self.subject = subject
-
     def send(self, recipients: list[str], data: dict):
         """Sends email asynchronously"""
         self.send_task.delay(
