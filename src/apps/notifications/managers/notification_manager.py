@@ -61,13 +61,13 @@ class NotificationManager:
             NotificationManager.send_push_notification(user.fcm_token, notification)
 
         if send_mail:
-            MailTemplate.send([user.email], data={
+            MailTemplate().send(recipients=[{'Email': user.email}], data={
                 "title": notification.title,
                 "description": notification.description,
             }, )
 
         # Return the status
-        return notification_status
+        return notification_status  
 
     @staticmethod
     def create_notification(title: str, description: str, image_url, ):
@@ -140,7 +140,7 @@ def create_global_mail(title: str, description: str, user_id: str = None, group_
         try:
             user = User.objects.get(id=user_id)
 
-            MailTemplate.send([user.email], data={
+            MailTemplate().send(recipients=[{'Email': user.email}], data={
                     "title": title,
                     "description": description,
                 }, )
@@ -155,7 +155,8 @@ def create_global_mail(title: str, description: str, user_id: str = None, group_
             continue
         if user.archived:
             continue
-        MailTemplate.send([user.email], data={
+
+        MailTemplate().send(recipients=[{'Email': user.email}], data={
                 "title": title,
                 "description": description,
             }, )

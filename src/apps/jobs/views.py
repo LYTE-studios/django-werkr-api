@@ -4,6 +4,7 @@ from django.http import HttpRequest, HttpResponseNotFound, HttpResponse, HttpRes
 from django.shortcuts import get_object_or_404
 from django.db.models import F
 from rest_framework.response import Response
+from apps.authentication.models.user import User
 from apps.authentication.views import JWTBaseAuthView
 from .models import Job, JobApplication, JobApplicationState, JobState, TimeRegistration
 from .utils.job_util import JobUtil
@@ -40,6 +41,21 @@ class JobView(JWTBaseAuthView):
             JobService.delete_job(job_id)
         except Http404:
             return HttpResponseNotFound()
+
+        job.archived = True
+        job.selected_workers = 0
+        job.save(update_fields=['archived', 'selected_workers'])
+
+        applications = JobApplication.objects.filter(job_id=job.id, application_state=JobApplicationState.approved)
+        applications.update(application_state=JobApplicationState.rejected)
+
+        for application in applications:
+            NotificationManager.create_notification_for_user(
+                application.worker, 'Your job got cancelled!', application.job.title, send_mail=False, image_url=None
+            )
+            CancelledMailTemplate().send(recipients=[{'Email': application.worker.email}], 
+                                         data={"job_title": application.job.title,})
+
         return Response()
 
     def put(self, request: HttpRequest, *args, **kwargs):
@@ -182,8 +198,55 @@ class TimeRegistrationView(JWTBaseAuthView):
             job_id = JobService.register_time(request.data, self.user)
         except DeserializationException as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
-        except Exception as e:
-            return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+
+        job = Job.objects.get(id=job_id)
+
+        if job is None:
+            return Response({k_message: 'Job not found'}, status=HTTPStatus.BAD_REQUEST)
+
+        if worker is None:
+            worker = self.user
+
+        query = TimeRegistration.objects.filter(job_id=job_id, worker_id=worker.id)
+
+        if query.exists():
+            registration = query.first()
+
+            job.customer.hours -= (registration.start_time - registration.end_time).seconds / 3600
+
+            job.customer.save()
+
+            registration.delete()
+
+        time_registration = TimeRegistration(
+            job=job,
+            start_time=start_time,
+            end_time=end_time,
+            break_time=break_time,
+            worker=worker,
+            worker_signature=worker_signature,
+            customer_signature=customer_signature,
+        )
+
+        time_registration.save()
+
+        # Customer email
+        TimeRegisteredTemplate().send(recipients=[{'Email': job.customer.email}], 
+                                      data={"title": job.title, "interval": FormattingUtil.to_time_interval(start_time, end_time), "worker": self.user.get_full_name(),})
+
+        application = JobApplication.objects.filter(job_id=job_id, worker_id=worker.id).first()
+
+        time_registration_count = TimeRegistration.objects.filter(job_id=job.id).count()
+
+        if time_registration_count >= job.selected_workers:
+            job.job_state = JobState.done
+
+            job.customer.hours += (time_registration.start_time - time_registration.end_time).seconds / 3600
+
+            job.customer.save()
+
+            job.save()
+
         return Response({k_job_id: job_id}, status=HTTPStatus.OK)
 
 

@@ -30,11 +30,9 @@ class JobManager(models.Manager):
 
         if (job.max_workers - selected_workers) > 0 and send_new_push:
             JobManager._send_job_notification(job=job, title='New spot available!', )
-
-        DeniedMailTemplate.send([application.worker], {
-            "job_title": job.title,
-            "city": job.address.city or 'Belgium',
-        })
+        
+        DeniedMailTemplate().send(recipients=[{'Email': application.worker.email}], 
+                                  data={"job_title": job.title, "city": job.address.city or 'Belgium',})
 
         NotificationManager.create_notification_for_user(application.worker,
                                                          'Job full! - {}'.format(job.title),
@@ -56,14 +54,10 @@ class JobManager(models.Manager):
         end = job.end_time
 
         # Worker email
-        ApprovedMailTemplate.send([application.worker], {
-            "job_title": job.title,
-            "weekday": FormattingUtil.to_day_of_the_week(start),
-            "date": FormattingUtil.to_date(start),
-            "time_interval": FormattingUtil.to_time_interval(start, end),
-            "customer_name": job.customer.get_full_name(),
-            "address": job.address.to_readable(),
-        })
+        ApprovedMailTemplate().send(recipients=[{'Email': application.worker.email}], 
+                                    data={"job_title": job.title, "weekday": FormattingUtil.to_day_of_the_week(start), 
+                                          "date": FormattingUtil.to_date(start), "time_interval": FormattingUtil.to_time_interval(start, end), 
+                                          "customer_name": job.customer.get_full_name(), "address": job.address.to_readable(),})
 
         # Worker notification
         NotificationManager.create_notification_for_user(application.worker,
@@ -74,14 +68,11 @@ class JobManager(models.Manager):
                                                          send_mail=False, )
 
         # Customer email
-        SelectedWorkerTemplate.send([application.job.customer], {
-            "title": job.title,
-            "weekday": FormattingUtil.to_day_of_the_week(start),
-            "date": FormattingUtil.to_date(start),
-            "interval": FormattingUtil.to_readable_time(start),
-            "worker": application.worker.first_name,
-            "address": job.address.to_readable(),
-        })
+        SelectedWorkerTemplate().send(recipients=[{'Email': application.job.customer.email}],   
+                                      data={"title": job.title, "weekday": FormattingUtil.to_day_of_the_week(start), 
+                                            "date": FormattingUtil.to_date(start), "interval": FormattingUtil.to_readable_time(start), \
+                                            "worker": application.worker.first_name, "address": job.address.to_readable(),})
+
 
     @staticmethod
     def approve_application(application: JobApplication):

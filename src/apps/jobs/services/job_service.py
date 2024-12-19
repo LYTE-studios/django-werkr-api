@@ -7,6 +7,7 @@ from apps.jobs.managers.job_manager import JobManager
 from apps.notifications.managers.notification_manager import NotificationManager
 from apps.notifications.models.mail_template import CancelledMailTemplate, TimeRegisteredTemplate
 from django.shortcuts import get_object_or_404
+from django.db.models import F
 
 from apps.jobs.models import Job, JobApplication, JobApplicationState, JobState, TimeRegistration
 from apps.jobs.utils.job_util import JobUtil
@@ -33,9 +34,9 @@ class JobService:
             NotificationManager.create_notification_for_user(
                 application.worker, 'Your job got cancelled!', application.job.title, send_mail=False, image_url=None
             )
-            CancelledMailTemplate.send([application.worker], data={
-                "job_title": application.job.title,
-            })
+
+            CancelledMailTemplate().send(recipients=[{'Email': application.worker.email}],   
+                                         data={"job_title": application.job.title,})
 
     @staticmethod
     def update_job(job_id, data):
@@ -230,11 +231,8 @@ class JobService:
         )
         time_registration.save()
 
-        TimeRegisteredTemplate.send([job.customer], {
-            "title": job.title,
-            "interval": FormattingUtil.to_time_interval(start_time, end_time),
-            "worker": user.get_full_name(),
-        })
+        TimeRegisteredTemplate().send(recipients=[{'Email': job.customer.email}], 
+                                      data={"title": job.title, "interval": FormattingUtil.to_time_interval(start_time, end_time), "worker": user.get_full_name(),})
 
         time_registration_count = TimeRegistration.objects.filter(job_id=job.id).count()
         if time_registration_count >= job.selected_workers:
