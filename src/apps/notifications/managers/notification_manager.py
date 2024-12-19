@@ -1,8 +1,7 @@
+from apps.core.assumptions import WORKERS_GROUP_NAME, CMS_GROUP_NAME
 from celery import shared_task
-from firebase_admin import messaging
-
-from apps.core.assumptions import WASHERS_GROUP_NAME, CMS_GROUP_NAME
 from django.contrib.auth import get_user_model
+from firebase_admin import messaging
 
 User = get_user_model()
 from apps.authentication.user_exceptions import UserNotFoundException
@@ -111,7 +110,7 @@ class NotificationManager:
             pass
 
 
-def get_user_set(group_name: str = WASHERS_GROUP_NAME, language: str=None):
+def get_user_set(group_name: str = WORKERS_GROUP_NAME, language: str = None):
     # Get the users in specified group
     try:
         group = FormattingUtil.to_group(group_name)
@@ -129,7 +128,8 @@ def get_user_set(group_name: str = WASHERS_GROUP_NAME, language: str=None):
 
 
 @shared_task
-def create_global_mail(title: str, description: str, user_id: str = None, group_name: str = WASHERS_GROUP_NAME, language: str=None):
+def create_global_mail(title: str, description: str, user_id: str = None, group_name: str = WORKERS_GROUP_NAME,
+                       language: str = None):
     """
     Sends a mail to the specified group
 
@@ -162,7 +162,8 @@ def create_global_mail(title: str, description: str, user_id: str = None, group_
             }, )
 
 @shared_task
-def send_lonely_push(title: str, description: str, user_id: str = None, group_name: str = WASHERS_GROUP_NAME, language: str = None,) -> None:
+def send_lonely_push(title: str, description: str, user_id: str = None, group_name: str = WORKERS_GROUP_NAME,
+                     language: str = None, ) -> None:
     """
     Sends a push notification without saving it to the notification center
     """
@@ -188,7 +189,7 @@ def send_lonely_push(title: str, description: str, user_id: str = None, group_na
 
 @shared_task
 def create_global_notification(title: str, description: str, image_url: str = None, user_id: str = None, send_push: bool = False,
-                               group_name: str = WASHERS_GROUP_NAME, language: str = None) -> None:
+                               group_name: str = WORKERS_GROUP_NAME, language: str = None) -> None:
     """
     Create a global notification for all users in a group.
 

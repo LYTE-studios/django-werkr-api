@@ -1,11 +1,11 @@
 from celery import shared_task
-from mailjet_rest import Client
 from django.conf import settings
+from mailjet_rest import Client
 
 
 class MailTemplate:
     template_id: int = 5794325
-    subject: str = 'Get A Wash | New message'
+    subject: str = 'Get A Work | New message'
 
     api_key = settings.MAILJET_API_KEY
     api_secret = settings.MAILJET_API_SECRET
@@ -71,7 +71,7 @@ class MailTemplate:
 
 class ApprovedMailTemplate(MailTemplate):
     template_id = 5792978
-    subject = "Get A Wash | You\'ve been approved!"
+    subject = "Get A Work | You\'ve been approved!"
 
 
 class CodeMailTemplate(MailTemplate):
@@ -81,19 +81,19 @@ class CodeMailTemplate(MailTemplate):
 
 class DeniedMailTemplate(MailTemplate):
     template_id = 5771049
-    subject = 'Get A Wash | Job was full!'
+    subject = 'Get A Work | Job was full!'
 
 
 class SelectedWorkerTemplate(MailTemplate):
     template_id = 6150888
-    subject = 'Get A Wash | A worker has been selected for your job!'
+    subject = 'Get A Work | A worker has been selected for your job!'
 
 
 class TimeRegisteredTemplate(MailTemplate):
     template_id = 6095618
-    subject = 'Get A Wash | A worker registered time for your job!'
+    subject = 'Get A Work | A worker registered time for your job!'
 
 
 class CancelledMailTemplate(MailTemplate):
     template_id = 5792996
-    subject = 'Get A Wash | Your job was cancelled!'
+    subject = 'Get A Work | Your job was cancelled!'

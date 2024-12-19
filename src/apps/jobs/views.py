@@ -1,17 +1,16 @@
+import datetime
 from http import HTTPStatus
 
-from django.http import HttpRequest, HttpResponseNotFound, HttpResponse, HttpResponseBadRequest, Http404
-from rest_framework.response import Response
 from apps.authentication.views import JWTBaseAuthView
+from apps.core.assumptions import *
+from apps.core.model_exceptions import DeserializationException
 from apps.core.utils.formatters import FormattingUtil
 from apps.core.utils.wire_names import *
-from apps.core.model_exceptions import DeserializationException
-from apps.jobs.managers.job_manager import JobManager
-from apps.core.assumptions import *
-import datetime
 from apps.jobs.services.contract_service import JobApplicationService
 from apps.jobs.services.job_service import JobService
 from django.core.paginator import Paginator
+from django.http import HttpRequest, HttpResponseNotFound, HttpResponse, HttpResponseBadRequest, Http404
+from rest_framework.response import Response
 
 
 class JobView(JWTBaseAuthView):
@@ -83,7 +82,7 @@ class UpcomingJobsView(JWTBaseAuthView):
     """
 
     groups = [
-        WASHERS_GROUP_NAME,
+        WORKERS_GROUP_NAME,
     ]
 
     def get(self, request: HttpRequest):
@@ -122,7 +121,7 @@ class HistoryJobsView(JWTBaseAuthView):
     """
 
     groups = [
-        WASHERS_GROUP_NAME,
+        WORKERS_GROUP_NAME,
     ]
 
     def get(self, request: HttpRequest, *args, **kwargs):
@@ -140,7 +139,7 @@ class HistoryJobsView(JWTBaseAuthView):
 class GetJobsBasedOnUserView(JWTBaseAuthView):
     groups = [
         CMS_GROUP_NAME,
-        WASHERS_GROUP_NAME,
+        WORKERS_GROUP_NAME,
         CUSTOMERS_GROUP_NAME,
     ]
 
@@ -160,7 +159,7 @@ class GetJobsBasedOnUserView(JWTBaseAuthView):
 class TimeRegistrationView(JWTBaseAuthView):
     app_types = [
         CMS_GROUP_NAME,
-        WASHERS_GROUP_NAME
+        WORKERS_GROUP_NAME
     ]
 
     def get(self, request: HttpRequest):
@@ -184,7 +183,7 @@ class TimeRegistrationView(JWTBaseAuthView):
 class SignTimeRegistrationView(JWTBaseAuthView):
     app_types = [
         CMS_GROUP_NAME,
-        WASHERS_GROUP_NAME,
+        WORKERS_GROUP_NAME,
     ]
 
     def post(self, request: HttpRequest):
@@ -295,7 +294,7 @@ class DenyApplicationView(JWTBaseAuthView):
 class DirectionsView(JWTBaseAuthView):
     groups = [
         CMS_GROUP_NAME,
-        WASHERS_GROUP_NAME,
+        WORKERS_GROUP_NAME,
     ]
 
     def get(self, request, *args, **kwargs):

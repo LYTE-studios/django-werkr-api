@@ -1,8 +1,7 @@
 # src/apps/notifications/tests/test_email_service.py
 
-from django.test import TestCase
 from unittest.mock import patch
-from django.conf import settings
+
 from apps.notifications.models.mail_template import (
     ApprovedTemplate,
     CodeMailTemplate,
@@ -12,6 +11,9 @@ from apps.notifications.models.mail_template import (
     CancelledMailTemplate
 )
 from apps.notifications.tasks import send_template_email
+from django.conf import settings
+from django.test import TestCase
+
 
 class EmailTemplateServiceTests(TestCase):
     def setUp(self):
@@ -27,7 +29,7 @@ class EmailTemplateServiceTests(TestCase):
     def test_approved_template_creation(self):
         template = ApprovedTemplate()
         self.assertEqual(template.template_id, 5792978)
-        self.assertEqual(template.subject, "Get A Wash | You've been approved!")
+        self.assertEqual(template.subject, "Get A Work | You've been approved!")
 
     def test_code_mail_template_creation(self):
         template = CodeMailTemplate()
@@ -37,12 +39,12 @@ class EmailTemplateServiceTests(TestCase):
     def test_denied_template_creation(self):
         template = DeniedMailTemplate()
         self.assertEqual(template.template_id, 5771049)
-        self.assertEqual(template.subject, 'Get A Wash | Job was full!')
+        self.assertEqual(template.subject, 'Get A Work | Job was full!')
 
     def test_selected_worker_template_creation(self):
         template = SelectedWorkerTemplate()
         self.assertEqual(template.template_id, 6150888)
-        self.assertEqual(template.subject, 'Get A Wash | A worker has been selected for your job!')
+        self.assertEqual(template.subject, 'Get A Work | A worker has been selected for your job!')
 
     @patch('apps.notifications.tasks.send_template_email.delay')
     def test_send_method_calls_celery_task(self, mock_delay):
@@ -55,7 +57,7 @@ class EmailTemplateServiceTests(TestCase):
         # Assert that Celery task was called with correct arguments
         mock_delay.assert_called_once_with(
             template_id=5792978,
-            subject="Get A Wash | You've been approved!",
+            subject="Get A Work | You've been approved!",
             recipients=self.test_recipients,
             data=self.test_data
         )
@@ -69,7 +71,7 @@ class EmailTemplateServiceTests(TestCase):
         # Call the task directly
         result = send_template_email(
             template_id=5792978,
-            subject="Get A Wash | You've been approved!",
+            subject="Get A Work | You've been approved!",
             recipients=self.test_recipients,
             data=self.test_data
         )
@@ -87,7 +89,7 @@ class EmailTemplateServiceTests(TestCase):
                             "Name": settings.DEFAULT_FROM_NAME
                         },
                         "To": self.test_recipients,
-                        "Subject": "Get A Wash | You've been approved!",
+                        "Subject": "Get A Work | You've been approved!",
                         "TemplateID": 5792978,
                         "TemplateLanguage": True,
                         "Variables": self.test_data,
@@ -105,7 +107,7 @@ class EmailTemplateServiceTests(TestCase):
         # Call the task directly
         result = send_template_email(
             template_id=5792978,
-            subject="Get A Wash | You've been approved!",
+            subject="Get A Work | You've been approved!",
             recipients=self.test_recipients,
             data=self.test_data
         )
