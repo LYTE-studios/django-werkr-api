@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
-
+DEBUG = True
 # Application definition
 DJANGO_APPS = [
     'django.contrib.admin',
@@ -28,11 +28,18 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-    'apps.core',
     'apps.authentication',
+    'apps.core',
     'apps.jobs',
     'apps.notifications',
 ]
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -154,3 +161,5 @@ MAILJET_API_KEY = config('MAILJET_API_KEY')
 MAILJET_API_SECRET = config('MAILJET_API_SECRET')
 DEFAULT_FROM_EMAIL = 'hello@getawash.be'
 DEFAULT_FROM_NAME = 'Get A Wash'
+
+AUTH_USER_MODEL = 'authentication.User'
