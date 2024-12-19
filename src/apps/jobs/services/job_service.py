@@ -4,13 +4,13 @@ from apps.core.model_exceptions import DeserializationException
 from apps.core.utils.formatters import FormattingUtil
 from apps.core.utils.wire_names import *
 from apps.jobs.managers.job_manager import JobManager
-from apps.notifications.managers.notification_manager import NotificationManager
-from apps.notifications.models.mail_template import CancelledMailTemplate, TimeRegisteredTemplate
-from django.shortcuts import get_object_or_404
-from django.db.models import F
-
 from apps.jobs.models import Job, JobApplication, JobApplicationState, JobState, TimeRegistration
 from apps.jobs.utils.job_util import JobUtil
+from apps.notifications.managers.notification_manager import NotificationManager
+from apps.notifications.models.mail_template import CancelledMailTemplate, TimeRegisteredTemplate
+from django.db.models import F
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 
 class JobService:
@@ -132,8 +132,8 @@ class JobService:
         return job.id
 
     @staticmethod
-    def get_upcoming_jobs(user, is_worker=True):
-        now = datetime.datetime.now()
+    def get_upcoming_jobs(user, is_worker=True, start=None, end=None):
+        now = timezone.now()
         if is_worker:
             jobs = Job.objects.filter(
                 start_time__gte=now,
@@ -145,12 +145,22 @@ class JobService:
                 archived=False
             ).order_by('start_time')[:50]
         else:
-            jobs = Job.objects.filter(
-                start_time__gt=now,
-                job_state=JobState.pending,
-                is_draft=False,
-                archived=False
-            ).order_by('start_time')[:50]
+            if not start or not end:
+                jobs = Job.objects.filter(
+                    start_time__gt=now,
+                    job_state=JobState.pending,
+                    is_draft=False,
+                    archived=False
+                ).order_by('start_time')[:50]
+            else:
+                if start < now:
+                    start = now
+                jobs = Job.objects.filter(
+                    start_time__range=[start, end],
+                    job_state=JobState.pending,
+                    is_draft=False,
+                    archived=False
+                ).order_by('start_time')[:50]
 
         return [JobUtil.to_model_view(job) for job in jobs]
 

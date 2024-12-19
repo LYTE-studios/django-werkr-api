@@ -115,6 +115,11 @@ class JobApplicationService:
             except Exception:
                 pass
 
+        try:
+            Job.objects.get(id=job_id)
+        except Job.DoesNotExist:
+            return JobNotFoundException().get_response()
+
         application = JobApplication(
             job_id=job_id, address=start_address, worker_id=user.id,
             application_state=JobApplicationState.pending, no_travel_cost=no_travel_cost,
