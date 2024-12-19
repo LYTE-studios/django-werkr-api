@@ -10,5 +10,5 @@ class CustomerProfile(models.Model):
     phone_number = models.CharField(max_length=64, null=True)
     tax_number = models.CharField(max_length=64, null=True)
     company_name = models.CharField(max_length=64, null=True)
-    billing_address = models.ForeignKey(Address, null=True, on_delete=models.CASCADE, related_name='customer_billing_address')
-    address = models.ForeignKey(Address, null=True, on_delete=models.CASCADE, related_name='customer_address')
+    customer_billing_address = models.ForeignKey(Address, null=True, on_delete=models.CASCADE, related_name='customer_billing_address')
+    customer_address = models.ForeignKey(Address, null=True, on_delete=models.CASCADE, related_name='customer_address')

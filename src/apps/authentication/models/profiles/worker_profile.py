@@ -9,7 +9,7 @@ class WorkerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='worker_profile')
     iban = models.CharField(max_length=64, null=True)
     ssn = models.CharField(max_length=64, null=True)
-    address = models.ForeignKey(Address, null=True, on_delete=models.CASCADE, related_name='worker_address')
+    worker_address = models.ForeignKey(Address, null=True, on_delete=models.CASCADE, related_name='worker_address')
     date_of_birth = models.DateField(null=True)
     place_of_birth = models.CharField(max_length=30, null=True)
     accepted = models.BooleanField(default=True, null=False)
