@@ -1,19 +1,30 @@
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
-from django.http import JsonResponse, HttpResponseNotFound, HttpResponseBadRequest
-from django.shortcuts import get_object_or_404
-from .models import User
-from apps.core.models.settings import Settings
+from http import HTTPStatus
+
+from apps.authentication.utils.encryption_util import EncryptionUtil
+from apps.authentication.utils.pass_reset_util import CustomPasswordResetUtil
 from apps.core.model_exceptions import DeserializationException
+from apps.core.models.settings import Settings
 from apps.core.utils.formatters import FormattingUtil
 from apps.core.utils.profile import ProfileUtil
 from apps.core.utils.wire_names import k_token, k_code, k_password, k_message, k_email
-from http import HTTPStatus
-from apps.authentication.utils.pass_reset_util import CustomPasswordResetUtil
-from apps.authentication.utils.encryption_util import EncryptionUtil
+from django.http import JsonResponse, HttpResponseBadRequest
+from django.shortcuts import get_object_or_404
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from apps.core.assumptions import (
+    CUSTOMERS_GROUP_NAME,
+    WASHERS_GROUP_NAME,
+    CMS_GROUP_NAME
+)
+from .models import User
+from django.contrib.auth.models import Group
+from django.http import HttpResponseForbidden, HttpRequest
+from rest_framework_simplejwt.tokens import AccessToken
+from .utils.authentication_util import AuthenticationUtil
+from .utils.jwt_auth_util import JWTAuthUtil
 
 
 class JWTAuthenticationView(TokenObtainPairView):
@@ -29,6 +40,52 @@ class JWTTestConnectionView(APIView):
 
     def get(self, request):
         return Response({"message": "Connection successful"})
+
+
+class JWTBaseAuthView(APIView):
+    """
+    Base view for authentication using JWT token auth
+    """
+
+    # Override this to allow different groups.
+    groups = [
+        CUSTOMERS_GROUP_NAME,
+        WASHERS_GROUP_NAME,
+        CMS_GROUP_NAME,
+    ]
+
+    token: AccessToken
+
+    user: User
+
+    group: Group
+
+    def dispatch(self, request: HttpRequest, *args, **kwargs):
+
+        self.group = AuthenticationUtil.check_client_secret(request)
+
+        auth_token = JWTAuthUtil.check_for_authentication(request)
+
+        if auth_token is None:
+            return HttpResponseForbidden()
+
+        try:
+            self.user = User.objects.get(id=auth_token.get('user_id'))
+        except User.DoesNotExist:
+            return HttpResponseForbidden()
+
+        in_group = False
+
+        for group in Group.objects.filter(user=self.user):
+            if group.name in self.groups:
+                in_group = True
+
+        if not in_group:
+            return HttpResponseForbidden()
+
+        self.token = auth_token
+
+        return super(JWTBaseAuthView, self).dispatch(request, *args, **kwargs)
 
 
 class ProfileMeView(APIView):
