@@ -73,7 +73,7 @@ class MailTemplate:
         }
 
 
-class ApprovedTemplate(MailTemplate):
+class ApprovedMailTemplate(MailTemplate):
     template_id = 5792978
     subject = "Get A Wash | You\'ve been approved!"
 
@@ -88,14 +88,14 @@ class DeniedMailTemplate(MailTemplate):
     subject = 'Get A Wash | Job was full!'
 
 
-class SelectedWasherTemplate(MailTemplate):
+class SelectedWorkerTemplate(MailTemplate):
     template_id = 6150888
-    subject = 'Get A Wash | A washer has been selected for your job!'
+    subject = 'Get A Wash | A worker has been selected for your job!'
 
 
 class TimeRegisteredTemplate(MailTemplate):
     template_id = 6095618
-    subject = 'Get A Wash | A washer registered time for your job!'
+    subject = 'Get A Wash | A worker registered time for your job!'
 
 
 class CancelledMailTemplate(MailTemplate):

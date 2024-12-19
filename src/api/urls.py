@@ -24,7 +24,7 @@ schema_view = get_schema_view(
 # API URLs
 api_v1_patterns = [
     path('auth/', include('apps.authentication.urls')),
-    # path('jobs/', include('apps.jobs.urls')),
+    path('jobs/', include('apps.jobs.urls')),
 ]
 
 urlpatterns = [

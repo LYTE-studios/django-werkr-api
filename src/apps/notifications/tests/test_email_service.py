@@ -7,7 +7,7 @@ from apps.notifications.models.mail_template import (
     ApprovedTemplate,
     CodeMailTemplate,
     DeniedMailTemplate,
-    SelectedWasherTemplate,
+    SelectedWorkerTemplate,
     TimeRegisteredTemplate,
     CancelledMailTemplate
 )
@@ -39,10 +39,10 @@ class EmailTemplateServiceTests(TestCase):
         self.assertEqual(template.template_id, 5771049)
         self.assertEqual(template.subject, 'Get A Wash | Job was full!')
 
-    def test_selected_washer_template_creation(self):
-        template = SelectedWasherTemplate()
+    def test_selected_worker_template_creation(self):
+        template = SelectedWorkerTemplate()
         self.assertEqual(template.template_id, 6150888)
-        self.assertEqual(template.subject, 'Get A Wash | A washer has been selected for your job!')
+        self.assertEqual(template.subject, 'Get A Wash | A worker has been selected for your job!')
 
     @patch('apps.notifications.tasks.send_template_email.delay')
     def test_send_method_calls_celery_task(self, mock_delay):
@@ -118,7 +118,7 @@ class EmailTemplateServiceTests(TestCase):
             ApprovedTemplate(),
             CodeMailTemplate(),
             DeniedMailTemplate(),
-            SelectedWasherTemplate(),
+            SelectedWorkerTemplate(),
             TimeRegisteredTemplate(),
             CancelledMailTemplate()
         ]
@@ -136,7 +136,7 @@ class EmailTemplateServiceTests(TestCase):
             ApprovedTemplate(),
             CodeMailTemplate(),
             DeniedMailTemplate(),
-            SelectedWasherTemplate(),
+            SelectedWorkerTemplate(),
             TimeRegisteredTemplate(),
             CancelledMailTemplate()
         ]
