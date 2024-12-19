@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from apps.core.utils.wire_names import k_message
 
 
-class GawBaseException(Exception):
+class WerkrBaseException(Exception):
     """
     Base exception for all exceptions
     """
@@ -16,7 +16,7 @@ class GawBaseException(Exception):
     pass
 
 
-class DeserializationException(GawBaseException):
+class DeserializationException(WerkrBaseException):
     """
     Exception used when there's an error processing a model.
 
@@ -29,7 +29,7 @@ class DeserializationException(GawBaseException):
     pass
 
 
-class NotFoundException(GawBaseException):
+class NotFoundException(WerkrBaseException):
     """
     Exception used when a model could not be found.
 
