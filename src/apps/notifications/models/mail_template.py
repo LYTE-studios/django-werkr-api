@@ -2,8 +2,8 @@ from celery import shared_task
 from mailjet_rest import Client
 from django.conf import settings
 
-class MailTemplate:
 
+class MailTemplate:
     template_id: int = 5794325
     subject: str = 'Get A Wash | New message'
 
@@ -12,7 +12,7 @@ class MailTemplate:
 
     def __init__(self, template_id: int, subject: str):
         self.template_id = template_id
-        self.subject = subject  
+        self.subject = subject
 
     def send(self, recipients: list[str], data: dict):
         """Sends email asynchronously"""
@@ -26,7 +26,7 @@ class MailTemplate:
     @shared_task
     def send_task(self, recipients: list[str], data: dict):
         """Celery task to send emails asynchronously"""
-        try: 
+        try:
             mailjet = Client(auth=(self.api_key, self.api_secret), version='v3.1')
 
             response = mailjet.send.create(
@@ -48,16 +48,35 @@ class MailTemplate:
             )
 
             return response.status_code == 200
-        
+
         except Exception as e:
             # Log the error but don't raise it
             print(f"Error sending email: {str(e)}")
             return False
 
+    def to_data(self, recipient: dict, extra_data: dict):
+        """Converts template data into the required format"""
+        return {
+            'Messages': [
+                {
+                    "From": {
+                        "Email": settings.DEFAULT_FROM_EMAIL,
+                        "Name": settings.DEFAULT_FROM_NAME
+                    },
+                    "To": [recipient],
+                    "Subject": self.subject,
+                    "TemplateID": self.template_id,
+                    "TemplateLanguage": True,
+                    "Variables": extra_data,
+                },
+            ],
+        }
+
 
 class ApprovedTemplate(MailTemplate):
     template_id = 5792978
     subject = "Get A Wash | You\'ve been approved!"
+
 
 class CodeMailTemplate(MailTemplate):
     template_id = 5798048

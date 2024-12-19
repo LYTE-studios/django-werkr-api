@@ -6,13 +6,14 @@ from rest_framework import status
 from django.http import JsonResponse, HttpResponseNotFound, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from .models import User
-from .models.profiles.admin_profile import AdminProfile
-from .models.profiles.customer_profile import CustomerProfile
-from .models.profiles.worker_profile import WorkerProfile
 from apps.core.models.settings import Settings
 from apps.core.model_exceptions import DeserializationException
 from apps.core.utils.formatters import FormattingUtil
 from apps.core.utils.profile import ProfileUtil
+from apps.core.utils.wire_names import k_token, k_code, k_password, k_message, k_email
+from http import HTTPStatus
+from apps.authentication.utils.pass_reset_util import CustomPasswordResetUtil
+from apps.authentication.utils.encryption_util import EncryptionUtil
 
 
 class JWTAuthenticationView(TokenObtainPairView):
@@ -202,3 +203,90 @@ class UploadUserProfilePictureView(APIView):
         user.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PasswordResetRequestView(APIView):
+    """
+    Password reset request view
+    """
+
+    def post(self, request, *args, **kwargs):
+        """
+        POST method handler
+        """
+        formatter = FormattingUtil(data=request.data)
+
+        try:
+            email = formatter.get_email(k_email, required=True)
+        except Exception as e:
+            return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({k_message: 'Email not found.'}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+
+        pass_reset_util = CustomPasswordResetUtil()
+        pass_reset_util.send_reset_code(user)
+
+        return Response({k_message: 'Password reset email has been sent.'}, status=HTTPStatus.OK)
+
+
+class VerifyCodeView(APIView):
+    """
+    Verify code view
+    """
+
+    def post(self, request, *args, **kwargs):
+        """
+        POST method handler
+        """
+        formatter = FormattingUtil(data=request.data)
+
+        try:
+            email = formatter.get_value(k_email, required=True)
+            code = formatter.get_value(k_code, required=True)
+        except Exception as e:
+            return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({k_message: 'Email not found.'}, status=HTTPStatus.BAD_REQUEST)
+
+        pass_reset_util = CustomPasswordResetUtil()
+        if pass_reset_util.verify_code(user, code):
+            token = pass_reset_util.create_temporary_token_for_user(user, code)
+            return Response({k_token: token}, status=HTTPStatus.OK)
+        else:
+            return Response({k_message: 'Code not verified.'}, status=HTTPStatus.FORBIDDEN)
+
+
+class ResetPasswordView(APIView):
+    """
+    Reset password view
+    """
+
+    def post(self, request, *args, **kwargs):
+        """
+        POST method handler
+        """
+        formatter = FormattingUtil(data=request.data)
+
+        try:
+            token = formatter.get_value(k_token, required=True)
+            code = formatter.get_value(k_code, required=True)
+            password = formatter.get_value(k_password, required=True)
+        except Exception as e:
+            return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
+
+        pass_reset_util = CustomPasswordResetUtil()
+        user = pass_reset_util.get_user_by_token_and_code(token, code)
+        if user:
+            password = EncryptionUtil.encrypt(password)
+            user.password = password
+            user.save()
+
+            return Response({k_message: 'Password has been reset.'}, status=HTTPStatus.OK)
+        else:
+            return Response({k_message: 'Invalid or expired token'}, status=HTTPStatus.BAD_REQUEST)

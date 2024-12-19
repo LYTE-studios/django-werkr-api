@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import (
     JWTAuthenticationView, JWTRefreshView, JWTTestConnectionView,
-    ProfileMeView, LanguageSettingsView, UploadUserProfilePictureView
+    ProfileMeView, LanguageSettingsView, UploadUserProfilePictureView,
+    PasswordResetRequestView, VerifyCodeView, ResetPasswordView
 )
 
 
@@ -12,4 +13,7 @@ urlpatterns = [
     path('users/me/', ProfileMeView.as_view(), name='profile_me'),
     path('users/settings/languages/', LanguageSettingsView.as_view(), name='language_settings'),
     path('users/settings/profile-picture/', UploadUserProfilePictureView.as_view(), name='upload_profile_picture'),
+    path('password_reset/', PasswordResetRequestView.as_view(), name="password_reset"),
+    path('password_reset/verify/', VerifyCodeView.as_view(), name="password_reset_verify"),
+    path('password_reset/reset/', ResetPasswordView.as_view(), name="password_reset_reset"),
 ]
