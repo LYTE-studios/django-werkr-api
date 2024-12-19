@@ -5,7 +5,6 @@ from datetime import timedelta
 from django.utils import timezone
 
 from apps.authentication.models.pass_reset import PassResetCode
-from apps.notifications.managers.mail_service_manager import MailServiceManager
 from apps.notifications.models.mail_template import CodeMailTemplate
 
 
@@ -23,9 +22,7 @@ class CustomPasswordResetUtil:
 
         pass_code.save()
 
-        MailServiceManager.send_template(user, CodeMailTemplate(5798048, 'Password reset code'), {
-            "code": code,
-        })
+        CodeMailTemplate().send([user.email], {"code": code})
 
     def verify_code(self, user, code):
         pass_code = PassResetCode.objects.filter(user=user, code=code, used=False).first()
