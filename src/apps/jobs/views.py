@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from django.http import HttpRequest, HttpResponseNotFound
+from django.http import HttpRequest, HttpResponseNotFound, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import get_object_or_404
 from django.db.models import F
 from rest_framework.response import Response
@@ -16,6 +16,8 @@ from apps.jobs.managers.job_manager import JobManager
 from apps.core.assumptions import *
 import datetime
 import pytz
+from apps.jobs.services.contract_service import JobApplicationService
+from apps.jobs.services.job_service import JobService
 
 
 class JobView(JWTBaseAuthView):
@@ -28,89 +30,26 @@ class JobView(JWTBaseAuthView):
     """
 
     def get(self, request: HttpRequest, *args, **kwargs):
-        job = get_object_or_404(Job, id=kwargs['id'])
-        return Response(data=JobUtil.to_model_view(job))
+        job_id = kwargs['id']
+        job_details = JobService.get_job_details(job_id)
+        return Response(data=job_details)
 
     def delete(self, request: HttpRequest, *args, **kwargs):
+        job_id = kwargs['id']
         try:
-            job = Job.objects.get(id=kwargs['id'])
-        except (KeyError, Job.DoesNotExist):
+            JobService.delete_job(job_id)
+        except Http404:
             return HttpResponseNotFound()
-
-        job.archived = True
-        job.selected_workers = 0
-        job.save(update_fields=['archived', 'selected_workers'])
-
-        applications = JobApplication.objects.filter(job_id=job.id, application_state=JobApplicationState.approved)
-        applications.update(application_state=JobApplicationState.rejected)
-
-        for application in applications:
-            NotificationManager.create_notification_for_user(
-                application.worker, 'Your job got cancelled!', application.job.title, send_mail=False, image_url=None
-            )
-            CancelledMailTemplate.send([application.worker], data={
-                "job_title": application.job.title,
-            })
-
         return Response()
 
     def put(self, request: HttpRequest, *args, **kwargs):
-        job = get_object_or_404(Job, id=kwargs['id'])
-        formatter = FormattingUtil(data=request.data)
-
+        job_id = kwargs['id']
         try:
-            # Optional fields
-            title = formatter.get_value(k_title)
-            start_time = formatter.get_date(k_start_time)
-            end_time = formatter.get_date(k_end_time)
-            customer_id = formatter.get_value(k_customer_id)
-            address = formatter.get_address(k_address)
-            max_workers = formatter.get_value(k_max_workers)
-            description = formatter.get_value(k_description)
-            application_start_time = formatter.get_date(k_application_start_time)
-            application_end_time = formatter.get_date(k_application_end_time)
-            is_draft = formatter.get_bool(k_is_draft)
-
+            JobService.update_job(job_id, request.data)
         except DeserializationException as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
             return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
-
-        fields_to_update = []
-        if title:
-            job.title = title
-            fields_to_update.append('title')
-        if start_time:
-            job.start_time = start_time
-            fields_to_update.append('start_time')
-        if end_time:
-            job.end_time = end_time
-            fields_to_update.append('end_time')
-        if customer_id:
-            job.customer_id = customer_id
-            fields_to_update.append('customer_id')
-        if address:
-            job.address = address
-            address.save()
-            fields_to_update.append('address')
-        if max_workers:
-            job.max_workers = max_workers
-            fields_to_update.append('max_workers')
-        if description:
-            job.description = description
-            fields_to_update.append('description')
-        if application_start_time:
-            job.application_start_time = application_start_time
-            fields_to_update.append('application_start_time')
-        if application_end_time:
-            job.application_end_time = application_end_time
-            fields_to_update.append('application_end_time')
-        if is_draft is not None:
-            job.is_draft = is_draft
-            fields_to_update.append('is_draft')
-
-        job.save(update_fields=fields_to_update)
-
         return Response()
 
 
@@ -130,48 +69,13 @@ class CreateJobView(JWTBaseAuthView):
     ]
 
     def post(self, request: HttpRequest):
-
-        formatter = FormattingUtil(data=request.data)
         try:
-            # Required fields
-            title = formatter.get_value(k_title, required=True)
-            start_time = formatter.get_date(k_start_time, required=True)
-            end_time = formatter.get_date(k_end_time, required=True)
-            customer_id = formatter.get_value(k_customer_id, required=True)
-            address = formatter.get_address(k_address, required=True)
-            max_workers = formatter.get_value(k_max_workers, required=True)
-
-            # Optional fields
-            description = formatter.get_value(k_description)
-            application_start_time = formatter.get_date(k_application_start_time)
-            application_end_time = formatter.get_date(k_application_end_time)
-            is_draft = formatter.get_bool(k_is_draft)
-
+            job_id = JobService.create_job(request.data)
         except DeserializationException as e:
-            # If the inner validation fails, this throws an error
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
-            # Unhandled exception
             return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
-
-        job = Job(
-            customer_id=customer_id,
-            title=title,
-            description=description,
-            address=address,
-            job_state=JobState.pending,
-            start_time=start_time,
-            end_time=end_time,
-            application_start_time=application_start_time,
-            application_end_time=application_end_time,
-            max_workers=max_workers,
-            selected_workers=0,
-            is_draft=is_draft
-        )
-
-        JobManager.create(job)
-
-        return Response({k_job_id: job.id, })
+        return Response({k_job_id: job_id})
 
 
 class UpcomingJobsView(JWTBaseAuthView):
@@ -187,40 +91,9 @@ class UpcomingJobsView(JWTBaseAuthView):
         WASHERS_GROUP_NAME,
     ]
 
-    def is_available_to_user(self, job: Job):
-        if JobApplication.objects.filter(worker_id=self.user.id, job_id=job.id,
-                                         application_state__in=[JobApplicationState.approved,
-                                                                JobApplicationState.pending]).exists():
-            return False
-
-        date_range = [job.start_time - datetime.timedelta(hours=3),
-                      job.end_time + datetime.timedelta(hours=3)]
-
-        before_check = JobApplication.objects.filter(worker=self.user, job__start_time__range=date_range,
-                                                     application_state=JobApplicationState.approved).exists()
-        after_check = JobApplication.objects.filter(worker=self.user, job__end_time__range=date_range,
-                                                    application_state=JobApplicationState.approved).exists()
-
-        return not (before_check or after_check)
-
     def get(self, request: HttpRequest):
-        data = []
-
-        jobs = Job.objects.filter(start_time__gte=datetime.datetime.now(),
-                                  application_start_time__lte=datetime.datetime.now(),
-                                  application_end_time__gte=datetime.datetime.now(),
-                                  job_state=JobState.pending,
-                                  selected_workers__lt=F('max_workers'),
-                                  is_draft=False,
-                                  archived=False).order_by('start_time')[:50]
-
-        for job in jobs:
-            if self.is_available_to_user(job=job):
-                data.append(job)
-
-        job_model_list = [JobUtil.to_model_view(job) for job in data]
-
-        return Response({k_jobs: job_model_list})
+        jobs = JobService.get_upcoming_jobs(self.user, is_worker=True)
+        return Response({k_jobs: jobs})
 
 
 class AllUpcomingJobsView(JWTBaseAuthView):
@@ -240,27 +113,8 @@ class AllUpcomingJobsView(JWTBaseAuthView):
         formatter = FormattingUtil(kwargs)
         start = formatter.get_date(value_key=k_start)
         end = formatter.get_date(value_key=k_end)
-
-        data = []
-
-        if not start or not end:
-            jobs = Job.objects.filter(start_time__gt=datetime.datetime.utcnow(), job_state=JobState.pending,
-                                      is_draft=False,
-                                      archived=False).order_by('start_time')[:50]
-        else:
-            now = pytz.utc.localize(datetime.datetime.utcnow())
-
-            if start < now:
-                start = now
-
-            jobs = Job.objects.filter(start_time__range=[start, end], job_state=JobState.pending,
-                                      is_draft=False,
-                                      archived=False).order_by('start_time')[:50]
-
-        for job in jobs:
-            data.append(JobUtil.to_model_view(job))
-
-        return Response({k_jobs: data})
+        jobs = JobService.get_upcoming_jobs(self.user, is_worker=False)
+        return Response({k_jobs: jobs})
 
 
 class HistoryJobsView(JWTBaseAuthView):
@@ -277,23 +131,15 @@ class HistoryJobsView(JWTBaseAuthView):
     ]
 
     def get(self, request: HttpRequest, *args, **kwargs):
-
         end = datetime.datetime.now()
         start = datetime.datetime.fromtimestamp(0)
-
         try:
             start = FormattingUtil.to_date_time(kwargs['start'])
             end = FormattingUtil.to_date_time(kwargs['end'])
         except KeyError:
             pass
-
-        applications = JobApplication.objects.filter(job__start_time__lt=end, job__start_time__gt=start,
-                                                     worker_id=self.user.id,
-                                                     application_state=JobApplicationState.approved)[:50]
-
-        job_model_list = [JobUtil.to_model_view(application.job) for application in applications]
-
-        return Response({k_jobs: job_model_list})
+        jobs = JobService.get_history_jobs(self.user, start, end)
+        return Response({k_jobs: jobs})
 
 
 class GetJobsBasedOnUserView(JWTBaseAuthView):
@@ -304,32 +150,16 @@ class GetJobsBasedOnUserView(JWTBaseAuthView):
     ]
 
     def post(self, request, *args, **kwargs):
-        # Assuming the body of the request is in JSON format
         formatter = FormattingUtil(data=request.data)
-
         try:
             worker_id = formatter.get_value(k_worker_id)
             customer_id = formatter.get_value(k_customer_id)
         except DeserializationException as e:
-            # If the inner validation fails, this throws an error
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
-            # Unhandled exception
             return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
-
-        if worker_id and customer_id:
-            jobs = Job.objects.filter(jobapplication__worker__id=worker_id, customer_id=customer_id, is_draft=False,
-                                      archived=False)[:50]
-        elif worker_id:
-            jobs = Job.objects.filter(jobapplication__worker__id=worker_id, is_draft=False, archived=False)[:50]
-        elif customer_id:
-            jobs = Job.objects.filter(customer_id=customer_id, is_draft=False, archived=False)[:50]
-        else:
-            jobs = Job.objects.all()[:50]
-
-        jobs_model_list = [JobUtil.to_model_view(job) for job in jobs]
-
-        return Response({k_jobs: jobs_model_list})
+        jobs = JobService.get_jobs_based_on_user(worker_id, customer_id)
+        return Response({k_jobs: jobs})
 
 
 class TimeRegistrationView(JWTBaseAuthView):
@@ -340,104 +170,20 @@ class TimeRegistrationView(JWTBaseAuthView):
 
     def get(self, request: HttpRequest):
         formatter = FormattingUtil(data=request.data)
-
         try:
             job_id = formatter.get_value(k_job_id, required=True)
         except Exception as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
-
-        job = Job.objects.get(id=job_id)
-
-        if job:
-            times = TimeRegistration.objects.filter(job_id=job_id)
-        else:
-            return Response({k_message: 'Job id is required'}, status=HTTPStatus.BAD_REQUEST)
-
-        times_model_list = [time.to_model_view() for time in times]
-
-        return Response({k_times: times_model_list})
+        times = JobService.get_time_registrations(job_id)
+        return Response({k_times: times})
 
     def post(self, request: HttpRequest, *args, **kwargs):
-        formatter = FormattingUtil(data=request.data)
-
-        worker = None
-
-        worker_signature = None
-        customer_signature = None
-
         try:
-            worker = User.objects.get(id=kwargs[k_user_id])
-        except KeyError:
-            pass
-        except User.DoesNotExist:
-            return Response(status=HTTPStatus.BAD_REQUEST)
-
-        try:
-            job_id = formatter.get_value(k_job_id, required=True)
-            start_time = FormattingUtil.to_date_time(int(formatter.get_value(k_start_time, required=True)))
-            end_time = FormattingUtil.to_date_time(int(formatter.get_value(k_end_time, required=True)))
-            break_time = formatter.get_time(k_break_time, required=False)
-
-            try:
-                # Signatures are optional in this view
-                worker_signature = request.FILES[k_worker_signature]
-                customer_signature = request.FILES[k_customer_signature]
-            except KeyError:
-                pass
-        except Exception as e:
+            job_id = JobService.register_time(request.data, self.user)
+        except DeserializationException as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
-
-        job = Job.objects.get(id=job_id)
-
-        if job is None:
-            return Response({k_message: 'Job not found'}, status=HTTPStatus.BAD_REQUEST)
-
-        if worker is None:
-            worker = self.user
-
-        query = TimeRegistration.objects.filter(job_id=job_id, worker_id=worker.id)
-
-        if query.exists():
-            registration = query.first()
-
-            job.customer.hours -= (registration.start_time - registration.end_time).seconds / 3600
-
-            job.customer.save()
-
-            registration.delete()
-
-        time_registration = TimeRegistration(
-            job=job,
-            start_time=start_time,
-            end_time=end_time,
-            break_time=break_time,
-            worker=worker,
-            worker_signature=worker_signature,
-            customer_signature=customer_signature,
-        )
-
-        time_registration.save()
-
-        # Customer email
-        TimeRegisteredTemplate.send([job.customer], {
-            "title": job.title,
-            "interval": FormattingUtil.to_time_interval(start_time, end_time),
-            "worker": self.user.get_full_name(),
-        })
-
-        application = JobApplication.objects.filter(job_id=job_id, worker_id=worker.id).first()
-
-        time_registration_count = TimeRegistration.objects.filter(job_id=job.id).count()
-
-        if time_registration_count >= job.selected_workers:
-            job.job_state = JobState.done
-
-            job.customer.hours += (time_registration.start_time - time_registration.end_time).seconds / 3600
-
-            job.customer.save()
-
-            job.save()
-
+        except Exception as e:
+            return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
         return Response({k_job_id: job_id}, status=HTTPStatus.OK)
 
 
@@ -448,23 +194,13 @@ class SignTimeRegistrationView(JWTBaseAuthView):
     ]
 
     def post(self, request: HttpRequest):
-        formatter = FormattingUtil(data=request.data)
         try:
-            id = formatter.get_value(k_id, required=True)
-            # Signatures are optional in this view
-            worker_signature = request.FILES[k_worker_signature]
-            customer_signature = request.FILES[k_customer_signature]
-        except Exception as e:
+            time_registration_id = JobService.sign_time_registration(request.data)
+        except DeserializationException as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
-
-        time_registration = TimeRegistration.objects.get(id=id)
-
-        time_registration.worker_signature = worker_signature
-        time_registration.customer_signature = customer_signature
-
-        time_registration.save()
-
-        return Response({k_id: time_registration.id}, status=HTTPStatus.OK)
+        except Exception as e:
+            return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        return Response({k_id: time_registration_id}, status=HTTPStatus.OK)
 
 
 class ActiveJobList(JWTBaseAuthView):
@@ -473,24 +209,8 @@ class ActiveJobList(JWTBaseAuthView):
     ]
 
     def get(self, request, *args, **kwargs):
-        jobs = Job.objects.filter(job_state__in=[JobState.pending, JobState.fulfilled],
-                                  start_time__lt=datetime.datetime.utcnow(),
-                                  archived=False, is_draft=False).order_by('start_time')[:50]
-
-        jobs_model_list = []
-
-        for job in jobs:
-            def cancel_job():
-                job.job_state = JobState.cancelled
-                job.save()
-
-            if job.archived or job.selected_workers == 0:
-                cancel_job()
-                continue
-
-            jobs_model_list.append(JobUtil.to_model_view(job))
-
-        return Response({k_jobs: jobs_model_list})
+        jobs = JobService.get_active_jobs()
+        return Response({k_jobs: jobs})
 
 
 class DoneJobList(JWTBaseAuthView):
@@ -500,20 +220,10 @@ class DoneJobList(JWTBaseAuthView):
 
     def get(self, request, *args, **kwargs):
         formatter = FormattingUtil(kwargs)
-
         start = formatter.get_date(value_key=k_start)
         end = formatter.get_date(value_key=k_end)
-
-        if not start or not end:
-            jobs = Job.objects.filter(job_state__in=[JobState.done, JobState.cancelled], archived=False).order_by(
-                '-start_time')[:50]
-        else:
-            jobs = Job.objects.filter(job_state__in=[JobState.done, JobState.cancelled], archived=False,
-                                      start_time__range=[start, end]).order_by('-start_time')[:50]
-
-        jobs_model_list = [JobUtil.to_model_view(job) for job in jobs]
-
-        return Response({k_jobs: jobs_model_list})
+        jobs = JobService.get_done_jobs(start, end)
+        return Response({k_jobs: jobs})
 
 
 class DraftJobList(JWTBaseAuthView):
@@ -522,8 +232,134 @@ class DraftJobList(JWTBaseAuthView):
     ]
 
     def get(self, request, *args, **kwargs):
-        jobs = Job.objects.filter(is_draft=True, archived=False)[:50]
+        jobs = JobService.get_draft_jobs()
+        return Response({k_jobs: jobs})
 
-        jobs_model_list = [JobUtil.to_model_view(job) for job in jobs]
 
-        return Response({k_jobs: jobs_model_list})
+class ApplicationView(JWTBaseAuthView):
+    """
+    [ALL]
+
+    GET
+
+    A view for getting application details
+    """
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+        try:
+            application_data = JobApplicationService.get_application_details(kwargs['id'])
+        except KeyError:
+            return HttpResponseNotFound()
+
+        return Response(data=application_data)
+
+    def delete(self, request: HttpRequest, *args, **kwargs):
+        try:
+            JobApplicationService.delete_application(kwargs['id'])
+        except KeyError:
+            return HttpResponseNotFound()
+
+        return Response()
+
+
+class ApproveApplicationView(JWTBaseAuthView):
+    """
+    [ALL]
+
+    GET
+
+    A view for approving applications
+    """
+
+    def post(self, request: HttpRequest, *args, **kwargs):
+        try:
+            JobApplicationService.approve_application(kwargs['id'])
+        except KeyError:
+            return HttpResponseNotFound()
+
+        return Response()
+
+
+class DenyApplicationView(JWTBaseAuthView):
+    """
+    [ALL]
+
+    GET
+
+    A view for Denying applications
+    """
+
+    def post(self, request: HttpRequest, *args, **kwargs):
+        try:
+            JobApplicationService.deny_application(kwargs['id'])
+        except KeyError:
+            return HttpResponseNotFound()
+
+        return Response()
+
+
+class DirectionsView(JWTBaseAuthView):
+    groups = [
+        CMS_GROUP_NAME,
+        WASHERS_GROUP_NAME,
+    ]
+
+    def get(self, request, *args, **kwargs):
+        from_lat = int(kwargs.get('from_lat', 0)) / 1000000
+        from_lon = int(kwargs.get('from_lon', 0)) / 1000000
+        to_lat = int(kwargs.get('to_lat', 0)) / 1000000
+        to_lon = int(kwargs.get('to_lon', 0)) / 1000000
+
+        response = JobApplicationService.fetch_directions(from_lat, from_lon, to_lat, to_lon)
+
+        if response.ok:
+            return HttpResponse(response.content)
+
+        return HttpResponseBadRequest(response.content)
+
+
+class MyApplicationsView(JWTBaseAuthView):
+    """
+    [Workers]
+
+    GET | POST
+
+    A view for workers to view their applications and add new ones
+    """
+
+    def get(self, request: HttpRequest):
+        application_model_list = JobApplicationService.get_my_applications(self.user)
+        return Response({k_applications: application_model_list})
+
+    def post(self, request: HttpRequest):
+        try:
+            application_id = JobApplicationService.create_application(request.data, self.user)
+        except DeserializationException as e:
+            return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
+        except ValueError as e:
+            return Response({k_message: str(e)}, status=HTTPStatus.BAD_REQUEST)
+        except Exception as e:
+            return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+
+        return Response({k_id: application_id})
+
+
+class ApplicationsListView(JWTBaseAuthView):
+    """
+    [CMS]
+
+    GET
+
+    View for CMS users to get applications details
+    """
+
+    app_types = [
+        CMS_GROUP_NAME,
+    ]
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+        applications = JobApplicationService.get_applications_list(kwargs.get('job_id'))
+        paginator = Paginator(applications, per_page=25)
+        data = [application.to_model_view() for application in applications]
+
+        return Response({k_applications: data, k_items_per_page: paginator.per_page, k_total: len(applications)})

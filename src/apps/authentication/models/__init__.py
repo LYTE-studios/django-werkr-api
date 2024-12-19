@@ -8,3 +8,4 @@ from .profiles.admin_profile import AdminProfile
 from .profiles.customer_profile import CustomerProfile
 from .profiles.worker_profile import WorkerProfile
 from .pass_reset import PassResetCode
+from .favorite_address import FavoriteAddress

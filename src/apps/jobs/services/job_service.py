@@ -8,8 +8,8 @@ from apps.notifications.managers.notification_manager import NotificationManager
 from apps.notifications.models.mail_template import CancelledMailTemplate, TimeRegisteredTemplate
 from django.shortcuts import get_object_or_404
 
-from .models import Job, JobApplication, JobApplicationState, JobState, TimeRegistration
-from .utils.job_util import JobUtil
+from apps.jobs.models import Job, JobApplication, JobApplicationState, JobState, TimeRegistration
+from apps.jobs.utils.job_util import JobUtil
 
 
 class JobService:
