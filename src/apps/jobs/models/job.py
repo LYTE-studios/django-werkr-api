@@ -2,12 +2,11 @@ import datetime
 import uuid
 
 import pytz
+from apps.core.models.geo import Address
+from apps.jobs.models.job_state import JobState
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
-
-from apps.core.models.geo import Address
-from apps.jobs.models.job_state import JobState
 
 
 class Job(models.Model):
@@ -25,7 +24,7 @@ class Job(models.Model):
 
     start_time = models.DateTimeField()
 
-    end_time = models.DateTimeField()
+    end_time = models.DateTimeField(null=True, blank=True)
 
     application_start_time = models.DateTimeField(null=True, blank=True, )
 
@@ -39,9 +38,9 @@ class Job(models.Model):
 
     archived = models.BooleanField(default=False)
 
-    max_workers = models.IntegerField()
+    max_workers = models.IntegerField(null=True, blank=True)
 
-    selected_workers = models.IntegerField()
+    selected_workers = models.IntegerField(null=True, blank=True)
 
     def is_visible(self):
         time_window_check = self.application_start_time <= pytz.utc.localize(

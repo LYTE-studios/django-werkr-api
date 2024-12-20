@@ -36,23 +36,51 @@ from .utils.jwt_auth_util import JWTAuthUtil
 
 
 class JWTAuthenticationView(TokenObtainPairView):
+    """
+    View for obtaining JWT tokens.
+    """
     pass
 
 
 class JWTRefreshView(TokenRefreshView):
+    """
+    View for refreshing JWT tokens.
+    """
     pass
 
 
 class JWTTestConnectionView(APIView):
+    """
+    View for testing JWT connection.
+    """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        """
+        Handles GET requests to test the connection.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            Response: A JSON response indicating the connection is successful.
+        """
         return Response({"message": "Connection successful"})
 
 
 class JWTBaseAuthView(APIView):
     """
-    Base view for authentication using JWT token auth
+    Base view for authentication using JWT token auth.
+
+    This view provides a base implementation for views that require JWT token authentication.
+    It checks the client secret and the JWT token, and ensures the user belongs to one of the allowed groups.
+
+    Attributes:
+        groups (list): List of allowed group names.
+        token (AccessToken): The JWT token extracted from the request.
+        user (User): The authenticated user.
+        group (Group): The group to which the authenticated user belongs.
     """
 
     # Override this to allow different groups.
@@ -63,13 +91,24 @@ class JWTBaseAuthView(APIView):
     ]
 
     token: AccessToken
-
     user: User
-
     group: Group
 
     def dispatch(self, request: HttpRequest, *args, **kwargs):
+        """
+        Dispatch method to handle the request.
 
+        This method checks the client secret and the JWT token, and ensures the user belongs to one of the allowed groups.
+        If the checks pass, it calls the parent class's dispatch method.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            HttpResponse: The HTTP response object.
+        """
         self.group = AuthenticationUtil.check_client_secret(request)
 
         auth_token = JWTAuthUtil.check_for_authentication(request)
@@ -97,9 +136,22 @@ class JWTBaseAuthView(APIView):
 
 
 class ProfileMeView(APIView):
+    """
+    View for retrieving and updating the authenticated user's profile.
+    """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        """
+        Handles GET requests to retrieve the user's profile.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            Response: A JSON response containing the user's profile data.
+        """
         profile_picture = ProfileUtil.get_user_profile_picture_url(
             request.user) if ProfileUtil.get_user_profile_picture_url(request.user) else None
 
@@ -142,6 +194,15 @@ class ProfileMeView(APIView):
         return Response(data)
 
     def put(self, request):
+        """
+        Handles PUT requests to update the user's profile.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            Response: A JSON response containing the updated user ID.
+        """
         formatter = FormattingUtil(data=request.data)
 
         try:
@@ -224,13 +285,35 @@ class ProfileMeView(APIView):
 
 
 class LanguageSettingsView(APIView):
+    """
+    View for managing user language settings.
+    """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        """
+        Handles GET requests to retrieve available languages.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            JsonResponse: A JSON response containing the list of available languages.
+        """
         languages = sorted(set(setting.language for setting in Settings.objects.all() if setting.language))
         return JsonResponse({'languages': languages})
 
     def put(self, request):
+        """
+        Handles PUT requests to update the user's language setting.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            Response: A JSON response containing the updated language setting.
+        """
         formatter = FormattingUtil(data=request.data)
 
         try:
@@ -251,14 +334,41 @@ class LanguageSettingsView(APIView):
 
 
 class UploadUserProfilePictureView(APIView):
+    """
+    View for managing user profile pictures.
+    """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
+        """
+        Handles GET requests to retrieve the user's profile picture URL.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A JSON response containing the profile picture URL.
+        """
         user = get_object_or_404(User, id=kwargs['id'])
         profile_picture_url = user.profile_picture.url if user.profile_picture else None
         return Response({'profile_picture': profile_picture_url})
 
     def put(self, request, *args, **kwargs):
+        """
+        Handles PUT requests to update the user's profile picture.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: An empty response indicating successful update.
+            HttpResponseBadRequest: If the request data is empty.
+        """
         user = get_object_or_404(User, id=kwargs['id'])
 
         if not request.data:
@@ -272,12 +382,20 @@ class UploadUserProfilePictureView(APIView):
 
 class PasswordResetRequestView(APIView):
     """
-    Password reset request view
+    View for initiating a password reset request.
     """
 
     def post(self, request, *args, **kwargs):
         """
-        POST method handler
+        Handles POST requests to send a password reset email.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A JSON response indicating the result of the password reset request.
         """
         formatter = FormattingUtil(data=request.data)
 
@@ -299,12 +417,21 @@ class PasswordResetRequestView(APIView):
 
 class VerifyCodeView(APIView):
     """
-    Verify code view
+    View for verifying a password reset code.
     """
 
     def post(self, request, *args, **kwargs):
         """
-        POST method handler
+        Handles POST requests to verify a password reset code.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A JSON response containing a temporary token if the code is verified.
+            Response: A response with an error message and status code if the code is not verified.
         """
         formatter = FormattingUtil(data=request.data)
 
@@ -334,32 +461,45 @@ class ResetPasswordView(APIView):
 
     def post(self, request, *args, **kwargs):
         """
-        POST method handler
+        Handles POST requests to reset the user's password.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A JSON response indicating the result of the password reset.
         """
         formatter = FormattingUtil(data=request.data)
 
         try:
+            # Extract required fields from the request data
             token = formatter.get_value(k_token, required=True)
             code = formatter.get_value(k_code, required=True)
             password = formatter.get_value(k_password, required=True)
         except Exception as e:
+            # Return a bad request response if any required field is missing or invalid
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
 
         pass_reset_util = CustomPasswordResetUtil()
         user = pass_reset_util.get_user_by_token_and_code(token, code)
         if user:
+            # Encrypt the new password and update the user's password
             password = EncryptionUtil.encrypt(password)
             user.password = password
             user.save()
 
+            # Return a success response
             return Response({k_message: 'Password has been reset.'}, status=HTTPStatus.OK)
         else:
+            # Return a bad request response if the token or code is invalid or expired
             return Response({k_message: 'Invalid or expired token'}, status=HTTPStatus.BAD_REQUEST)
 
 
 class BaseClientView(APIView):
     """
-    Base view for authentication using only the client secret
+    Base view for authentication using only the client secret.
     """
 
     group = None
@@ -373,11 +513,35 @@ class BaseClientView(APIView):
     allowed_methods = ['GET', 'POST', 'UPDATE', 'DELETE', 'OPTIONS']
 
     def options(self, request, **kwargs):
+        """
+        Handles OPTIONS requests to provide allowed methods.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            HttpResponse: An HTTP response with allowed methods.
+        """
         response = HttpResponse()
         response['allow'] = ','.join(self.allowed_methods)
         return response
 
     def dispatch(self, request: HttpRequest, *args, **kwargs):
+        """
+        Dispatch method to handle the request.
+
+        This method checks the client secret and ensures the user belongs to one of the allowed groups.
+        If the checks pass, it calls the parent class's dispatch method.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            HttpResponse: The HTTP response object.
+        """
         if request.method == 'OPTIONS':
             return super(BaseClientView, self).dispatch(request, *args, **kwargs)
 
@@ -412,9 +576,14 @@ class WorkerRegisterView(BaseClientView):
 
     def post(self, request: HttpRequest):
         """
-        Returns the id of the created user if valid
-        """
+        Handles POST requests to register a new worker.
 
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            Response: A JSON response containing the ID of the created user if valid.
+        """
         formatter = FormattingUtil(data=request.data)
 
         # Required fields
@@ -429,7 +598,6 @@ class WorkerRegisterView(BaseClientView):
             place_of_birth = formatter.get_value(k_place_of_birth, required=False)
             ssn = formatter.get_value(k_company, required=False)
             worker_address = formatter.get_address(k_address, required=False)
-
         except DeserializationException as e:
             # If the inner validation fails, this throws an error
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
@@ -483,11 +651,29 @@ class WorkerRegisterView(BaseClientView):
 
 
 class StatisticsView(JWTBaseAuthView):
+    """
+    [WORKERS]
+
+    POST
+
+    View for retrieving worker statistics based on a specified time frame (week or month).
+    """
+
     groups = [
         WORKERS_GROUP_NAME,
     ]
 
     def post(self, request: HttpRequest):
+        """
+        Handles POST requests to retrieve worker statistics.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            JsonResponse: A JSON response containing the worker statistics.
+            Response: A response with an error message and status code if there is an error in the request data.
+        """
         formatter = FormattingUtil(data=request.data)
 
         try:
@@ -504,6 +690,17 @@ class StatisticsView(JWTBaseAuthView):
         return self.statistics_view(request, time_frame, worker_id)
 
     def statistics_view(self, request, time_frame, worker_id):
+        """
+        Retrieves worker statistics based on the specified time frame.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            time_frame (str): The time frame for the statistics ('week' or 'month').
+            worker_id (int): The ID of the worker.
+
+        Returns:
+            JsonResponse: A JSON response containing the worker statistics.
+        """
         today = datetime.date.today()
 
         if time_frame == k_week:
@@ -529,7 +726,7 @@ class WorkerDetailView(JWTBaseAuthView):
 
     GET
 
-    A view for getting worker details
+    A view for getting worker details.
     """
 
     # Overrides the app types with access to this view
@@ -538,29 +735,64 @@ class WorkerDetailView(JWTBaseAuthView):
     ]
 
     def get(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handles GET requests to retrieve worker details.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A JSON response containing the worker details.
+            HttpResponseNotFound: If the worker does not exist.
+        """
         try:
-            worker = User.objects.get(id=kwargs['id'], groups__name__contains=WORKERS_GROUP_NAME, )
-        except Job.DoesNotExist:
+            worker = User.objects.get(id=kwargs['id'], groups__name__contains=WORKERS_GROUP_NAME)
+        except User.DoesNotExist:
             return HttpResponseNotFound()
 
         return Response(data=WorkerUtil.to_worker_view(worker))
 
     def delete(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handles DELETE requests to remove a worker.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: An empty response indicating successful deletion.
+            HttpResponseNotFound: If the worker does not exist.
+        """
         try:
-            worker = User.objects.get(id=kwargs['id'], groups__name__contains=WORKERS_GROUP_NAME, )
-        except Job.DoesNotExist:
+            worker = User.objects.get(id=kwargs['id'], groups__name__contains=WORKERS_GROUP_NAME)
+        except User.DoesNotExist:
             return HttpResponseNotFound()
 
         my_group = Group.objects.get(name=WORKERS_GROUP_NAME)
         my_group.user_set.remove(worker)
-
         my_group.save()
 
         return Response()
 
     def put(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handles PUT requests to update worker details.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: An empty response indicating successful update.
+            Response: A response with an error message and status code if there is an error in the request data.
+        """
         try:
-            worker = User.objects.get(id=kwargs['id'], groups__name__contains=WORKERS_GROUP_NAME, )
+            worker = User.objects.get(id=kwargs['id'], groups__name__contains=WORKERS_GROUP_NAME)
         except User.DoesNotExist:
             return HttpResponseNotFound()
 
@@ -576,19 +808,16 @@ class WorkerDetailView(JWTBaseAuthView):
             billing_address = formatter.get_address(k_billing_address)
             tax_number = formatter.get_value(k_tax_number)
             company = formatter.get_value(k_company)
-
         except DeserializationException as e:
-            # If the inner validation fails, this throws an error
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
-            # Unhandled exception
             return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
         worker.first_name = first_name or worker.first_name
         worker.last_name = last_name or worker.last_name
         worker.email = email or worker.email
         worker.phone_number = phone_number or worker.phone_number
-        worker.worker_address = address or worker.workder_address
+        worker.worker_address = address or worker.worker_address
         worker.tax_number = tax_number or worker.tax_number
         worker.company_name = company or worker.company_name
         worker.date_of_birth = date_of_birth or worker.date_of_birth
@@ -609,7 +838,7 @@ class WorkersListView(JWTBaseAuthView):
 
     GET
 
-    View for CMS users to get workers details
+    View for CMS users to get workers details.
     """
 
     # Overrides the app types with access to this view
@@ -618,94 +847,69 @@ class WorkersListView(JWTBaseAuthView):
     ]
 
     def get(self, request: HttpRequest, *args, **kwargs):
-        item_count = 25
-        page = 1
-        search_term = None
-        sort_term = None
-        algorithm = None
-        state = None
+        """
+        Handles GET requests to retrieve a list of workers with optional pagination, sorting, and searching.
 
-        try:
-            item_count = kwargs['count']
-            page = kwargs['page']
-        except KeyError:
-            pass
-        try:
-            sort_term = kwargs['sort_term']
-            algorithm = kwargs['algorithm']
-        except KeyError:
-            pass
-        try:
-            search_term = kwargs['search_term']
-        except KeyError:
-            pass
-        try:
-            state = kwargs['state']
-        except KeyError:
-            pass
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
 
-        block_unaccepted_workers = True
+        Returns:
+            Response: A JSON response containing the list of workers, items per page, and total count.
+        """
+        item_count = kwargs.get('count', 25)
+        page = kwargs.get('page', 1)
+        search_term = kwargs.get('search_term')
+        sort_term = kwargs.get('sort_term')
+        algorithm = kwargs.get('algorithm')
+        state = kwargs.get('state')
 
-        if state == 'registered':
-            block_unaccepted_workers = False
+        block_unaccepted_workers = state != 'registered'
 
-        if sort_term is not None:
+        workers = User.objects.filter(
+            groups__name__contains=WORKERS_GROUP_NAME,
+            archived=False,
+            accepted=block_unaccepted_workers
+        )
+
+        if sort_term:
             if algorithm == 'descending':
-                sort_term = '-{}'.format(sort_term)
-
-            workers = User.objects.filter(groups__name__contains=WORKERS_GROUP_NAME, archived=False,
-                                          accepted=block_unaccepted_workers).order_by(
-                sort_term)
-
-        else:
-            workers = User.objects.filter(groups__name__contains=WORKERS_GROUP_NAME, archived=False,
-                                          accepted=block_unaccepted_workers)
+                sort_term = f'-{sort_term}'
+            workers = workers.order_by(sort_term)
 
         if search_term:
-            first_name_query = workers.filter(first_name__icontains=search_term, )[:10]
-            last_name_query = workers.filter(last_name__icontains=search_term, )[:10]
-            email_query = workers.filter(email__icontains=search_term, )[:10]
+            queries = [
+                workers.filter(first_name__icontains=search_term)[:10],
+                workers.filter(last_name__icontains=search_term)[:10],
+                workers.filter(email__icontains=search_term)[:10]
+            ]
+            data = list({worker for query in queries for worker in query})
+        else:
+            data = list(workers)
 
-            data = []
+        paginator = Paginator(data, per_page=item_count)
+        paginated_workers = paginator.page(page).object_list
 
-            for query in [first_name_query, last_name_query, email_query]:
-                for worker in query:
-                    data.append(worker)
+        response_data = [
+            WorkerUtil.to_worker_view(worker)
+            for worker in paginated_workers
+        ]
 
-            paginator = Paginator(data, per_page=item_count, )
-
-            response_data = []
-
-            workers = []
-
-            for worker in paginator.page(page).object_list:
-                if worker in workers:
-                    continue
-                workers.append(worker)
-                response_data.append(WorkerUtil.to_worker_view(worker))
-
-            return Response({k_workers: response_data, k_items_per_page: paginator.per_page, k_total: len(
-                data)})
-
-        paginator = Paginator(workers, per_page=item_count)
-
-        data = []
-
-        for worker in paginator.page(page).object_list:
-            data.append(WorkerUtil.to_worker_view(worker))
-
-        # Return the worker id
-        return Response({k_workers: data, k_items_per_page: paginator.per_page, k_total: len(
-            workers)})
+        return Response({
+            k_workers: response_data,
+            k_items_per_page: paginator.per_page,
+            k_total: paginator.count
+        })
 
 
 class AcceptWorkerView(JWTBaseAuthView):
     """
     [ALL]
 
-    GET
+    POST
 
-    A view for getting worker details
+    A view for accepting a worker.
     """
 
     # Overrides the app types with access to this view
@@ -714,13 +918,28 @@ class AcceptWorkerView(JWTBaseAuthView):
     ]
 
     def post(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handles POST requests to accept a worker.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: An empty response indicating successful acceptance.
+            HttpResponseNotFound: If the worker does not exist.
+        """
         try:
-            worker = User.objects.get(id=kwargs['id'], groups__name__contains=WORKERS_GROUP_NAME, )
+            # Retrieve the worker by id and group
+            worker = User.objects.get(id=kwargs['id'], groups__name__contains=WORKERS_GROUP_NAME)
         except User.DoesNotExist:
             return HttpResponseNotFound()
 
+        # Mark the worker as accepted
         worker.accepted = True
 
+        # Save the worker
         worker.save()
 
         return Response()
@@ -743,9 +962,20 @@ class CreateCustomerView(JWTBaseAuthView):
     ]
 
     def post(self, request: HttpRequest):
+        """
+        Handles POST requests to create a new customer.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            Response: A JSON response containing the customer id upon success.
+            Response: A response with an error message and status code if there is an error in the request data.
+        """
         formatter = FormattingUtil(data=request.data)
 
         try:
+            # Required fields
             first_name = formatter.get_value(k_first_name, required=True)
             last_name = formatter.get_value(k_last_name, required=True)
             email = formatter.get_email(k_email, required=True)
@@ -761,11 +991,13 @@ class CreateCustomerView(JWTBaseAuthView):
         except Exception as e:
             return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
+        # Save addresses if provided
         if address:
             address.save()
         if billing_address:
             billing_address.save()
 
+        # Create or get the user
         user, created = User.objects.get_or_create(
             email=email,
             defaults={
@@ -776,15 +1008,18 @@ class CreateCustomerView(JWTBaseAuthView):
         )
 
         if not created:
+            # Add user to the customer group if not already a member
             if not user.groups.filter(name=CUSTOMERS_GROUP_NAME).exists():
                 my_group = Group.objects.get(name=CUSTOMERS_GROUP_NAME)
                 my_group.user_set.add(user)
 
+            # Update user details
             user.archived = False
             user.first_name = first_name or user.first_name
             user.last_name = last_name or user.last_name
             user.save()
 
+        # Create customer profile
         UserManager.create_customer_profile(
             user=user,
             phone_number=phone_number,
@@ -795,6 +1030,7 @@ class CreateCustomerView(JWTBaseAuthView):
         )
 
         if created:
+            # Add user to the customer group
             my_group = Group.objects.get(name=CUSTOMERS_GROUP_NAME)
             my_group.user_set.add(user)
             my_group.save()
@@ -808,7 +1044,7 @@ class CustomersListView(JWTBaseAuthView):
 
     GET
 
-    View for CMS users to get customer details
+    View for CMS users to get customer details.
     """
 
     # Overrides the app types with access to this view
@@ -817,27 +1053,43 @@ class CustomersListView(JWTBaseAuthView):
     ]
 
     def get(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handles GET requests to retrieve a list of customers with optional pagination, sorting, and searching.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A JSON response containing the list of customers, items per page, and total count.
+        """
+        # Get pagination parameters from kwargs, with default values
         item_count = kwargs.get('count', 25)
         page = kwargs.get('page', 1)
         search_term = kwargs.get('search_term')
         sort_term = kwargs.get('sort_term')
         algorithm = kwargs.get('algorithm')
 
+        # Get customers with active jobs
         active_job_customers = Job.objects.filter(
             start_time__lt=datetime.datetime.utcnow(),
             job_state=JobState.pending
         ).values_list('customer', flat=True)
 
+        # Filter customers by group and archived status
         customers = User.objects.filter(
             groups__name__contains=CUSTOMERS_GROUP_NAME,
             archived=False
         )
 
+        # Apply sorting if sort_term is provided
         if sort_term:
             if algorithm == 'descending':
                 sort_term = f'-{sort_term}'
             customers = customers.order_by(sort_term)
 
+        # Apply search if search_term is provided
         if search_term:
             queries = [
                 customers.filter(first_name__icontains=search_term)[:10],
@@ -848,14 +1100,17 @@ class CustomersListView(JWTBaseAuthView):
         else:
             data = list(customers)
 
+        # Paginate the customer list
         paginator = Paginator(data, per_page=item_count)
         paginated_customers = paginator.page(page).object_list
 
+        # Convert customers to view format and check for active jobs
         response_data = [
             CustomerUtil.to_customer_view(customer, has_active_job=customer.id in active_job_customers)
             for customer in paginated_customers
         ]
 
+        # Return the paginated customer data
         return Response({
             k_customers: response_data,
             k_items_per_page: paginator.per_page,
@@ -869,7 +1124,7 @@ class CustomerDetailView(JWTBaseAuthView):
 
     GET
 
-    A view for getting customer details
+    A view for getting customer details.
     """
 
     # Overrides the app types with access to this view
@@ -878,6 +1133,18 @@ class CustomerDetailView(JWTBaseAuthView):
     ]
 
     def get(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handles GET requests to retrieve customer details.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A JSON response containing the customer details.
+            HttpResponseNotFound: If the customer does not exist.
+        """
         try:
             customer = User.objects.get(id=kwargs['id'], groups__name__contains=CUSTOMERS_GROUP_NAME)
         except User.DoesNotExist:
@@ -886,6 +1153,18 @@ class CustomerDetailView(JWTBaseAuthView):
         return Response(data=CustomerUtil.to_customer_view(customer))
 
     def delete(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handles DELETE requests to remove a customer from the group.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: An empty response indicating successful deletion.
+            HttpResponseNotFound: If the customer does not exist.
+        """
         try:
             customer = User.objects.get(id=kwargs['id'], groups__name__contains=CUSTOMERS_GROUP_NAME)
         except User.DoesNotExist:
@@ -899,6 +1178,19 @@ class CustomerDetailView(JWTBaseAuthView):
         return Response()
 
     def put(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handles PUT requests to update customer details.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: An empty response indicating successful update.
+            HttpResponseNotFound: If the customer does not exist.
+            Response: A response with an error message and status code if there is an error in the request data.
+        """
         try:
             customer = User.objects.get(id=kwargs['id'], groups__name__contains=CUSTOMERS_GROUP_NAME)
         except User.DoesNotExist:
@@ -948,7 +1240,7 @@ class CustomerSearchTermView(JWTBaseAuthView):
 
     GET
 
-    View for CMS users to get customer details based on search terms
+    View for CMS users to get customer details based on search terms.
     """
 
     # Overrides the app types with access to this view
@@ -957,6 +1249,18 @@ class CustomerSearchTermView(JWTBaseAuthView):
     ]
 
     def get(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handles GET requests to search for customers based on a search term.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A JSON response containing the list of customers matching the search term.
+            HttpResponseNotFound: If the search term is not provided.
+        """
         search_term = kwargs.get('search_term')
         if not search_term:
             return HttpResponseNotFound()

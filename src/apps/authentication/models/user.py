@@ -1,8 +1,10 @@
 import uuid
 
+from apps.core.models.settings import Settings
+from apps.core.utils.formatters import FormattingUtil
+from apps.core.utils.wire_names import *
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from apps.core.models.settings import Settings
 
 
 class User(AbstractUser):
@@ -26,3 +28,22 @@ class User(AbstractUser):
     session_duration = models.IntegerField(null=True)
 
     place_of_birth = models.CharField(max_length=30, null=True)
+
+    def to_worker_view(self):
+        # Required data
+        data = {k_id: self.id, k_first_name: self.first_name, k_last_name: self.last_name, k_email: self.email, }
+
+        # Optional data
+        try:
+            data[k_profile_picture] = MediaUtil.to_media_url(self.profile_picture.url)
+        except:
+            pass
+        try:
+            data[k_company] = self.company_name
+            data[k_phone_number] = self.phone_number
+            data[k_tax_number] = self.tax_number
+            data[k_date_of_birth] = FormattingUtil.to_timestamp(self.date_of_birth)
+        except Exception:
+            pass
+
+        return data

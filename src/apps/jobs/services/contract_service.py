@@ -1,13 +1,15 @@
-
-from django.shortcuts import get_object_or_404
-from apps.jobs.models import JobApplication, JobApplicationState, Job, JobState
-from apps.core.utils.formatters import FormattingUtil
-from apps.core.utils.wire_names import *
-from apps.jobs.managers.job_manager import JobManager
 import datetime
+
 import requests
 from apps.authentication.models import FavoriteAddress
+from apps.core.utils.formatters import FormattingUtil
+from apps.core.utils.wire_names import *
 from apps.jobs.job_exceptions import JobNotFoundException
+from apps.jobs.managers.job_manager import JobManager
+from apps.jobs.models import JobApplication, JobApplicationState, Job, JobState
+# from api.my_secrets import GOOGLE_BASE_URL, GOOGLE_ROUTES_URL, GOOGLE_API_KEY
+from django.db.models import Q
+from django.shortcuts import get_object_or_404
 
 
 class JobApplicationService:
@@ -143,4 +145,3 @@ class JobApplicationService:
             ).order_by('job__start_time')
 
         return applications
-

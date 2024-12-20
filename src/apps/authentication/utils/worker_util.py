@@ -12,7 +12,7 @@ class WorkerUtil:
     @staticmethod
     def to_worker_view(worker: User):
         # Required data
-        data = {k_id: worker.id, k_initials: worker.initials, k_first_name: worker.first_name,
+        data = {k_id: worker.id, k_first_name: worker.first_name,
                 k_last_name: worker.last_name,
                 k_email: worker.email, k_created_at: FormattingUtil.to_timestamp(worker.date_joined),
                 k_phone_number: worker.phone_number,

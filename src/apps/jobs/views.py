@@ -9,7 +9,7 @@ from apps.core.utils.wire_names import *
 from apps.jobs.services.contract_service import JobApplicationService
 from apps.jobs.services.job_service import JobService
 from django.core.paginator import Paginator
-from django.http import HttpRequest, HttpResponseNotFound, HttpResponse, HttpResponseBadRequest, Http404
+from django.http import HttpRequest, HttpResponseNotFound, Http404
 from rest_framework.response import Response
 
 
@@ -19,15 +19,37 @@ class JobView(JWTBaseAuthView):
 
     GET
 
-    A view for getting job details
+    A view for getting job details.
     """
 
     def get(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle GET request to retrieve job details.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A response object containing job details.
+        """
         job_id = kwargs['id']
         job_details = JobService.get_job_details(job_id)
         return Response(data=job_details)
 
     def delete(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle DELETE request to delete a job.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A response object indicating the result of the delete operation.
+        """
         job_id = kwargs['id']
         try:
             JobService.delete_job(job_id)
@@ -37,6 +59,17 @@ class JobView(JWTBaseAuthView):
         return Response()
 
     def put(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle PUT request to update a job.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A response object indicating the result of the update operation.
+        """
         job_id = kwargs['id']
         try:
             JobService.update_job(job_id, request.data)
@@ -63,6 +96,15 @@ class CreateJobView(JWTBaseAuthView):
     ]
 
     def post(self, request: HttpRequest):
+        """
+        Handle POST request to create a job.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            Response: A response object containing the job id if creation is successful.
+        """
         try:
             job_id = JobService.create_job(request.data)
         except DeserializationException as e:
@@ -78,7 +120,7 @@ class UpcomingJobsView(JWTBaseAuthView):
 
     GET
 
-    A view for workers to get their upcoming jobs
+    A view for workers to get their upcoming jobs.
     """
 
     groups = [
@@ -86,6 +128,15 @@ class UpcomingJobsView(JWTBaseAuthView):
     ]
 
     def get(self, request: HttpRequest):
+        """
+        Handle GET request to retrieve upcoming jobs for workers.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            Response: A response object containing the list of upcoming jobs.
+        """
         jobs = JobService.get_upcoming_jobs(self.user, is_worker=True)
         return Response({k_jobs: jobs})
 
@@ -96,7 +147,7 @@ class AllUpcomingJobsView(JWTBaseAuthView):
 
     GET
 
-    A view for admin users to get upcoming jobs
+    A view for admin users to get upcoming jobs.
     """
 
     groups = [
@@ -104,6 +155,17 @@ class AllUpcomingJobsView(JWTBaseAuthView):
     ]
 
     def get(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle GET request to retrieve upcoming jobs for admin users.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A response object containing the list of upcoming jobs.
+        """
         formatter = FormattingUtil(kwargs)
         start = formatter.get_date(value_key=k_start)
         end = formatter.get_date(value_key=k_end)
@@ -117,7 +179,7 @@ class HistoryJobsView(JWTBaseAuthView):
 
     GET
 
-    A view for workers to get their upcoming jobs
+    A view for workers to get their upcoming jobs.
     """
 
     groups = [
@@ -125,6 +187,17 @@ class HistoryJobsView(JWTBaseAuthView):
     ]
 
     def get(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle GET request to retrieve history jobs for workers.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A response object containing the list of history jobs.
+        """
         end = datetime.datetime.now()
         start = datetime.datetime.fromtimestamp(0)
         try:
@@ -137,6 +210,14 @@ class HistoryJobsView(JWTBaseAuthView):
 
 
 class GetJobsBasedOnUserView(JWTBaseAuthView):
+    """
+    [CMS, Workers, Customers]
+
+    POST
+
+    A view to get jobs based on user.
+    """
+
     groups = [
         CMS_GROUP_NAME,
         WORKERS_GROUP_NAME,
@@ -144,6 +225,17 @@ class GetJobsBasedOnUserView(JWTBaseAuthView):
     ]
 
     def post(self, request, *args, **kwargs):
+        """
+        Handle POST request to retrieve jobs based on user.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A response object containing the list of jobs based on user.
+        """
         formatter = FormattingUtil(data=request.data)
         try:
             worker_id = formatter.get_value(k_worker_id)
@@ -157,12 +249,29 @@ class GetJobsBasedOnUserView(JWTBaseAuthView):
 
 
 class TimeRegistrationView(JWTBaseAuthView):
+    """
+    [CMS, Workers]
+
+    GET | POST
+
+    A view for time registration.
+    """
+
     app_types = [
         CMS_GROUP_NAME,
         WORKERS_GROUP_NAME
     ]
 
     def get(self, request: HttpRequest):
+        """
+        Handle GET request to retrieve time registrations.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            Response: A response object containing the list of time registrations.
+        """
         formatter = FormattingUtil(data=request.data)
         try:
             job_id = formatter.get_value(k_job_id, required=True)
@@ -172,6 +281,17 @@ class TimeRegistrationView(JWTBaseAuthView):
         return Response({k_times: times})
 
     def post(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle POST request to register time.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A response object containing the job id if registration is successful.
+        """
         try:
             job_id = JobService.register_time(request.data, self.user)
         except DeserializationException as e:
@@ -181,12 +301,29 @@ class TimeRegistrationView(JWTBaseAuthView):
 
 
 class SignTimeRegistrationView(JWTBaseAuthView):
+    """
+    [CMS, Workers]
+
+    POST
+
+    A view to sign time registration.
+    """
+
     app_types = [
         CMS_GROUP_NAME,
         WORKERS_GROUP_NAME,
     ]
 
     def post(self, request: HttpRequest):
+        """
+        Handle POST request to sign time registration.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            Response: A response object containing the time registration id if signing is successful.
+        """
         try:
             time_registration_id = JobService.sign_time_registration(request.data)
         except DeserializationException as e:
@@ -197,21 +334,59 @@ class SignTimeRegistrationView(JWTBaseAuthView):
 
 
 class ActiveJobList(JWTBaseAuthView):
+    """
+    [CMS]
+
+    GET
+
+    A view to get active jobs.
+    """
+
     groups = [
         CMS_GROUP_NAME,
     ]
 
     def get(self, request, *args, **kwargs):
+        """
+        Handle GET request to retrieve active jobs.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A response object containing the list of active jobs.
+        """
         jobs = JobService.get_active_jobs()
         return Response({k_jobs: jobs})
 
 
 class DoneJobList(JWTBaseAuthView):
+    """
+    [CMS]
+
+    GET
+
+    A view to get done jobs.
+    """
+
     groups = [
         CMS_GROUP_NAME,
     ]
 
     def get(self, request, *args, **kwargs):
+        """
+        Handle GET request to retrieve done jobs.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A response object containing the list of done jobs.
+        """
         formatter = FormattingUtil(kwargs)
         start = formatter.get_date(value_key=k_start)
         end = formatter.get_date(value_key=k_end)
@@ -220,11 +395,30 @@ class DoneJobList(JWTBaseAuthView):
 
 
 class DraftJobList(JWTBaseAuthView):
+    """
+    [CMS]
+
+    GET
+
+    A view to get draft jobs.
+    """
+
     groups = [
         CMS_GROUP_NAME,
     ]
 
     def get(self, request, *args, **kwargs):
+        """
+        Handle GET request to retrieve draft jobs.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A response object containing the list of draft jobs.
+        """
         jobs = JobService.get_draft_jobs()
         return Response({k_jobs: jobs})
 
@@ -235,10 +429,21 @@ class ApplicationView(JWTBaseAuthView):
 
     GET
 
-    A view for getting application details
+    A view for getting application details.
     """
 
     def get(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle GET request to retrieve application details.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A response object containing application details.
+        """
         try:
             application_data = JobApplicationService.get_application_details(kwargs['id'])
         except KeyError:
@@ -247,6 +452,17 @@ class ApplicationView(JWTBaseAuthView):
         return Response(data=application_data)
 
     def delete(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle DELETE request to delete an application.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A response object indicating the result of the delete operation.
+        """
         try:
             JobApplicationService.delete_application(kwargs['id'])
         except KeyError:
@@ -259,12 +475,23 @@ class ApproveApplicationView(JWTBaseAuthView):
     """
     [ALL]
 
-    GET
+    POST
 
-    A view for approving applications
+    A view for approving applications.
     """
 
     def post(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle POST request to approve an application.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A response object indicating the result of the approval operation.
+        """
         try:
             JobApplicationService.approve_application(kwargs['id'])
         except KeyError:
@@ -277,12 +504,23 @@ class DenyApplicationView(JWTBaseAuthView):
     """
     [ALL]
 
-    GET
+    POST
 
-    A view for Denying applications
+    A view for denying applications.
     """
 
     def post(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle POST request to deny an application.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A response object indicating the result of the denial operation.
+        """
         try:
             JobApplicationService.deny_application(kwargs['id'])
         except KeyError:
@@ -291,40 +529,38 @@ class DenyApplicationView(JWTBaseAuthView):
         return Response()
 
 
-class DirectionsView(JWTBaseAuthView):
-    groups = [
-        CMS_GROUP_NAME,
-        WORKERS_GROUP_NAME,
-    ]
-
-    def get(self, request, *args, **kwargs):
-        from_lat = int(kwargs.get('from_lat', 0)) / 1000000
-        from_lon = int(kwargs.get('from_lon', 0)) / 1000000
-        to_lat = int(kwargs.get('to_lat', 0)) / 1000000
-        to_lon = int(kwargs.get('to_lon', 0)) / 1000000
-
-        response = JobApplicationService.fetch_directions(from_lat, from_lon, to_lat, to_lon)
-
-        if response.ok:
-            return HttpResponse(response.content)
-
-        return HttpResponseBadRequest(response.content)
-
-
 class MyApplicationsView(JWTBaseAuthView):
     """
     [Workers]
 
     GET | POST
 
-    A view for workers to view their applications and add new ones
+    A view for workers to view their applications and add new ones.
     """
 
     def get(self, request: HttpRequest):
+        """
+        Handle GET request to retrieve the worker's applications.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            Response: A response object containing the list of applications.
+        """
         application_model_list = JobApplicationService.get_my_applications(self.user)
         return Response({k_applications: application_model_list})
 
     def post(self, request: HttpRequest):
+        """
+        Handle POST request to create a new application.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            Response: A response object containing the application id if creation is successful.
+        """
         try:
             application_id = JobApplicationService.create_application(request.data, self.user)
         except DeserializationException as e:
@@ -343,7 +579,7 @@ class ApplicationsListView(JWTBaseAuthView):
 
     GET
 
-    View for CMS users to get applications details
+    View for CMS users to get applications details.
     """
 
     app_types = [
@@ -351,6 +587,17 @@ class ApplicationsListView(JWTBaseAuthView):
     ]
 
     def get(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle GET request to retrieve the list of applications.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A response object containing the list of applications.
+        """
         applications = JobApplicationService.get_applications_list(kwargs.get('job_id'))
         paginator = Paginator(applications, per_page=25)
         data = [application.to_model_view() for application in applications]

@@ -22,11 +22,11 @@ urlpatterns = [
     path('password_reset/reset/', ResetPasswordView.as_view(), name="password_reset_reset"),
 
     # Workers
-    path('workers/register', WorkerRegisterView.as_view()),
-    path('workers/statistics/me', StatisticsView.as_view()),
-    path('workers/details/<str:id>', WorkerDetailView.as_view()),
-    path('workers', WorkersListView.as_view()),
-    path('accept/workers/<str:id>', AcceptWorkerView.as_view()),
+    path('workers/register', WorkerRegisterView.as_view(), name="worker_register"),
+    path('workers/statistics/me', StatisticsView.as_view(), name="statistics_view"),
+    path('workers/details/<str:id>', WorkerDetailView.as_view(), name="worker_detail"),
+    path('workers', WorkersListView.as_view(), name="workers_list"),
+    path('accept/workers/<str:id>', AcceptWorkerView.as_view(), name="accept_worker"),
     path('workers/<str:sort_term>/<str:algorithm>/<int:count>/<int:page>', WorkersListView.as_view()),
     path('workers/<int:count>/<int:page>', WorkersListView.as_view()),
     path('workers/<int:count>/<int:page>/<str:search_term>', WorkersListView.as_view()),
@@ -35,11 +35,11 @@ urlpatterns = [
     path('<str:state>/workers/<int:count>/<int:page>/<str:search_term>', WorkersListView.as_view()),
 
     # Customers
-    path('customers/create', CreateCustomerView.as_view()),
-    path('customers', CustomersListView.as_view()),
+    path('customers/create', CreateCustomerView.as_view(), name="create_customer"),
+    path('customers', CustomersListView.as_view(), name="customers_list"),
     path('customers/<str:sort_term>/<str:algorithm>/<int:count>/<int:page>', CustomersListView.as_view()),
     path('customers/<int:count>/<int:page>', CustomersListView.as_view()),
     path('customers/<int:count>/<int:page>/<str:search_term>', CustomersListView.as_view()),
-    path('customers/details/<str:id>', CustomerDetailView.as_view()),
-    path('customers/<str:search_term>', CustomerSearchTermView.as_view()),
+    path('customers/details/<str:id>', CustomerDetailView.as_view(), name="customer_detail"),
+    path('customers/<str:search_term>', CustomerSearchTermView.as_view(), name="customer_search_term"),
 ]
