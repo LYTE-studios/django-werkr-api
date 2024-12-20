@@ -16,18 +16,10 @@ class User(AbstractUser):
     password = models.CharField(max_length=256, null=False)
     salt = models.CharField(max_length=256, null=True)
     description = models.CharField(max_length=256, null=True, blank=True)
+    phone_number = models.CharField(max_length=64, null=True, blank=True)
     profile_picture = models.ImageField(upload_to='users/{}/profile_picture'.format(id), null=True)
     settings = models.ForeignKey(Settings, null=True, on_delete=models.CASCADE, related_name='settings')
     archived = models.BooleanField(default=False)
-
-    accepted = models.BooleanField(default=True, null=False)
-
-    hours = models.FloatField(default=0, null=True)
-
-    archived = models.BooleanField(default=False, )
-    session_duration = models.IntegerField(null=True)
-
-    place_of_birth = models.CharField(max_length=30, null=True)
 
     def to_worker_view(self):
         # Required data

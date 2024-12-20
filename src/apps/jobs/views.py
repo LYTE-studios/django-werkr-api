@@ -529,6 +529,26 @@ class DenyApplicationView(JWTBaseAuthView):
         return Response()
 
 
+class DirectionsView(JWTBaseAuthView):
+    groups = [
+        CMS_GROUP_NAME,
+        WORKERS_GROUP_NAME,
+    ]
+
+    def get(self, request, *args, **kwargs):
+        from_lat = int(kwargs.get('from_lat', 0)) / 1000000
+        from_lon = int(kwargs.get('from_lon', 0)) / 1000000
+        to_lat = int(kwargs.get('to_lat', 0)) / 1000000
+        to_lon = int(kwargs.get('to_lon', 0)) / 1000000
+
+        response = JobApplicationService.fetch_directions(from_lat, from_lon, to_lat, to_lon)
+
+        if response is not None:
+            return HttpResponse(response)
+
+        return HttpResponseBadRequest(response)
+
+
 class MyApplicationsView(JWTBaseAuthView):
     """
     [Workers]

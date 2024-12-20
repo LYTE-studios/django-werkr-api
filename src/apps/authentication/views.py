@@ -15,7 +15,7 @@ from apps.core.model_exceptions import DeserializationException
 from apps.core.models.settings import Settings
 from apps.core.utils.formatters import FormattingUtil
 from apps.core.utils.profile import ProfileUtil
-from apps.core.utils.wire_names import k_token, k_code, k_password, k_message, k_email
+from apps.core.utils.wire_names import *
 from apps.jobs.models import Job, JobState
 from apps.jobs.services.statistics_service import StatisticsService
 from django.contrib.auth.models import Group
@@ -502,6 +502,8 @@ class BaseClientView(APIView):
     Base view for authentication using only the client secret.
     """
 
+    permission_classes = []
+
     group = None
 
     # Override this to allow different groups.
@@ -618,10 +620,7 @@ class WorkerRegisterView(BaseClientView):
             last_name=last_name,
             password=password,
             email=email,
-            accepted=False,
             phone_number=phone_number,
-            date_of_birth=date_of_birth,
-            place_of_birth=place_of_birth
         )
 
         # Use the manager to create the user
@@ -634,7 +633,7 @@ class WorkerRegisterView(BaseClientView):
             ssn=ssn,
             worker_address=worker_address,
             date_of_birth=date_of_birth,
-            place_of_birth=place_of_birth
+            place_of_birth=place_of_birth,
         )
 
         # Get the workers group
