@@ -10,7 +10,10 @@ from django.http import Http404
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APIClient
+from rest_framework.test import APITestCase, APIClient
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 class JobViewTest(TestCase):
@@ -394,3 +397,43 @@ class ApplicationsListViewTest(TestCase):
         self.assertEqual(response.data[k_applications], self.applications)
         self.assertEqual(response.data[k_items_per_page], 25)
         self.assertEqual(response.data[k_total], len(self.applications))
+
+
+class DirectionsViewTest(APITestCase):
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(username='testuser', password='password')
+        self.client.force_authenticate(user=self.user)
+        self.url = reverse('directions-view', kwargs={
+            'from_lat': 12345678,
+            'from_lon': 87654321,
+            'to_lat': 12345678,
+            'to_lon': 87654321
+        })
+
+    @patch('apps.jobs.services.contract_service.JobApplicationService.fetch_directions')
+    def test_get_directions_success(self, mock_fetch_directions):
+        mock_response = {
+            "routes": [
+                {
+                    "distanceMeters": 1000,
+                    "polyline": "encoded_polyline"
+                }
+            ]
+        }
+        mock_fetch_directions.return_value = mock_response
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json(), mock_response)
+
+    @patch('apps.jobs.services.contract_service.JobApplicationService.fetch_directions')
+    def test_get_directions_bad_request(self, mock_fetch_directions):
+        mock_fetch_directions.return_value = None
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+

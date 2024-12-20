@@ -11,7 +11,6 @@ from apps.jobs.models.stored_directions import StoredDirections
 from apps.jobs.managers.job_manager import JobManager
 from apps.jobs.models import JobApplication, JobApplicationState, Job, JobState
 # from api.my_secrets import GOOGLE_BASE_URL, GOOGLE_ROUTES_URL, GOOGLE_API_KEY
-from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
 

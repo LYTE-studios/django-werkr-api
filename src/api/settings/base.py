@@ -183,7 +183,7 @@ STATIC_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/'
 # Google Maps
 GOOGLE_DIRECTIONS_EXPIRES_IN_DAYS = 60
 
-GOOGLE_API_KEY = config('GOOGLE_API_KEY')
+# GOOGLE_API_KEY = config('GOOGLE_API_KEY')
 
 GOOGLE_BASE_URL = "https://maps.googleapis.com"
 GOOGLE_ROUTES_URL = "https://routes.googleapis.com"

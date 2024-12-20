@@ -530,24 +530,43 @@ class DenyApplicationView(JWTBaseAuthView):
 
 
 class DirectionsView(JWTBaseAuthView):
+    """
+    View to handle fetching directions between two geographical points.
+    Requires JWT authentication and user to be in specific groups.
+    """
     groups = [
         CMS_GROUP_NAME,
         WORKERS_GROUP_NAME,
     ]
 
     def get(self, request, *args, **kwargs):
+        """
+        Handle GET requests to fetch directions.
+
+        Args:
+            request: The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments containing latitude and longitude.
+
+        Returns:
+            HttpResponse: The response containing directions if successful.
+            HttpResponseBadRequest: The response if fetching directions fails.
+        """
+        # Extract and convert latitude and longitude from kwargs
         from_lat = int(kwargs.get('from_lat', 0)) / 1000000
         from_lon = int(kwargs.get('from_lon', 0)) / 1000000
         to_lat = int(kwargs.get('to_lat', 0)) / 1000000
         to_lon = int(kwargs.get('to_lon', 0)) / 1000000
 
+        # Fetch directions using the JobApplicationService
         response = JobApplicationService.fetch_directions(from_lat, from_lon, to_lat, to_lon)
 
+        # Return the response if directions are fetched successfully
         if response is not None:
             return HttpResponse(response)
 
+        # Return a bad request response if fetching directions fails
         return HttpResponseBadRequest(response)
-
 
 class MyApplicationsView(JWTBaseAuthView):
     """
