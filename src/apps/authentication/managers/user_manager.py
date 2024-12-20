@@ -35,7 +35,8 @@ class UserManager:
             ssn=ssn,
             worker_address=worker_address,
             date_of_birth=date_of_birth,
-            place_of_birth=place_of_birth
+            place_of_birth=place_of_birth,
+            accepted=False,
         )
         worker_profile.save()
 
