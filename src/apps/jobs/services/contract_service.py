@@ -8,6 +8,9 @@ import datetime
 import requests
 from apps.authentication.models import FavoriteAddress
 from apps.jobs.job_exceptions import JobNotFoundException
+from django.db.models import F, Q
+
+from apps.jobs.models.stored_directions import StoredDirections
 
 
 class JobApplicationService:
@@ -39,21 +42,29 @@ class JobApplicationService:
 
     @staticmethod
     def fetch_directions(lat, lon, to_lat, to_lon):
-        response = requests.post(
-            url='{}/directions/v2:computeRoutes'.format(GOOGLE_ROUTES_URL),
-            headers={
-                "X-Goog-Api-Key": GOOGLE_API_KEY,
-                "X-Goog-FieldMask": "routes.distanceMeters,routes.polyline",
-            },
-            json={
-                "origin": {
-                    "location": {
-                        "latLng": {
-                            "latitude": lat,
-                            "longitude": lon
-                        }
-                    }
+
+        stored_directions = StoredDirections.objects.filter(
+            Q(from_lat=lat) & Q(from_lon=lon) & Q(to_lat=to_lat) & Q(to_lon=to_lon)
+        ).first()
+
+        if stored_directions and not stored_directions.check_expired():
+            return stored_directions.directions_response
+        else: 
+            response = requests.post(
+                url='{}/directions/v2:computeRoutes'.format(GOOGLE_ROUTES_URL),
+                headers={
+                    "X-Goog-Api-Key": GOOGLE_API_KEY,
+                    "X-Goog-FieldMask": "routes.distanceMeters,routes.polyline",
                 },
+                json={
+                    "origin": {
+                        "location": {
+                            "latLng": {
+                                "latitude": lat,
+                                "longitude": lon
+                            }   
+                        }
+                    },
                 "destination": {
                     "location": {
                         "latLng": {
@@ -63,9 +74,22 @@ class JobApplicationService:
                     }
                 },
                 "travelMode": "DRIVE",
-            }
-        )
-        return response
+                },
+            )
+
+            if response.ok:
+                directions_response = response.json()
+
+                StoredDirections(
+                    from_lat=lat,
+                    from_lon=lon,
+                    to_lat=to_lat,
+                    to_lon=to_lon,
+                    directions_response=directions_response
+                ).save()
+                return directions_response
+            else:
+                return None
 
     @staticmethod
     def get_my_applications(user):

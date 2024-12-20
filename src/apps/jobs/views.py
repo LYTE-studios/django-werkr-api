@@ -305,10 +305,10 @@ class DirectionsView(JWTBaseAuthView):
 
         response = JobApplicationService.fetch_directions(from_lat, from_lon, to_lat, to_lon)
 
-        if response.ok:
-            return HttpResponse(response.content)
+        if response is not None:
+            return HttpResponse(response)
 
-        return HttpResponseBadRequest(response.content)
+        return HttpResponseBadRequest(response)
 
 
 class MyApplicationsView(JWTBaseAuthView):

@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import (
+    DirectionsView,
     JobView,
     CreateJobView,
     UpcomingJobsView,
@@ -43,5 +44,7 @@ urlpatterns = [
     path('applications/me/', MyApplicationsView.as_view()),
     path('applications/', ApplicationsListView.as_view()),
     path('applications/<str:job_id>/', ApplicationsListView.as_view()),
+
+    path('directions/<int:from_lat>/<int:from_lon>/<int:to_lat>/<int:to_lon>', DirectionsView.as_view()),
 ]
 
