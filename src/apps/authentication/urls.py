@@ -11,15 +11,15 @@ from .views import (
 )
 
 urlpatterns = [
-    path('token/', JWTAuthenticationView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', JWTRefreshView.as_view(), name='token_refresh'),
-    path('hello/there/', JWTTestConnectionView.as_view(), name='test_connection'),
-    path('users/me/', ProfileMeView.as_view(), name='profile_me'),
-    path('users/settings/languages/', LanguageSettingsView.as_view(), name='language_settings'),
-    path('users/settings/profile-picture/', UploadUserProfilePictureView.as_view(), name='upload_profile_picture'),
-    path('password_reset/', PasswordResetRequestView.as_view(), name="password_reset"),
-    path('password_reset/verify/', VerifyCodeView.as_view(), name="password_reset_verify"),
-    path('password_reset/reset/', ResetPasswordView.as_view(), name="password_reset_reset"),
+    path('token', JWTAuthenticationView.as_view(), name='token_obtain_pair'),
+    path('token/refresh', JWTRefreshView.as_view(), name='token_refresh'),
+    path('hello/there', JWTTestConnectionView.as_view(), name='test_connection'),
+    path('users/me', ProfileMeView.as_view(), name='profile_me'),
+    path('users/settings/languages', LanguageSettingsView.as_view(), name='language_settings'),
+    path('users/settings/profile-picture', UploadUserProfilePictureView.as_view(), name='upload_profile_picture'),
+    path('password_reset', PasswordResetRequestView.as_view(), name="password_reset"),
+    path('password_reset/verify', VerifyCodeView.as_view(), name="password_reset_verify"),
+    path('password_reset/reset', ResetPasswordView.as_view(), name="password_reset_reset"),
 
     # Workers
     path('workers/register', WorkerRegisterView.as_view(), name="worker_register"),

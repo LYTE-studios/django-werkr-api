@@ -35,38 +35,72 @@ from .utils.authentication_util import AuthenticationUtil
 from .utils.jwt_auth_util import JWTAuthUtil
 
 
-class JWTAuthenticationView(TokenObtainPairView):
-    """
-    View for obtaining JWT tokens.
-    """
-    pass
 
-
-class JWTRefreshView(TokenRefreshView):
+class BaseClientView(APIView):
     """
-    View for refreshing JWT tokens.
-    """
-    pass
-
-
-class JWTTestConnectionView(APIView):
-    """
-    View for testing JWT connection.
+    Base view for authentication using only the client secret.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
 
-    def get(self, request):
+    group = None
+
+    # Override this to allow different groups.
+    groups = [
+        CUSTOMERS_GROUP_NAME,
+        WORKERS_GROUP_NAME,
+        CMS_GROUP_NAME,
+    ]
+    allowed_methods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+
+    def options(self, request, **kwargs):
         """
-        Handles GET requests to test the connection.
+        Handles OPTIONS requests to provide allowed methods.
 
         Args:
             request (HttpRequest): The HTTP request object.
+            **kwargs: Additional keyword arguments.
 
         Returns:
-            Response: A JSON response indicating the connection is successful.
+            HttpResponse: An HTTP response with allowed methods.
         """
-        return Response({"message": "Connection successful"})
+        response = HttpResponse()
+        response['allow'] = ','.join(self.allowed_methods)
+        return response
+
+    def dispatch(self, request: HttpRequest, *args, **kwargs):
+        """
+        Dispatch method to handle the request.
+
+        This method checks the client secret and ensures the user belongs to one of the allowed groups.
+        If the checks pass, it calls the parent class's dispatch method.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            HttpResponse: The HTTP response object.
+        """
+        if request.method == 'OPTIONS':
+            return super(BaseClientView, self).dispatch(request, *args, **kwargs)
+
+        self.group = AuthenticationUtil.check_client_secret(request)
+
+        in_group = False
+
+        if not self.group:
+            return HttpResponseForbidden()
+
+        if self.group.name in self.groups:
+            in_group = True
+
+        if not in_group:
+            return HttpResponseForbidden()
+
+        return super(BaseClientView, self).dispatch(request, *args, **kwargs)
+
 
 
 class JWTBaseAuthView(APIView):
@@ -135,12 +169,43 @@ class JWTBaseAuthView(APIView):
         return super(JWTBaseAuthView, self).dispatch(request, *args, **kwargs)
 
 
-class ProfileMeView(APIView):
+class JWTAuthenticationView(TokenObtainPairView):
+    """
+    View for obtaining JWT tokens.
+    """
+    pass
+
+
+class JWTRefreshView(TokenRefreshView):
+    """
+    View for refreshing JWT tokens.
+    """
+    pass
+
+
+class JWTTestConnectionView(JWTBaseAuthView):
+    """
+    View for testing JWT connection.
+    """
+
+    def get(self, request):
+        """
+        Handles GET requests to test the connection.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            Response: A JSON response indicating the connection is successful.
+        """
+        return Response({"message": "Connection successful"})
+
+
+
+class ProfileMeView(JWTBaseAuthView):
     """
     View for retrieving and updating the authenticated user's profile.
     """
-
-    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         """
@@ -284,12 +349,10 @@ class ProfileMeView(APIView):
         return Response({'user_id': request.user.id})
 
 
-class LanguageSettingsView(APIView):
+class LanguageSettingsView(JWTBaseAuthView):
     """
     View for managing user language settings.
     """
-
-    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         """
@@ -333,12 +396,10 @@ class LanguageSettingsView(APIView):
         return Response({'language': request.user.settings.language})
 
 
-class UploadUserProfilePictureView(APIView):
+class UploadUserProfilePictureView(JWTBaseAuthView):
     """
     View for managing user profile pictures.
     """
-
-    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         """
@@ -380,7 +441,7 @@ class UploadUserProfilePictureView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class PasswordResetRequestView(APIView):
+class PasswordResetRequestView(BaseClientView):
     """
     View for initiating a password reset request.
     """
@@ -415,7 +476,7 @@ class PasswordResetRequestView(APIView):
         return Response({k_message: 'Password reset email has been sent.'}, status=HTTPStatus.OK)
 
 
-class VerifyCodeView(APIView):
+class VerifyCodeView(BaseClientView):
     """
     View for verifying a password reset code.
     """
@@ -454,7 +515,7 @@ class VerifyCodeView(APIView):
             return Response({k_message: 'Code not verified.'}, status=HTTPStatus.FORBIDDEN)
 
 
-class ResetPasswordView(APIView):
+class ResetPasswordView(BaseClientView):
     """
     Reset password view
     """
@@ -495,72 +556,6 @@ class ResetPasswordView(APIView):
         else:
             # Return a bad request response if the token or code is invalid or expired
             return Response({k_message: 'Invalid or expired token'}, status=HTTPStatus.BAD_REQUEST)
-
-
-class BaseClientView(APIView):
-    """
-    Base view for authentication using only the client secret.
-    """
-
-    permission_classes = []
-
-    group = None
-
-    # Override this to allow different groups.
-    groups = [
-        CUSTOMERS_GROUP_NAME,
-        WORKERS_GROUP_NAME,
-        CMS_GROUP_NAME,
-    ]
-    allowed_methods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-
-    def options(self, request, **kwargs):
-        """
-        Handles OPTIONS requests to provide allowed methods.
-
-        Args:
-            request (HttpRequest): The HTTP request object.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            HttpResponse: An HTTP response with allowed methods.
-        """
-        response = HttpResponse()
-        response['allow'] = ','.join(self.allowed_methods)
-        return response
-
-    def dispatch(self, request: HttpRequest, *args, **kwargs):
-        """
-        Dispatch method to handle the request.
-
-        This method checks the client secret and ensures the user belongs to one of the allowed groups.
-        If the checks pass, it calls the parent class's dispatch method.
-
-        Args:
-            request (HttpRequest): The HTTP request object.
-            *args: Additional positional arguments.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            HttpResponse: The HTTP response object.
-        """
-        if request.method == 'OPTIONS':
-            return super(BaseClientView, self).dispatch(request, *args, **kwargs)
-
-        self.group = AuthenticationUtil.check_client_secret(request)
-
-        in_group = False
-
-        if not self.group:
-            return HttpResponseForbidden()
-
-        if self.group.name in self.groups:
-            in_group = True
-
-        if not in_group:
-            return HttpResponseForbidden()
-
-        return super(BaseClientView, self).dispatch(request, *args, **kwargs)
 
 
 class WorkerRegisterView(BaseClientView):
