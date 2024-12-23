@@ -512,7 +512,7 @@ class BaseClientView(APIView):
         WORKERS_GROUP_NAME,
         CMS_GROUP_NAME,
     ]
-    allowed_methods = ['GET', 'POST', 'UPDATE', 'DELETE', 'OPTIONS']
+    allowed_methods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 
     def options(self, request, **kwargs):
         """
