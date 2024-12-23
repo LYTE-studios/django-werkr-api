@@ -32,6 +32,6 @@ class AuthenticationUtil:
 
         try:
             # Returns the app type
-            return CustomGroup.objects.get(app_secret=client_secret).group
+            return CustomGroup.objects.get(group_secret=client_secret).group
         except CustomGroup.DoesNotExist:
             return None

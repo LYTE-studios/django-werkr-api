@@ -169,11 +169,26 @@ class JWTBaseAuthView(APIView):
         return super(JWTBaseAuthView, self).dispatch(request, *args, **kwargs)
 
 
-class JWTAuthenticationView(TokenObtainPairView):
+class JWTAuthenticationView(BaseClientView):
     """
     View for obtaining JWT tokens.
     """
-    pass
+
+    def post(self, request):
+        formatter = FormattingUtil(data=request.data)
+
+        try:
+            password = formatter.get_value('password', required=True)
+            email = formatter.get_value('email', required=True)
+        except DeserializationException as e:
+            return Response({'message': e.args}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+        tokens =  JWTAuthUtil.authenticate(email=email, password=password, group=self.group)
+
+        return Response(tokens)
+
 
 
 class JWTRefreshView(TokenRefreshView):

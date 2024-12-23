@@ -21,22 +21,3 @@ class User(AbstractUser):
     profile_picture = models.ImageField(upload_to='users/{}/profile_picture'.format(id), null=True)
     settings = models.ForeignKey(Settings, null=True, on_delete=models.CASCADE, related_name='settings')
     archived = models.BooleanField(default=False)
-
-    def to_worker_view(self):
-        # Required data
-        data = {k_id: self.id, k_first_name: self.first_name, k_last_name: self.last_name, k_email: self.email, }
-
-        # Optional data
-        try:
-            data[k_profile_picture] = MediaUtil.to_media_url(self.profile_picture.url)
-        except:
-            pass
-        try:
-            data[k_company] = self.company_name
-            data[k_phone_number] = self.phone_number
-            data[k_tax_number] = self.tax_number
-            data[k_date_of_birth] = FormattingUtil.to_timestamp(self.date_of_birth)
-        except Exception:
-            pass
-
-        return data

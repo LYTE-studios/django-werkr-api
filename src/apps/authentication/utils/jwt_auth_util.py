@@ -7,6 +7,9 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
+from apps.authentication.models.profiles.worker_profile import WorkerProfile
+
+from apps.core.assumptions import *
 
 User = get_user_model()
 from .authentication_util import AuthenticationUtil
@@ -61,8 +64,15 @@ class JWTAuthUtil:
         if not user:
             return None
 
-        if not user.accepted:
-            raise Exception('User not accepted')
+        if group.name == WORKERS_GROUP_NAME:
+            try:
+                worker_profile = WorkerProfile.objects.get(user_id=user.id)
+
+                if not worker_profile.accepted: 
+                    raise Exception('User not accepted')
+                
+            except WorkerProfile.DoesNotExist:
+                raise Exception('User profile not found')
 
         # Check if the user is a superuser
         if user.is_superuser:
@@ -70,10 +80,8 @@ class JWTAuthUtil:
             if not authenticate(username=user.username, password=password):
                 return None
         else:
-            if user.salt is None:
-                return None
             # Check the users credentials
-            if not EncryptionUtil.check_value(password, user.salt, user.password):
+            if not EncryptionUtil.check_value(password, user.password):
                 return None
 
         # Get the refresh token
