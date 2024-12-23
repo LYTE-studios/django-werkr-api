@@ -1,4 +1,5 @@
 import uuid
+from apps.authentication.utils.media_util import MediaUtil
 
 from apps.core.models.settings import Settings
 from apps.core.utils.formatters import FormattingUtil
@@ -13,7 +14,7 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=64, null=True)
     email = models.CharField(max_length=64, null=False)
     fcm_token = models.CharField(max_length=256, null=True)
-    password = models.CharField(max_length=256, null=False)
+    password = models.CharField(max_length=256, null=True)
     salt = models.CharField(max_length=256, null=True)
     description = models.CharField(max_length=256, null=True, blank=True)
     phone_number = models.CharField(max_length=64, null=True, blank=True)
