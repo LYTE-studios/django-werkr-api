@@ -24,7 +24,7 @@ celery = {extras = ["redis"], version = "~=5.3.4"}
 django-celery-results = "~=2.5.1"
 redis = "*"
 # AWS
-django-storages = "*"
+django-storages = {extras = ["s3"], version = "~=1.13.2"}
 boto3 = "*"
 # Utilities
 python-decouple = "~=3.8"
@@ -38,9 +38,7 @@ sentry-sdk = {extras = ["django"], version = "~=1.29.2"}
 # Server
 gunicorn = "~=20.1.0"
 uvicorn = "*"
-bcrypt = "*"
 mailjet-rest = "*"
-firebase-admin = "*"
 
 [dev-packages]
 # Testing
