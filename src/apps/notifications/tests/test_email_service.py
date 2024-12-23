@@ -4,11 +4,11 @@ from django.test import TestCase
 from unittest.mock import patch
 from django.conf import settings
 from apps.notifications.models.mail_template import (
-    ApprovedTemplate,
+    ApprovedMailTemplate,
     CodeMailTemplate,
     DeniedMailTemplate,
     MailTemplate,
-    SelectedWasherTemplate,
+    SelectedWorkerTemplate,
     TimeRegisteredTemplate,
     CancelledMailTemplate
 )
@@ -25,7 +25,7 @@ class EmailTemplateServiceTests(TestCase):
         }
 
     def test_approved_template_creation(self):
-        template = ApprovedTemplate()
+        template = ApprovedMailTemplate()
         self.assertEqual(template.template_id, 5792978)
         self.assertEqual(template.subject, "Get A Wash | You've been approved!")
 
@@ -40,13 +40,13 @@ class EmailTemplateServiceTests(TestCase):
         self.assertEqual(template.subject, 'Get A Wash | Job was full!')
 
     def test_selected_washer_template_creation(self):
-        template = SelectedWasherTemplate()
+        template = SelectedWorkerTemplate()
         self.assertEqual(template.template_id, 6150888)
         self.assertEqual(template.subject, 'Get A Wash | A washer has been selected for your job!')
 
     @patch('apps.notifications.tasks.send_template_email.delay')
     def test_send_method_calls_celery_task(self, mock_delay):
-        template = ApprovedTemplate()
+        template = ApprovedMailTemplate()
         template.send(
             recipients=self.test_recipients, 
             data=self.test_data
@@ -109,10 +109,10 @@ class EmailTemplateServiceTests(TestCase):
 
     def test_all_templates_have_unique_ids(self):
         templates = [
-            ApprovedTemplate(),
+            ApprovedMailTemplate(),
             CodeMailTemplate(),
             DeniedMailTemplate(),
-            SelectedWasherTemplate(),
+            SelectedWorkerTemplate(),
             TimeRegisteredTemplate(),
             CancelledMailTemplate()
         ]
@@ -127,10 +127,10 @@ class EmailTemplateServiceTests(TestCase):
     def test_template_data_variables(self):
         # Test that all templates can be instantiated with data
         templates = [
-            ApprovedTemplate(),
+            ApprovedMailTemplate(),
             CodeMailTemplate(),
             DeniedMailTemplate(),
-            SelectedWasherTemplate(),
+            SelectedWorkerTemplate(),
             TimeRegisteredTemplate(),
             CancelledMailTemplate()
         ]

@@ -1,6 +1,8 @@
 from django.contrib.auth.models import Group
 from django.http import HttpRequest
 
+from apps.authentication.models.custom_group import CustomGroup
+
 
 class AuthenticationUtil:
     """
@@ -30,6 +32,6 @@ class AuthenticationUtil:
 
         try:
             # Returns the app type
-            return Group.objects.get(secret=client_secret)
-        except Group.DoesNotExist:
+            return CustomGroup.objects.get(app_secret=client_secret).group
+        except CustomGroup.DoesNotExist:
             return None

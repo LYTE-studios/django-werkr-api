@@ -9,7 +9,7 @@ from apps.core.utils.wire_names import *
 from apps.jobs.services.contract_service import JobApplicationService
 from apps.jobs.services.job_service import JobService
 from django.core.paginator import Paginator
-from django.http import HttpRequest, HttpResponseNotFound, Http404
+from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, Http404
 from rest_framework.response import Response
 
 

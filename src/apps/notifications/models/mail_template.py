@@ -48,7 +48,7 @@ def send_task(subject: str, template_id: int, recipients: list[str], data: dict)
         return False
 
 
-class ApprovedTemplate(MailTemplate):
+class ApprovedMailTemplate(MailTemplate):
     template_id = 5792978
     subject = "Get A Wash | You\'ve been approved!"
 
@@ -62,7 +62,7 @@ class DeniedMailTemplate(MailTemplate):
     subject = 'Get A Wash | Job was full!'
 
 
-class SelectedWasherTemplate(MailTemplate):
+class SelectedWorkerTemplate(MailTemplate):
     template_id = 6150888
     subject = 'Get A Wash | A washer has been selected for your job!'
 
