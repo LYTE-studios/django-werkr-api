@@ -2,7 +2,7 @@ services:
   api:
     network_mode: "host"
     expose:
-      - "8000"
+      - "80"
     build:
       context: ./src/
       dockerfile: ../docker/api/Dockerfile
