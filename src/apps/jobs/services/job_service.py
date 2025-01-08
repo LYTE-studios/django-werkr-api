@@ -134,6 +134,7 @@ class JobService:
     @staticmethod
     def get_upcoming_jobs(user, is_worker=True, start=None, end=None):
         now = timezone.now()
+        
         if is_worker:
             jobs = Job.objects.filter(
                 start_time__gte=now,

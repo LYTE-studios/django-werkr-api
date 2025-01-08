@@ -4,6 +4,7 @@ from django.db import models
 from django.template.loader import get_template
 import os
 import io
+import asyncio
 
 from itertools import chain
 from django.core.files import File
@@ -129,7 +130,7 @@ class JobManager(models.Manager):
 
         description = 'in {} on {} at {}'.format(city, date, time, )
 
-        create_global_notification.delay(title, description, image_url=None, send_push=True)
+        asyncio.create_task(create_global_notification(title, description, image_url=None, send_push=True))
 
     @staticmethod
     def get_overlap_applications(application: JobApplication, state: JobApplicationState = JobApplicationState.pending):
@@ -223,7 +224,6 @@ class JobManager(models.Manager):
             'address': address,
             'birth_date': birth_date,
             'iban': application.worker.tax_number,
-
             'weekday': weekday,
             'start_date': start_date,
             'end_date': end_date,
@@ -240,8 +240,6 @@ class JobManager(models.Manager):
         temp_file = open(file_name, 'w+b')
 
         os.remove(file_name)
-
-        return
 
         bytes = File(generate_pdf(html.encode('utf-8'), dest=temp_file, encoding='utf-8'))
 

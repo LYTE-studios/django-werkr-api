@@ -185,7 +185,10 @@ class JWTAuthenticationView(BaseClientView):
         except Exception as e:
             return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-        tokens =  JWTAuthUtil.authenticate(email=email, password=password, group=self.group)
+        tokens = JWTAuthUtil.authenticate(email=email, password=password, group=self.group)
+
+        if not tokens or tokens == {}:
+            return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
         return Response(tokens)
 
@@ -428,8 +431,15 @@ class UploadUserProfilePictureView(JWTBaseAuthView):
         Returns:
             Response: A JSON response containing the profile picture URL.
         """
-        user = get_object_or_404(User, id=kwargs['id'])
-        profile_picture_url = user.profile_picture.url if user.profile_picture else None
+        profile_user = self.user
+
+        try:
+            user_id = kwargs['id']
+            profile_user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return HttpResponseNotFound()
+    
+        profile_picture_url = profile_user.profile_picture.url if profile_user.profile_picture else None
         return Response({'profile_picture': profile_picture_url})
 
     def put(self, request, *args, **kwargs):
@@ -445,15 +455,38 @@ class UploadUserProfilePictureView(JWTBaseAuthView):
             Response: An empty response indicating successful update.
             HttpResponseBadRequest: If the request data is empty.
         """
-        user = get_object_or_404(User, id=kwargs['id'])
+        profile_user = self.user
+
+        try:
+            user_id = kwargs['id']
+            profile_user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return HttpResponseNotFound()
 
         if not request.data:
             return HttpResponseBadRequest()
 
-        user.profile_picture = next(iter(request.data.values()))
-        user.save()
+        profile_user.profile_picture = next(iter(request.data.values()))
+        profile_user.save()
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_200_OK)
+    
+    def delete(self, request, *args, **kwargs):
+        profile_user = self.user
+
+        try:
+            user_id = kwargs['id']
+            profile_user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return HttpResponseNotFound()
+
+        if not request.data:
+            return HttpResponseBadRequest()
+
+        profile_user.profile_picture = None
+        profile_user.save()
+
+        return Response(status=status.HTTP_200_OK)
 
 
 class PasswordResetRequestView(BaseClientView):

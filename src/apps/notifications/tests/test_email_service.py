@@ -44,20 +44,6 @@ class EmailTemplateServiceTests(TestCase):
         self.assertEqual(template.template_id, 6150888)
         self.assertEqual(template.subject, 'Get A Wash | A washer has been selected for your job!')
 
-    @patch('apps.notifications.tasks.send_template_email.delay')
-    def test_send_method_calls_celery_task(self, mock_delay):
-        template = ApprovedMailTemplate()
-        template.send(
-            recipients=self.test_recipients, 
-            data=self.test_data
-        )
-
-        # Assert that Celery task was called with correct arguments
-        mock_delay.assert_called_once_with(
-            recipients=self.test_recipients,
-            data=self.test_data
-        )
-
     @patch('mailjet_rest.Client')
     def test_send_template_email_task(self, mock_mailjet_client):
         # Mock the Mailjet client response

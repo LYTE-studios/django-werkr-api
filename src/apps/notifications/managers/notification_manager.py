@@ -1,5 +1,4 @@
 from apps.core.assumptions import WORKERS_GROUP_NAME, CMS_GROUP_NAME
-from celery import shared_task
 from django.contrib.auth import get_user_model
 from firebase_admin import messaging
 
@@ -153,8 +152,6 @@ def get_user_set(group_name: str = WORKERS_GROUP_NAME, language: str = None):
 
     return users
 
-
-@shared_task
 def create_global_mail(title: str, description: str, user_id: str = None, group_name: str = WORKERS_GROUP_NAME,
                        language: str = None):
     """
@@ -191,8 +188,6 @@ def create_global_mail(title: str, description: str, user_id: str = None, group_
             "description": description,
         })
 
-
-@shared_task
 def send_lonely_push(title: str, description: str, user_id: str = None, group_name: str = WORKERS_GROUP_NAME,
                      language: str = None) -> None:
     """
@@ -224,8 +219,6 @@ def send_lonely_push(title: str, description: str, user_id: str = None, group_na
 
         NotificationManager.send_push_notification(user.fcm_token, Notification(title=title, description=description))
 
-
-@shared_task
 def create_global_notification(title: str, description: str, image_url: str = None, user_id: str = None,
                                send_push: bool = False, group_name: str = WORKERS_GROUP_NAME,
                                language: str = None) -> None:
