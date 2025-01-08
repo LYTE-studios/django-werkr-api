@@ -1,6 +1,5 @@
-import datetime
-
 import pytz
+from django.utils import timezone
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -89,11 +88,11 @@ class FormattingUtil:
         return int(value)
 
     @staticmethod
-    def to_user_timezone(time: datetime.datetime):
+    def to_user_timezone(time: timezone.datetime):
         return time.astimezone(pytz.timezone('Europe/Brussels'))
 
     @staticmethod
-    def to_time_interval(time1: datetime.datetime, time2: datetime.datetime):
+    def to_time_interval(time1: timezone.datetime, time2: timezone.datetime):
 
         time1 = FormattingUtil.to_user_timezone(time1)
 
@@ -104,7 +103,7 @@ class FormattingUtil:
 
 
     @staticmethod
-    def to_readable_duration(delta: datetime.timedelta):
+    def to_readable_duration(delta: timezone.timedelta):
 
         hours = delta.seconds//3600
 
@@ -114,7 +113,7 @@ class FormattingUtil:
 
 
     @staticmethod
-    def to_readable_time(date_time: datetime.datetime, use_timezone: bool = True):
+    def to_readable_time(date_time: timezone.datetime, use_timezone: bool = True):
         time = date_time
 
         if use_timezone:
@@ -129,21 +128,21 @@ class FormattingUtil:
         return _number_formatter.format(int(number))
 
     @staticmethod
-    def to_date(date: datetime.datetime):
+    def to_date(date: timezone.datetime):
 
         date = FormattingUtil.to_user_timezone(date)
 
         return '{}/{}'.format(str(date.day), FormattingUtil.format_date_number(date.month))
 
     @staticmethod
-    def to_full_date(date: datetime.datetime):
+    def to_full_date(date: timezone.datetime):
         try:
             return '{}/{}/{}'.format(FormattingUtil.format_date_number(date.month), FormattingUtil.format_date_number(date.month), str(date.year))
         except Exception as e:
             return None
 
     @staticmethod
-    def to_day_of_the_week(date: datetime.datetime):
+    def to_day_of_the_week(date: timezone.datetime):
         weekday = date.weekday()
         if weekday == 0:
             return 'Monday'
@@ -168,7 +167,7 @@ class FormattingUtil:
             hour = timestamp // 60
             minute = (timestamp - (hour * 60))
 
-            date_time = datetime.time(hour, minute)
+            date_time = timezone.time(hour, minute)
 
             return date_time
         except Exception:
@@ -177,7 +176,7 @@ class FormattingUtil:
     @staticmethod
     def to_date_time(timestamp):
         try:
-            date_time = pytz.utc.localize(datetime.datetime.fromtimestamp(timestamp))
+            date_time = timezone.datetime.fromtimestamp(timestamp)
         except Exception:
             return None
 
@@ -187,10 +186,10 @@ class FormattingUtil:
     def to_timestamp(date_time):
         if date_time is None:
             return None
-        if type(date_time) is datetime.time:
+        if type(date_time) is timezone.time:
             return date_time.minute + (date_time.hour * 60)
-        if type(date_time) is datetime.date:
-            date_time = datetime.datetime.combine(date_time, datetime.datetime.min.time())
+        if type(date_time) is timezone.date:
+            date_time = timezone.datetime.combine(date_time, timezone.datetime.min.time())
         return date_time.timestamp().__round__()
 
     @staticmethod

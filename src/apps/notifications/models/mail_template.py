@@ -7,7 +7,7 @@ class MailTemplate:
     template_id: int = 5794325
     subject: str = 'Get A Wash | New message'
 
-    async def _send_task(self, recipients: list[str], data: dict):
+    async def _send_task(self, recipients: list[str], data: dict, loop=None):
         """Async task to send emails asynchronously"""
 
         try: 
@@ -37,7 +37,10 @@ class MailTemplate:
             # Log the error but don't raise it
             print(f"Error sending email: {str(e)}")
             return False
+        
+    from apps.core.decorators import ensure_event_loop
 
+    @ensure_event_loop
     def send(self, recipients: list[str], data: dict):
         """Sends email synchronously"""
         asyncio.create_task(self._send_task(recipients=recipients, data=data),)

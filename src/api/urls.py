@@ -20,10 +20,6 @@ schema_view = get_schema_view(
     public=True,
     permission_classes=[permissions.AllowAny],
 )
-# API URLs
-api_v0_patterns = [
-    path('auth/', include('apps.authentication.urls')),
-]
 
 api_v1_patterns = [
     path('auth/', include('apps.authentication.urls')),
@@ -39,10 +35,8 @@ api_v1_patterns = [
 ]
 
 urlpatterns = [
-
     # API versions
     path('api/v1/', include(api_v1_patterns)),
-
 ]
 
 # Serve media files in development

@@ -11,3 +11,5 @@ class CustomerProfile(models.Model):
     company_name = models.CharField(max_length=64, null=True)
     customer_billing_address = models.ForeignKey(Address, null=True, on_delete=models.CASCADE, related_name='customer_billing_address')
     customer_address = models.ForeignKey(Address, null=True, on_delete=models.CASCADE, related_name='customer_address')
+    special_committee = models.CharField(max_length=30, null=True)
+
