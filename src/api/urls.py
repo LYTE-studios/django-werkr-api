@@ -20,26 +20,31 @@ schema_view = get_schema_view(
     public=True,
     permission_classes=[permissions.AllowAny],
 )
-
 # API URLs
-api_v1_patterns = [
+api_v0_patterns = [
     path('auth/', include('apps.authentication.urls')),
-    # path('jobs/', include('apps.jobs.urls')),
 ]
 
-urlpatterns = [
-    # Admin
-    path('admin/', admin.site.urls),
-    
-    # API versions
-    path('api/v1/', include(api_v1_patterns)),
-    
+api_v1_patterns = [
+    path('auth/', include('apps.authentication.urls')),
+    path('jobs/', include('apps.jobs.urls')),
+
     # Swagger documentation
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+
+    # Admin
+    path('admin/', admin.site.urls),
+]
+
+urlpatterns = [
+
+    # API versions
+    path('api/v1/', include(api_v1_patterns)),
+
 ]
 
 # Serve media files in development
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.MEDIA_ROOT)

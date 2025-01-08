@@ -19,10 +19,7 @@ pymysql = "~=1.1.0"
 # Async Support
 asgiref = "~=3.7.2"
 channels = "*"
-# Task Queue
-celery = {extras = ["redis"], version = "~=5.3.4"}
-django-celery-results = "~=2.5.1"
-redis = "*"
+asyncio = "*"
 # AWS
 django-storages = {extras = ["s3"], version = "~=1.13.2"}
 boto3 = "*"
@@ -38,6 +35,8 @@ sentry-sdk = {extras = ["django"], version = "~=1.29.2"}
 # Server
 gunicorn = "~=20.1.0"
 uvicorn = "*"
+mailjet-rest = "*"
+firebase-admin = "*"
 
 [dev-packages]
 # Testing

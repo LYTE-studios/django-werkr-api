@@ -25,4 +25,4 @@ RUN wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/w
 EXPOSE 8000
 
 # Command to run the Python script
-CMD ["pipenv", "run", "gunicorn", "-b", "0.0.0.0:8000", "api.asgi:application", "-k", "uvicorn.workers.UvicornWorker"]
+CMD ["pipenv", "run", "gunicorn", "-b", "0.0.0.0:80", "api.asgi:application", "-k", "uvicorn.workers.UvicornWorker"]

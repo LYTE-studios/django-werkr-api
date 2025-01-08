@@ -1,33 +1,17 @@
-from celery import shared_task
 from mailjet_rest import Client
 from django.conf import settings
+import asyncio
 
 class MailTemplate:
 
     template_id: int = 5794325
     subject: str = 'Get A Wash | New message'
 
-    api_key = settings.MAILJET_API_KEY
-    api_secret = settings.MAILJET_API_SECRET
+    async def _send_task(self, recipients: list[str], data: dict):
+        """Async task to send emails asynchronously"""
 
-    def __init__(self, template_id: int, subject: str):
-        self.template_id = template_id
-        self.subject = subject  
-
-    def send(self, recipients: list[str], data: dict):
-        """Sends email asynchronously"""
-        self.send_task.delay(
-            template_id=self.template_id,
-            subject=self.subject,
-            recipients=recipients,
-            data=data
-        )
-
-    @shared_task
-    def send_task(self, recipients: list[str], data: dict):
-        """Celery task to send emails asynchronously"""
         try: 
-            mailjet = Client(auth=(self.api_key, self.api_secret), version='v3.1')
+            mailjet = Client(auth=(settings.MAILJET_API_KEY, settings.MAILJET_API_SECRET), version='v3.1')
 
             response = mailjet.send.create(
                 data={
@@ -54,8 +38,11 @@ class MailTemplate:
             print(f"Error sending email: {str(e)}")
             return False
 
+    def send(self, recipients: list[str], data: dict):
+        """Sends email synchronously"""
+        asyncio.create_task(self._send_task(recipients=recipients, data=data),)
 
-class ApprovedTemplate(MailTemplate):
+class ApprovedMailTemplate(MailTemplate):
     template_id = 5792978
     subject = "Get A Wash | You\'ve been approved!"
 
@@ -69,7 +56,7 @@ class DeniedMailTemplate(MailTemplate):
     subject = 'Get A Wash | Job was full!'
 
 
-class SelectedWasherTemplate(MailTemplate):
+class SelectedWorkerTemplate(MailTemplate):
     template_id = 6150888
     subject = 'Get A Wash | A washer has been selected for your job!'
 

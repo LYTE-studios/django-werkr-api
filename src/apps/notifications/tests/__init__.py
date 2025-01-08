@@ -1,1 +1,1 @@
-from test_email_service import *  
+from .test_email_service import EmailTemplateServiceTests
