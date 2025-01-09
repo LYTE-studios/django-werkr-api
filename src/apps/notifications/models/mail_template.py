@@ -7,43 +7,37 @@ class MailTemplate:
     template_id: int = 5794325
     subject: str = 'Get A Wash | New message'
 
-    async def _send_task(self, recipients: list[str], data: dict, loop=None):
+    async def _send_task(self, recipients: list[str], data: dict):
         """Async task to send emails asynchronously"""
 
-        try: 
-            mailjet = Client(auth=(settings.MAILJET_API_KEY, settings.MAILJET_API_SECRET), version='v3.1')
+        mailjet = Client(auth=(settings.MAILJET_API_KEY, settings.MAILJET_API_SECRET), version='v3.1')
 
-            response = mailjet.send.create(
-                data={
-                    'Messages': [
-                        {
-                            "From": {
-                                "Email": settings.DEFAULT_FROM_EMAIL,
-                                "Name": settings.DEFAULT_FROM_NAME
-                            },
-                            "To": recipients,
-                            "Subject": self.subject,
-                            "TemplateID": self.template_id,
-                            "TemplateLanguage": True,
-                            "Variables": data,
+        response = mailjet.send.create(
+            data={
+                'Messages': [
+                    {
+                        "From": {
+                            "Email": settings.DEFAULT_FROM_EMAIL,
+                            "Name": settings.DEFAULT_FROM_NAME
                         },
-                    ],
-                },
-            )
+                        "To": recipients,
+                        "Subject": self.subject,
+                        "TemplateID": self.template_id,
+                        "TemplateLanguage": True,
+                        "Variables": data,
+                    },
+                ],
+            },
+        )
 
-            return response.status_code == 200
+        return response.status_code == 200
         
-        except Exception as e:
-            # Log the error but don't raise it
-            print(f"Error sending email: {str(e)}")
-            return False
-        
+
     from apps.core.decorators import ensure_event_loop
-
     @ensure_event_loop
-    def send(self, recipients: list[str], data: dict):
+    def send(self, recipients: list[str], data: dict, loop=None):
         """Sends email synchronously"""
-        asyncio.create_task(self._send_task(recipients=recipients, data=data),)
+        loop.create_task(self._send_task(recipients=recipients, data=data),)
 
 class ApprovedMailTemplate(MailTemplate):
     template_id = 5792978

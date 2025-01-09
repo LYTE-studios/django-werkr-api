@@ -6,6 +6,7 @@ class Address(models.Model):
     """
     Generic model for creating addresses.
     """
+    id = models.BigAutoField(primary_key=True, auto_created=True)
 
     street_name = models.CharField(max_length=256, null=True)
     house_number = models.CharField(max_length=8, null=True)

@@ -7,6 +7,8 @@ from .notification import Notification
 
 
 class NotificationStatus(models.Model):
+    id = models.BigAutoField(primary_key=True, auto_created=True)
+
     user = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.PROTECT, null=True)
 
     notification = models.ForeignKey(Notification, on_delete=models.PROTECT, null=True)

@@ -74,6 +74,12 @@ class JWTAuthUtil:
             except WorkerProfile.DoesNotExist:
                 raise Exception('User profile not found')
 
+        session_expiry = None
+
+        if group.name == CMS_GROUP_NAME:
+            if user.admin_profile.session_duration is not None:
+                session_expiry = FormattingUtil.to_timestamp(datetime.utcnow()) + user.session_duration
+
         # Check if the user is a superuser
         if user.is_superuser:
             # Check the credentials using the django auth system
@@ -86,11 +92,6 @@ class JWTAuthUtil:
 
         # Get the refresh token
         refresh = RefreshToken.for_user(user)
-
-        session_expiry = 0
-
-        if user.session_duration is not None:
-            session_expiry = FormattingUtil.to_timestamp(datetime.utcnow()) + user.session_duration
 
         # Return the tokens
         return {
