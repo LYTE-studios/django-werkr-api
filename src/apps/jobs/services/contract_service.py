@@ -10,7 +10,6 @@ from django.db.models import F, Q
 from apps.jobs.models.stored_directions import StoredDirections
 from apps.jobs.managers.job_manager import JobManager
 from apps.jobs.models import JobApplication, JobApplicationState, Job, JobState
-# from api.my_secrets import GOOGLE_BASE_URL, GOOGLE_ROUTES_URL, GOOGLE_API_KEY
 from django.shortcuts import get_object_or_404
 
 
@@ -51,10 +50,11 @@ class JobApplicationService:
         if stored_directions and not stored_directions.check_expired():
             return stored_directions.directions_response
         else: 
+            from django.conf import settings
             response = requests.post(
-                url='{}/directions/v2:computeRoutes'.format(GOOGLE_ROUTES_URL),
+                url='{}/directions/v2:computeRoutes'.format(settings.GOOGLE_ROUTES_URL),
                 headers={
-                    "X-Goog-Api-Key": GOOGLE_API_KEY,
+                    "X-Goog-Api-Key": settings.GOOGLE_API_KEY,
                     "X-Goog-FieldMask": "routes.distanceMeters,routes.polyline",
                 },
                 json={
