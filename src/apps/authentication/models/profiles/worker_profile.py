@@ -6,6 +6,11 @@ User = get_user_model()
 
 
 class WorkerProfile(models.Model):
+    class WorkerType(models.TextChoices):
+        FREELANCER = 'freelancer', 'Freelancer'
+        STUDENT = 'student', 'Student'
+        FLEXI = 'flexi', 'Flexi'
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='worker_profile')
     iban = models.CharField(max_length=64, null=True)
     ssn = models.CharField(max_length=64, null=True)
@@ -14,3 +19,4 @@ class WorkerProfile(models.Model):
     place_of_birth = models.CharField(max_length=30, null=True)
     accepted = models.BooleanField(default=True, null=False)
     hours = models.FloatField(default=0, null=True)
+    worker_type = models.CharField(max_length=10, choices=WorkerType.choices, default=WorkerType.FREELANCER)

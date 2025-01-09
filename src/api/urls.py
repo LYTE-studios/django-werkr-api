@@ -24,6 +24,7 @@ schema_view = get_schema_view(
 api_v1_patterns = [
     path('auth/', include('apps.authentication.urls')),
     path('jobs/', include('apps.jobs.urls')),
+    path('legal/', include('apps.legal.urls')),
 
     # Swagger documentation
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),

@@ -2,8 +2,9 @@ import datetime
 import uuid
 
 import pytz
+from apps.authentication.models.profiles.customer_profile import CustomerProfile
 from apps.core.models.geo import Address
-from apps.jobs.models.job_state import JobState
+from .job_state import JobState
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -12,7 +13,7 @@ from django.utils import timezone
 class Job(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, default=None)
+    customer = models.ForeignKey(CustomerProfile, on_delete=models.PROTECT, default=None)
 
     title = models.CharField(max_length=64, default='')
 
@@ -22,11 +23,11 @@ class Job(models.Model):
 
     job_state = models.CharField(max_length=64, choices=JobState.choices, default=JobState.pending)
 
-    start_time = models.DateTimeField()
+    start_time = models.DateTimeField(default=timezone.now)
 
     end_time = models.DateTimeField(null=True, blank=True)
 
-    application_start_time = models.DateTimeField(null=True, blank=True, )
+    application_start_time = models.DateTimeField(null=True, blank=True, default=timezone.now)
 
     application_end_time = models.DateTimeField(null=True, blank=True)
 

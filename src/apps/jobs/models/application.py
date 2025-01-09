@@ -9,6 +9,7 @@ from apps.core.utils.wire_names import *
 from .job import Job
 from .job_application_state import JobApplicationState
 from apps.jobs.utils.job_util import JobUtil
+from apps.authentication.models.profiles.worker_profile import WorkerProfile
 
 
 class JobApplication(models.Model):
@@ -16,7 +17,7 @@ class JobApplication(models.Model):
 
     job = models.ForeignKey(Job, on_delete=models.PROTECT)
 
-    worker = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    worker = models.ForeignKey(WorkerProfile, on_delete=models.PROTECT)
 
     address = models.ForeignKey(Address, on_delete=models.CASCADE)
 
@@ -34,7 +35,7 @@ class JobApplication(models.Model):
     note = models.CharField(max_length=256, null=True)
 
     def get_contract_upload_path(instance, file_name):
-        return 'contracts/{}/{}'.format( instance.worker.id, file_name)
+        return 'contracts/{}/{}'.format(instance.worker.id, file_name)
 
     contract = models.FileField(upload_to=get_contract_upload_path, null=True)
 
