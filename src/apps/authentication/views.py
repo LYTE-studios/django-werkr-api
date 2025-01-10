@@ -35,7 +35,6 @@ from .utils.authentication_util import AuthenticationUtil
 from .utils.jwt_auth_util import JWTAuthUtil
 
 
-
 class BaseClientView(APIView):
     """
     Base view for authentication using only the client secret.
@@ -100,7 +99,6 @@ class BaseClientView(APIView):
             return HttpResponseForbidden()
 
         return super(BaseClientView, self).dispatch(request, *args, **kwargs)
-
 
 
 class JWTBaseAuthView(APIView):
@@ -184,14 +182,13 @@ class JWTAuthenticationView(BaseClientView):
             return Response({'message': e.args}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
         tokens = JWTAuthUtil.authenticate(email=email, password=password, group=self.group)
 
         if not tokens or tokens == {}:
             return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
         return Response(tokens)
-
 
 
 class JWTRefreshView(TokenRefreshView):
@@ -217,7 +214,6 @@ class JWTTestConnectionView(JWTBaseAuthView):
             Response: A JSON response indicating the connection is successful.
         """
         return Response({"message": "Connection successful"})
-
 
 
 class ProfileMeView(JWTBaseAuthView):
@@ -438,7 +434,7 @@ class UploadUserProfilePictureView(JWTBaseAuthView):
             profile_user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return HttpResponseNotFound()
-    
+
         profile_picture_url = profile_user.profile_picture.url if profile_user.profile_picture else None
         return Response({'profile_picture': profile_picture_url})
 
@@ -470,7 +466,7 @@ class UploadUserProfilePictureView(JWTBaseAuthView):
         profile_user.save()
 
         return Response(status=status.HTTP_200_OK)
-    
+
     def delete(self, request, *args, **kwargs):
         profile_user = self.user
 

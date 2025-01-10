@@ -9,7 +9,6 @@ from apps.core.utils.wire_names import *
 from .job import Job
 from .job_application_state import JobApplicationState
 from apps.jobs.utils.job_util import JobUtil
-from apps.authentication.models.profiles.worker_profile import WorkerProfile
 
 
 class JobApplication(models.Model):
@@ -17,7 +16,7 @@ class JobApplication(models.Model):
 
     job = models.ForeignKey(Job, on_delete=models.PROTECT)
 
-    worker = models.ForeignKey(WorkerProfile, on_delete=models.PROTECT)
+    worker = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
 
     address = models.ForeignKey(Address, on_delete=models.CASCADE)
 

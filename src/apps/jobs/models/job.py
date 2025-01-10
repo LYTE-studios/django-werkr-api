@@ -2,7 +2,6 @@ import datetime
 import uuid
 
 import pytz
-from apps.authentication.models.profiles.customer_profile import CustomerProfile
 from apps.core.models.geo import Address
 from .job_state import JobState
 from django.conf import settings
@@ -13,7 +12,7 @@ from django.utils import timezone
 class Job(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    customer = models.ForeignKey(CustomerProfile, on_delete=models.PROTECT, default=None)
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, default=None)
 
     title = models.CharField(max_length=64, default='')
 
