@@ -3,7 +3,7 @@ import uuid
 
 import pytz
 from apps.core.models.geo import Address
-from apps.jobs.models.job_state import JobState
+from .job_state import JobState
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -22,11 +22,11 @@ class Job(models.Model):
 
     job_state = models.CharField(max_length=64, choices=JobState.choices, default=JobState.pending)
 
-    start_time = models.DateTimeField()
+    start_time = models.DateTimeField(default=timezone.now)
 
     end_time = models.DateTimeField(null=True, blank=True)
 
-    application_start_time = models.DateTimeField(null=True, blank=True, )
+    application_start_time = models.DateTimeField(null=True, blank=True, default=timezone.now)
 
     application_end_time = models.DateTimeField(null=True, blank=True)
 

@@ -34,7 +34,7 @@ class JobApplication(models.Model):
     note = models.CharField(max_length=256, null=True)
 
     def get_contract_upload_path(instance, file_name):
-        return 'contracts/{}/{}'.format( instance.worker.id, file_name)
+        return 'contracts/{}/{}'.format(instance.worker.id, file_name)
 
     contract = models.FileField(upload_to=get_contract_upload_path, null=True)
 

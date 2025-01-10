@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contract Agreement</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        h1, h2, h3 {
+            text-align: center;
+        }
+        .contract-section {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .signature {
+            margin-top: 40px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Contract Agreement</h1>
+    <h2>Between</h2>
+
+    <div class="contract-section">
+        <h3>Party A: {{ customer_profile.name }}</h3>
+        <p>Address: {{ customer_profile.address }}</p>
+        <p>Email: {{ customer_profile.email }}</p>
+    </div>
+
+    <div class="contract-section">
+        <h3>Party B: {{ worker_profile.name }}</h3>
+        <p>Address: {{ worker_profile.address }}</p>
+        <p>Email: {{ worker_profile.email }}</p>
+    </div>
+
+    <h2>Agreement Terms</h2>
+
+    <div class="contract-section">
+        <p>1. Party A agrees to provide services to Party B as outlined below:</p>
+        <p><strong>Services:</strong> {{ services_description }}</p>
+    </div>
+
+    <div class="contract-section">
+        <p>2. Compensation:</p>
+        <p>Party B agrees to pay Party A a total of {{ compensation_amount }} for the services rendered.</p>
+    </div>
+
+    <div class="contract-section">
+        <p>3. Duration:</p>
+        <p>This contract will commence on {{ start_date }} and will terminate on {{ end_date }}.</p>
+    </div>
+
+    <div class="contract-section">
+        <p>4. Confidentiality:</p>
+        <p>Both parties agree to keep all confidential information exchanged during the term of this agreement private.</p>
+    </div>
+
+    <div class="contract-section">
+        <p>5. Governing Law:</p>
+        <p>This contract shall be governed by the laws of {{ governing_law }}.</p>
+    </div>
+
+    <div class="signature">
+        <p>______________________________</p>
+        <p>Signature of Party A</p>
+
+        <p>______________________________</p>
+        <p>Signature of Party B</p>
+
+        <p>Date: {{ current_date }}</p>
+    </div>
+
+</body>
+</html>
