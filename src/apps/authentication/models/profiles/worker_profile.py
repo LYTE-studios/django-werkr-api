@@ -19,4 +19,4 @@ class WorkerProfile(models.Model):
     place_of_birth = models.CharField(max_length=30, null=True)
     accepted = models.BooleanField(default=True, null=False)
     hours = models.FloatField(default=0, null=True)
-    worker_type = models.CharField(max_length=10, choices=WorkerType.choices, default=WorkerType.FREELANCER)
+    worker_type = models.CharField(max_length=10, choices=WorkerType.choices, default=WorkerType.STUDENT)

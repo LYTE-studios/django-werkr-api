@@ -2,84 +2,88 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contract Agreement</title>
+    <title>Employment Contract</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
-            color: #333;
-        }
-        h1, h2, h3 {
-            text-align: center;
-        }
-        .contract-section {
-            margin-bottom: 20px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .signature {
-            margin-top: 40px;
-            text-align: center;
         }
     </style>
 </head>
 <body>
+    <h1>ARBEIDSOVEREENKOMST VOOR DE TEWERKSTELLING VAN FREELANCER</h1>
+    <p>Tussen de ondergetekenden</p>
+    <p>Young Mobility Services BV<br>
+    Gevestigd te 8500 Kortrijk, Nelson Mandelaplein 2<br>
+    vertegenwoordigd door: Stieg Martens<br>
+    hierna de werkgever genoemd.</p>
 
-    <h1>Contract Agreement</h1>
-    <h2>Between</h2>
+    <p>en</p>
+    <p>Naam: {{ name }}<br>
+    Adres: {{ address }}<br>
+    geboren op {{ birth_date }}</p>
 
-    <div class="contract-section">
-        <h3>Party A: {{ customer_profile.name }}</h3>
-        <p>Address: {{ customer_profile.address }}</p>
-        <p>Email: {{ customer_profile.email }}</p>
-    </div>
+    <p>Wordt overeengekomen hetgeen volgt:</p>
 
-    <div class="contract-section">
-        <h3>Party B: {{ worker_profile.name }}</h3>
-        <p>Address: {{ worker_profile.address }}</p>
-        <p>Email: {{ worker_profile.email }}</p>
-    </div>
+    <h2>Artikel 1: Voorwerp van de overeenkomst</h2>
+    <p>De werkgever neemt de freelancer aan in de hoedanigheid van arbeider (bevoegd paritair comité: PC 121.00). 
+        De taken die de freelancer dient uit te voeren kunnen best omschreven worden als het schoonmaken van appartementen/huizen en deze terug klaarmaken voor verhuur, controleren van schades, verversen van linnen, foto’s nemen ter controle van de staat van het appartement/huis. De freelancer kan volgens zijn eigen capaciteiten worden verzocht andere taken te vervullen.
+        De freelancer kan volgens zijn eigen capaciteiten worden verzocht andere taken te vervullen. Rekening houdende met de aard van het werk is er geen vaste tewerkstellingsplaats.
+    </p>
 
-    <h2>Agreement Terms</h2>
+    <h2>Artikel 2: Duur van de overeenkomst</h2>
+    <p>Deze arbeidsovereenkomst wordt afgesloten voor bepaalde duur, nl. vanaf {{ start_date }} tot en met {{ end_date }}.</p>
 
-    <div class="contract-section">
-        <p>1. Party A agrees to provide services to Party B as outlined below:</p>
-        <p><strong>Services:</strong> {{ services_description }}</p>
-    </div>
+    <h2>Artikel 3: Arbeidsduur</h2>
+    <p>De freelancer wordt als volgt tewerkgesteld:</p>
+    <table border="1">
+        <tbody>
+            <tr style="height: 20px">
+                <td class="s0" dir="ltr" rowspan="3">Dag</td>
+                <td class="s1" dir="ltr" colspan="4">Voormiddag</td>
+                <td class="s1" dir="ltr" colspan="4">Namiddag</td>
+                <td class="s0" dir="ltr" rowspan="3">Arbeidsduur</td>
+            </tr>
+            <tr style="height: 20px">
+                <td class="s1" dir="ltr" colspan="2">Arbeidsduur</td>
+                <td class="s1" dir="ltr" colspan="2">Pauze</td>
+                <td class="s1" dir="ltr" colspan="2">Arbeidsduur</td>
+                <td class="s1" dir="ltr" colspan="2">Pauze</td>
+            </tr>
+            <tr style="height: 20px">
+                <td class="s1" dir="ltr">Van</td>
+                <td class="s1" dir="ltr">Tot</td>
+                <td class="s1" dir="ltr">Van</td>
+                <td class="s1" dir="ltr">Tot</td>
+                <td class="s1" dir="ltr">Van</td>
+                <td class="s1" dir="ltr">Tot</td>
+                <td class="s1" dir="ltr">Van</td>
+                <td class="s1" dir="ltr">Tot</td>
+            </tr>
+            <tr style="height: 20px">
+                <td class="s2" dir="ltr">{{ weekday }}</td>
+                <td class="s2" dir="ltr">{{ start_time_morning }}</td>
+                <td class="s2" dir="ltr">{{ end_time_morning }}</td>
+                <td></td>
+                <td></td>
+                <td class="s2" dir="ltr">{{ start_time_afternoon }}</td>
+                <td class="s2" dir="ltr">{{ end_time_afternoon }}</td>
+                <td></td>
+                <td></td>
+                <td class="s2" dir="ltr">{{ duration }}</td>
+            </tr>
+        </tbody>
+    </table>
 
-    <div class="contract-section">
-        <p>2. Compensation:</p>
-        <p>Party B agrees to pay Party A a total of {{ compensation_amount }} for the services rendered.</p>
-    </div>
+    <h2>Artikel 4: Verloning</h2>
+    <p>De bezoldiging van de freelancer wordt vastgelegd op 17,10 EUR bruto per uur. De wet van 12 april 1965 op de bescherming van het loon voor freelancers is op deze overeenkomst van toepassing. Het loon wordt betaald zoals voorzien in het arbeidsreglement. De freelancer verklaart zich uitdrukkelijk akkoord met de betaling van het loon op volgend rekeningnummer {{ iban }}.</p>
 
-    <div class="contract-section">
-        <p>3. Duration:</p>
-        <p>This contract will commence on {{ start_date }} and will terminate on {{ end_date }}.</p>
-    </div>
+    <h2>Artikel 5: Aanvullende bepalingen</h2>
+    <p>De tewerkstelling wordt beheerst door de bepalingen van deze overeenkomst, en de raamovereenkomst waarbinnen deze tewerkstelling geregeld is. De raamovereenkomst maakt integraal deel uit van de overeenkomst. De aanvang en het einde van de gewone arbeidsdag, het tijdstip en de duur van de rusttijden, de dagen van regelmatige onderbreking van de arbeid, zijn opgenomen in het arbeidsreglement. De plaats waar en de manier waarop de persoon te bereiken is aangewezen om de eerste hulp te verlenen, de plaats waar zich de verbandkist zich bevindt, de gegevens van de interbedrijfsgeneeskundige dienst, de contactgegevens van de inspectiediensten, zijn opgenomen in het arbeidsreglement waarvan de freelancer verklaart een afschrift te hebben ontvangen.</p>
 
-    <div class="contract-section">
-        <p>4. Confidentiality:</p>
-        <p>Both parties agree to keep all confidential information exchanged during the term of this agreement private.</p>
-    </div>
+    <p>Opgemaakt in 2 exemplaren te Kortrijk op . Elke partij erkent één exemplaar te hebben ontvangen.</p>
 
-    <div class="contract-section">
-        <p>5. Governing Law:</p>
-        <p>This contract shall be governed by the laws of {{ governing_law }}.</p>
-    </div>
-
-    <div class="signature">
-        <p>______________________________</p>
-        <p>Signature of Party A</p>
-
-        <p>______________________________</p>
-        <p>Signature of Party B</p>
-
-        <p>Date: {{ current_date }}</p>
-    </div>
+    <p>De werkgever _____________________________ De freelancer _____________________________</p>
+    <img src="signature.png" style="width: 20%; height: 20%;" alt="signature.png">
 
 </body>
 </html>

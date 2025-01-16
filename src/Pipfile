@@ -4,62 +4,50 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-# Django and REST framework
 django = "~=4.2.5"
 djangorestframework = "~=3.15.2"
 django-cors-headers = "~=3.14.0"
 djangorestframework-simplejwt = "~=5.2.2"
 django-filter = "*"
-# API Documentation
 drf-yasg = "*"
 swagger-spec-validator = "*"
-# Database
 psycopg2-binary = "*"
 pymysql = "~=1.1.0"
-# Async Support
 asgiref = "~=3.7.2"
 channels = "*"
 asyncio = "*"
-# AWS
 django-storages = {extras = ["s3"], version = "~=1.13.2"}
 boto3 = "*"
-# Utilities
 python-decouple = "~=3.8"
 requests = "~=2.31.0"
 python-dateutil = "~=2.8.2"
 Pillow = "~=10.0.1"
 pydantic = "*"
 numpy = "~=1.26.4"
-# Monitoring and Error Tracking
 sentry-sdk = {extras = ["django"], version = "~=1.29.2"}
-# Server
 gunicorn = "~=20.1.0"
 uvicorn = "*"
 mailjet-rest = "*"
 firebase-admin = "*"
+xhtml2pdf = "*"
 
 [dev-packages]
-# Testing
 pytest = "*"
 pytest-django = "*"
 pytest-asyncio = "*"
 pytest-cov = "*"
 factory-boy = "*"
 faker = "*"
-# Linting and Formatting
 black = "*"
 flake8 = "*"
 isort = "*"
 mypy = "*"
 pylint = "*"
 pylint-django = "*"
-# Debugging
 django-debug-toolbar = "*"
 ipython = "*"
-# Documentation
 sphinx = "*"
 sphinx-rtd-theme = "*"
-# Development Tools
 django-extensions = "*"
 watchdog = "*"
 
