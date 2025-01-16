@@ -181,6 +181,10 @@ GOOGLE_ROUTES_URL = "https://routes.googleapis.com"
 
 DIMONA_URL = config('DIMONA_URL')
 DIMONA_AUTH_URL = config('DIMONA_AUTH_URL')
-EMPLOYER_DATA = config('EMPLOYER_DATA')
+
+EMPLOYER_DATA = {
+    "enterpriseNumber": config('ENTERPRISE_NUMBER'),
+} 
+
 DIMONA_CLIENT_ID = config('DIMONA_CLIENT_ID')
 JWT_SECRET = config('JWT_SECRET')
