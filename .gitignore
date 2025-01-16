@@ -173,3 +173,4 @@ my_secrets.py
 .DS_Store
 /trade_journal/my_secrets.py
 signature.png
+media/
