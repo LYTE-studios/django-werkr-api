@@ -30,9 +30,11 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from .models import User
+from .models import User, DashboardFlow
 from .utils.authentication_util import AuthenticationUtil
 from .utils.jwt_auth_util import JWTAuthUtil
+from .serializers import WorkerProfileSerializer, DashboardFlowSerializer
+from .models.profiles.worker_profile import WorkerProfile
 
 
 class BaseClientView(APIView):
@@ -1313,3 +1315,49 @@ class CustomerSearchTermView(JWTBaseAuthView):
         data = {CustomerUtil.to_customer_view(customer) for query in queries for customer in query}
 
         return Response({k_customers: list(data)})
+
+
+class OnboardingFlowView(APIView):
+    """
+    API view to handle the onboarding flow for workers.
+    """
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        worker_profile = get_object_or_404(WorkerProfile, user=user)
+
+        # Save data to DashboardFlow
+        dashboard_flow_data = request.data.copy()
+        dashboard_flow_data["user"] = user.id  # Use user ID for the serializer
+        dashboard_flow_serializer = DashboardFlowSerializer(data=dashboard_flow_data)
+        if dashboard_flow_serializer.is_valid():
+            dashboard_flow_serializer.save(user=user)
+        else:
+            return Response(dashboard_flow_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update WorkerProfile onboard_flow to True
+        worker_profile_serializer = WorkerProfileSerializer(worker_profile, data={"onboard_flow": True}, partial=True)
+        if worker_profile_serializer.is_valid():
+            worker_profile_serializer.save()
+            return Response(worker_profile_serializer.data, status=status.HTTP_200_OK)
+        return Response(worker_profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class WorkerProfileDetailView(APIView):
+    """
+    API view to fetch and view worker profile data for a specific user.
+    """
+
+    def get(self, request, user_id, *args, **kwargs):
+        worker_profile = get_object_or_404(WorkerProfile, user__id=user_id)
+        dashboard_flow = get_object_or_404(DashboardFlow, user__id=user_id)
+
+        worker_profile_serializer = WorkerProfileSerializer(worker_profile)
+        dashboard_flow_serializer = DashboardFlowSerializer(dashboard_flow)
+
+        response_data = {
+            'worker_profile': worker_profile_serializer.data,
+            'dashboard_flow': dashboard_flow_serializer.data
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
