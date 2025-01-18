@@ -1336,7 +1336,7 @@ class OnboardingFlowView(APIView):
             return Response(dashboard_flow_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         # Update WorkerProfile onboard_flow to True
-        worker_profile_serializer = WorkerProfileSerializer(worker_profile, data={"onboard_flow": True}, partial=True)
+        worker_profile_serializer = WorkerProfileSerializer(worker_profile, data={"has_passed_onboarding": True}, partial=True)
         if worker_profile_serializer.is_valid():
             worker_profile_serializer.save()
             return Response(worker_profile_serializer.data, status=status.HTTP_200_OK)

@@ -136,3 +136,50 @@ class ProfileModelTest(TestCase):
         self.assertEqual(worker_profile.place_of_birth, 'Sample City')
         self.assertTrue(worker_profile.accepted)
         self.assertEqual(worker_profile.hours, 40.0)
+
+
+import uuid
+from django.test import TestCase
+from django.contrib.auth import get_user_model
+from apps.authentication.models.dashboard_flow import DashboardFlow
+from apps.authentication.models.job_type import JobType
+from apps.authentication.models.location import Location
+
+User = get_user_model()
+
+
+class DashboardFlowModelTest(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='testuser@example.com',
+            password='password123'
+        )
+        self.job_type = JobType.objects.create(name='Sample Job Type')
+        self.location = Location.objects.create(name='Sample Location')
+
+    def test_dashboard_flow_creation(self):
+        dashboard_flow = DashboardFlow.objects.create(
+            user=self.user,
+            car_washing_experience_type='beginner',
+            waiter_experience_type='beginner',
+            cleaning_experience_type='beginner',
+            chauffeur_experience_type='beginner',
+            gardening_experience_type='beginner',
+            situation_type='flexi',
+            work_type='weekday_mornings'
+        )
+        dashboard_flow.job_type.add(self.job_type)
+        dashboard_flow.locations.add(self.location)
+
+        self.assertEqual(dashboard_flow.user, self.user)
+        self.assertEqual(dashboard_flow.car_washing_experience_type, 'beginner')
+        self.assertEqual(dashboard_flow.waiter_experience_type, 'beginner')
+        self.assertEqual(dashboard_flow.cleaning_experience_type, 'beginner')
+        self.assertEqual(dashboard_flow.chauffeur_experience_type, 'beginner')
+        self.assertEqual(dashboard_flow.gardening_experience_type, 'beginner')
+        self.assertEqual(dashboard_flow.situation_type, 'flexi')
+        self.assertEqual(dashboard_flow.work_type, 'weekday_mornings')
+        self.assertIn(self.job_type, dashboard_flow.job_type.all())
+        self.assertIn(self.location, dashboard_flow.locations.all())
