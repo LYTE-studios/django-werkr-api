@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='workerprofile',
             name='worker_type',
-            field=models.CharField(choices=[('freelancer', 'Freelancer'), ('student', 'Student'), ('flexi', 'Flexi')], default='freelancer', max_length=10),
+            field=models.CharField(choices=[('freelancer', 'Freelancer'), ('student', 'Student'), ('flexi', 'Flexi')], default='student', max_length=10),
         ),
     ]
