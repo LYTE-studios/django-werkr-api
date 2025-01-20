@@ -20,3 +20,5 @@ class WorkerProfile(models.Model):
     accepted = models.BooleanField(default=True, null=False)
     hours = models.FloatField(default=0, null=True)
     worker_type = models.CharField(max_length=10, choices=WorkerType.choices, default=WorkerType.STUDENT)
+    # Once a Worker registers, their account should get a “flag” that indicates that they have not yet done a onboarding flow
+    has_passed_onboarding = models.BooleanField(default=False)

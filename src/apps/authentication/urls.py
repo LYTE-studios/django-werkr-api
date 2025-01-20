@@ -7,7 +7,7 @@ from .views import (
     WorkerRegisterView, StatisticsView, WorkerDetailView,
     WorkersListView, AcceptWorkerView,
     CreateCustomerView, CustomersListView, CustomerDetailView,
-    CustomerSearchTermView
+    CustomerSearchTermView, OnboardingFlowView, WorkerProfileDetailView
 )
 
 from .views import TokenObtainPairView, TokenRefreshView
@@ -35,6 +35,8 @@ urlpatterns = [
     path('<str:state>/workers/<str:sort_term>/<str:algorithm>/<int:count>/<int:page>', WorkersListView.as_view()),
     path('<str:state>/workers/<int:count>/<int:page>', WorkersListView.as_view()),
     path('<str:state>/workers/<int:count>/<int:page>/<str:search_term>', WorkersListView.as_view()),
+    path('workers/onboarding/', OnboardingFlowView.as_view(), name='onboarding_flow'),
+    path('admin/workers/profile/<str:user_id>/', WorkerProfileDetailView.as_view(), name='worker_profile_detail'),
 
     # Customers
     path('customers/create', CreateCustomerView.as_view(), name="create_customer"),

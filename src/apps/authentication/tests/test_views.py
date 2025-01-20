@@ -21,6 +21,10 @@ from django.test import RequestFactory
 from django.test import TestCase, Client
 from django.urls import reverse
 from rest_framework import status
+from apps.authentication.models.profiles.worker_profile import WorkerProfile
+from apps.authentication.models.dashboard_flow import DashboardFlow
+from rest_framework import status
+from rest_framework.test import APIClient, APITestCase
 
 User = get_user_model()
 from apps.authentication.utils.worker_util import WorkerUtil
@@ -860,3 +864,69 @@ class CustomerSearchTermViewTest(TestCase):
         url = reverse('customer_search_term', kwargs={'search_term': 'invalid'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class OnboardingFlowViewTest(APITestCase):
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='testuser@example.com',
+            password='password123'
+        )
+        self.worker_profile = WorkerProfile.objects.create(user=self.user)
+        self.client.force_authenticate(user=self.user)
+        self.url = reverse('onboarding-flow')
+
+    def test_onboarding_flow_success(self):
+        data = {
+            'car_washing_experience_type': 'beginner',
+            'waiter_experience_type': 'beginner',
+            'cleaning_experience_type': 'beginner',
+            'chauffeur_experience_type': 'beginner',
+            'gardening_experience_type': 'beginner',
+            'situation_type': 'flexi',
+            'work_type': 'weekday_mornings'
+        }
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.worker_profile.refresh_from_db()
+        self.assertTrue(self.worker_profile.has_passed_onboarding)
+
+    def test_onboarding_flow_invalid_data(self):
+        data = {
+            'car_washing_experience_type': 'invalid_type'
+        }
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class WorkerProfileDetailViewTest(APITestCase):
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='testuser@example.com',
+            password='password123'
+        )
+        self.worker_profile = WorkerProfile.objects.create(user=self.user)
+        self.dashboard_flow = DashboardFlow.objects.create(
+            user=self.user,
+            car_washing_experience_type='beginner',
+            waiter_experience_type='beginner',
+            cleaning_experience_type='beginner',
+            chauffeur_experience_type='beginner',
+            gardening_experience_type='beginner',
+            situation_type='flexi',
+            work_type='weekday_mornings'
+        )
+        self.url = reverse('worker-profile-detail', kwargs={'user_id': self.user.id})
+
+    def test_get_worker_profile_detail(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('worker_profile', response.data)
+        self.assertIn('dashboard_flow', response.data)
+
