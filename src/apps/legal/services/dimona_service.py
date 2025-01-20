@@ -204,7 +204,7 @@ class DimonaService:
             raise e
 
         if user.first_name is None or user.last_name is None or ssn is None:
-            raise Exception('Washer doesn\'t have enough Data')
+            raise Exception('Worker doesn\'t have enough Data')
 
         start_time = FormattingUtil.to_user_timezone(application.job.start_time) 
         end_time = FormattingUtil.to_user_timezone(application.job.end_time)  
