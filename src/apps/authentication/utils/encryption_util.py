@@ -17,9 +17,12 @@ class EncryptionUtil:
         return password
 
     @staticmethod
-    def check_value(value: str, hashed_value: str):
+    def check_value(value: str, salt: str, hashed_value: str) -> bool:
         """
         Returns boolean result of the given value, salt combination
         """
 
-        return check_password(value, hashed_value)
+        if EncryptionUtil.encrypt_for_salt(value, salt) == hashed_value:
+            return True
+
+        return False
