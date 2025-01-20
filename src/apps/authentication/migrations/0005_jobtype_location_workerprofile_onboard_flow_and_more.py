@@ -46,7 +46,7 @@ def add_initial_job_type(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('authentication', '0004_alter_workerprofile_worker_type'),
+        ('authentication', '0003_workerprofile_worker_type'),
     ]
 
     operations = [
