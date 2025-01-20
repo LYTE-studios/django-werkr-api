@@ -10,10 +10,8 @@ from .views import (
     CustomerSearchTermView
 )
 
-from .views import TokenObtainPairView, TokenRefreshView
-
 urlpatterns = [
-    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/', JWTAuthenticationView.as_view(), name='token_obtain_pair'),
     path('token/refresh', JWTRefreshView.as_view(), name='token_refresh'),
     path('hello/there', JWTTestConnectionView.as_view(), name='test_connection'),
     path('users/me', ProfileMeView.as_view(), name='profile_me'),
