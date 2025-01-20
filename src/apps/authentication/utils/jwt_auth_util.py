@@ -7,11 +7,10 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
-from apps.authentication.models.profiles.worker_profile import WorkerProfile
+User = get_user_model()
 
 from apps.core.assumptions import *
 
-User = get_user_model()
 from .authentication_util import AuthenticationUtil
 from .encryption_util import EncryptionUtil
 from apps.core.utils.formatters import FormattingUtil
@@ -58,27 +57,23 @@ class JWTAuthUtil:
         """
 
         # Get the user
-        user = User.objects.filter(email=email, groups__id__contains=group.id).first()
-
-        # If no user can be found
-        if not user:
+        try:
+            user = User.objects.get(email=email, groups__id__contains=group.id)
+        except User.DoesNotExist:
             return None
-
-        if group.name == WORKERS_GROUP_NAME:
-            try:
-                worker_profile = WorkerProfile.objects.get(user_id=user.id)
-
-                if not worker_profile.accepted: 
-                    raise Exception('User not accepted')
-                
-            except WorkerProfile.DoesNotExist:
-                raise Exception('User profile not found')
-
-        session_expiry = None
+        
+        session_expiry = 0
 
         if group.name == CMS_GROUP_NAME:
-            if user.admin_profile.session_duration is not None:
-                session_expiry = FormattingUtil.to_timestamp(datetime.utcnow()) + user.session_duration
+            admin_profile = user.admin_profile
+            if admin_profile.session_duration is not None:
+                session_expiry = FormattingUtil.to_timestamp(datetime.utcnow()) + admin_profile.session_duration
+
+        if group.name == WORKERS_GROUP_NAME:
+            worker = user.worker_profile
+            
+            if not worker.accepted:
+                return None
 
         # Check if the user is a superuser
         if user.is_superuser:
@@ -86,8 +81,10 @@ class JWTAuthUtil:
             if not authenticate(username=user.username, password=password):
                 return None
         else:
+            if user.salt is None:
+                return None
             # Check the users credentials
-            if not EncryptionUtil.check_value(password, user.password):
+            if not EncryptionUtil.check_value(password, user.salt, user.password):
                 return None
 
         # Get the refresh token
