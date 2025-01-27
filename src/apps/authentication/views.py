@@ -34,7 +34,7 @@ from .utils.authentication_util import AuthenticationUtil
 from .utils.jwt_auth_util import JWTAuthUtil
 from .serializers import WorkerProfileSerializer, DashboardFlowSerializer
 from .models.profiles.worker_profile import WorkerProfile
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, login
 
 User = get_user_model()
 
@@ -171,7 +171,8 @@ class JWTBaseAuthView(APIView):
         self.token = auth_token
 
         request.user = self.user
-        request.user.is_authenticated = True
+        
+        login(request, self.user)
 
         return super(JWTBaseAuthView, self).dispatch(request, *args, **kwargs)
 
@@ -241,21 +242,21 @@ class ProfileMeView(JWTBaseAuthView):
             Response: A JSON response containing the user's profile data.
         """
         profile_picture = ProfileUtil.get_user_profile_picture_url(
-            request.user) if ProfileUtil.get_user_profile_picture_url(request.user) else None
+            request.user) 
 
         data = {
-            'user_id': request.user.id if request.user.is_authenticated else None,
-            'first_name': request.user.first_name if request.user.is_authenticated else None,
-            'last_name': request.user.last_name if request.user.is_authenticated else None,
-            'email': request.user.email if request.user.is_authenticated else None,
-            'description': request.user.description if request.user.is_authenticated else None,
+            'user_id': request.user.id,
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name,
+            'email': request.user.email,
+            'description': request.user.description,
             'profile_picture': profile_picture,
             'language': getattr(Settings.objects.filter(id=request.user.settings_id).first(), 'language',
-                                None) if request.user.is_authenticated else None
+                                None)
         }
 
         if hasattr(request.user, 'customer_profile'):
-            customer = request.user.customer_profile if request.user.is_authenticated else None
+            customer = request.user.customer_profile
             if customer is not None:
                 data.update({
                     'tax_number': customer.tax_number,
@@ -264,7 +265,7 @@ class ProfileMeView(JWTBaseAuthView):
                     'customer_address': customer.customer_address.to_model_view() if customer.customer_address else None,
                 })
         if hasattr(request.user, 'worker_profile'):
-            worker = request.user.worker_profile if request.user.is_authenticated else None
+            worker = request.user.worker_profile
             if worker is not None:
                 data.update({
                     'iban': worker.iban,
@@ -276,7 +277,7 @@ class ProfileMeView(JWTBaseAuthView):
                     'hours': worker.hours,
                 })
         if hasattr(request.user, 'admin_profile'):
-            admin = request.user.admin_profile if request.user.is_authenticated else None
+            admin = request.user.admin_profile
             if admin is not None:
                 data.update({
                     'session_duration': admin.session_duration,
