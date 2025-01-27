@@ -9,13 +9,12 @@ class ProfileUtil:
 
     @staticmethod
     def get_user_profile_picture_url(user: User):
-        if user.profile_picture is None:
+        if not user.is_authenticated or user.profile_picture is None:
             return None
 
         url = None
 
         try:
-
             url = user.profile_picture.url
         except Exception:
             pass

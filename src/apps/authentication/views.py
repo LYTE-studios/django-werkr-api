@@ -7,6 +7,7 @@ from apps.authentication.utils.customer_util import CustomerUtil
 from apps.authentication.utils.encryption_util import EncryptionUtil
 from apps.authentication.utils.pass_reset_util import CustomPasswordResetUtil
 from apps.authentication.utils.worker_util import WorkerUtil
+from apps.authentication.utils.profile_util import ProfileUtil
 from apps.core.assumptions import CMS_GROUP_NAME, CUSTOMERS_GROUP_NAME
 from apps.core.assumptions import (
     WORKERS_GROUP_NAME
@@ -14,7 +15,6 @@ from apps.core.assumptions import (
 from apps.core.model_exceptions import DeserializationException
 from apps.core.models.settings import Settings
 from apps.core.utils.formatters import FormattingUtil
-from apps.core.utils.profile import ProfileUtil
 from apps.core.utils.wire_names import *
 from apps.jobs.models import Job, JobState
 from apps.jobs.services.statistics_service import StatisticsService

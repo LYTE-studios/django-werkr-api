@@ -6,6 +6,8 @@ from django.core.validators import validate_email
 
 from apps.core.model_exceptions import DeserializationException
 from apps.core.models.geo import Address
+from datetime import datetime, time, date
+
 
 
 class FormattingUtil:
@@ -186,10 +188,10 @@ class FormattingUtil:
     def to_timestamp(date_time):
         if date_time is None:
             return None
-        if type(date_time) is timezone.time:
+        if isinstance(date_time, time):
             return date_time.minute + (date_time.hour * 60)
-        if type(date_time) is timezone.date:
-            date_time = timezone.datetime.combine(date_time, timezone.datetime.min.time())
+        if isinstance(date_time, date):
+            date_time = datetime.combine(date_time, datetime.min.time())
         return date_time.timestamp().__round__()
 
     @staticmethod
