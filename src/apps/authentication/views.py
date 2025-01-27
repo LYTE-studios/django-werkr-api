@@ -237,8 +237,7 @@ class ProfileMeView(JWTBaseAuthView):
         Returns:
             Response: A JSON response containing the user's profile data.
         """
-        profile_picture = ProfileUtil.get_user_profile_picture_url(
-            self.user) 
+        profile_picture = ProfileUtil.get_user_profile_picture_url(self.user) 
 
         data = {
             'user_id': self.user.id,
