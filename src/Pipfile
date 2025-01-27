@@ -30,6 +30,7 @@ uvicorn = "*"
 mailjet-rest = "*"
 firebase-admin = "*"
 xhtml2pdf = "*"
+bcrypt = "*"
 
 [dev-packages]
 pytest = "*"

@@ -117,6 +117,8 @@ class JWTBaseAuthView(APIView):
         group (Group): The group to which the authenticated user belongs.
     """
 
+    permission_classes = []
+
     # Override this to allow different groups.
     groups = [
         CUSTOMERS_GROUP_NAME,
@@ -593,8 +595,9 @@ class ResetPasswordView(BaseClientView):
         user = pass_reset_util.get_user_by_token_and_code(token, code)
         if user:
             # Encrypt the new password and update the user's password
-            password = EncryptionUtil.encrypt(password)
+            password, salt = EncryptionUtil.encrypt(password)
             user.password = password
+            user.salt = salt
             user.save()
 
             # Return a success response
@@ -652,7 +655,7 @@ class WorkerRegisterView(BaseClientView):
             return Response({k_message: 'User already exists'}, status=HTTPStatus.METHOD_NOT_ALLOWED)
 
         # Encrypt the password
-        password = EncryptionUtil.encrypt(password)
+        password, salt = EncryptionUtil.encrypt(password)
 
         # Create the user with the encrypted password
         user = User(
@@ -660,6 +663,7 @@ class WorkerRegisterView(BaseClientView):
             first_name=first_name,
             last_name=last_name,
             password=password,
+            salt=salt,
             email=email,
             phone_number=phone_number,
         )

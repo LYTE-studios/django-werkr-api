@@ -1,4 +1,4 @@
-from django.contrib.auth.hashers import make_password, check_password
+import bcrypt
 
 
 class EncryptionUtil:
@@ -12,9 +12,21 @@ class EncryptionUtil:
         Returns the encrypted password and the generated salt.
         """
 
-        password = make_password(value)
+        salt = bcrypt.gensalt()
 
-        return password
+        hashed_value = bcrypt.hashpw(bytes(value, 'utf-8'), salt=salt)
+
+        return hashed_value.decode('utf-8'), salt.decode('utf-8')
+ 
+    @staticmethod
+    def encrypt_for_salt(value: str, salt: str):
+        """
+        Returns the encrypted password with specified salt.
+        """
+
+        hashed_value = bcrypt.hashpw(bytes(value, 'utf-8'), salt=bytes(salt, 'utf-8'))
+
+        return hashed_value.decode('utf-8')
 
     @staticmethod
     def check_value(value: str, salt: str, hashed_value: str) -> bool:

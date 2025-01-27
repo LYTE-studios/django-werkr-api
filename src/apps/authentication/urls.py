@@ -11,7 +11,7 @@ from .views import (
 )
 
 urlpatterns = [
-    path('token/', JWTAuthenticationView.as_view(), name='token_obtain_pair'),
+    path('token', JWTAuthenticationView.as_view(), name='token_obtain_pair'),
     path('token/refresh', JWTRefreshView.as_view(), name='token_refresh'),
     path('hello/there', JWTTestConnectionView.as_view(), name='test_connection'),
     path('users/me', ProfileMeView.as_view(), name='profile_me'),
@@ -34,7 +34,7 @@ urlpatterns = [
     path('<str:state>/workers/<int:count>/<int:page>', WorkersListView.as_view()),
     path('<str:state>/workers/<int:count>/<int:page>/<str:search_term>', WorkersListView.as_view()),
     path('workers/onboarding/', OnboardingFlowView.as_view(), name='onboarding_flow'),
-    path('admin/workers/profile/<str:user_id>/', WorkerProfileDetailView.as_view(), name='worker_profile_detail'),
+    path('admin/workers/profile/<str:user_id>', WorkerProfileDetailView.as_view(), name='worker_profile_detail'),
 
     # Customers
     path('customers/create', CreateCustomerView.as_view(), name="create_customer"),
