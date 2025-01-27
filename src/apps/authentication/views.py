@@ -170,10 +170,6 @@ class JWTBaseAuthView(APIView):
 
         self.token = auth_token
 
-        request.user = self.user
-        
-        login(request, self.user)
-
         return super(JWTBaseAuthView, self).dispatch(request, *args, **kwargs)
 
 
@@ -242,21 +238,21 @@ class ProfileMeView(JWTBaseAuthView):
             Response: A JSON response containing the user's profile data.
         """
         profile_picture = ProfileUtil.get_user_profile_picture_url(
-            request.user) 
+            self.user) 
 
         data = {
-            'user_id': request.user.id,
-            'first_name': request.user.first_name,
-            'last_name': request.user.last_name,
-            'email': request.user.email,
-            'description': request.user.description,
+            'user_id': self.user.id,
+            'first_name': self.user.first_name,
+            'last_name': self.user.last_name,
+            'email': self.user.email,
+            'description': self.user.description,
             'profile_picture': profile_picture,
-            'language': getattr(Settings.objects.filter(id=request.user.settings_id).first(), 'language',
+            'language': getattr(Settings.objects.filter(id=self.user.settings_id).first(), 'language',
                                 None)
         }
 
-        if hasattr(request.user, 'customer_profile'):
-            customer = request.user.customer_profile
+        if hasattr(self.user, 'customer_profile'):
+            customer = self.user.customer_profile
             if customer is not None:
                 data.update({
                     'tax_number': customer.tax_number,
@@ -264,8 +260,8 @@ class ProfileMeView(JWTBaseAuthView):
                     'customer_billing_address': customer.customer_billing_address.to_model_view() if customer.customer_billing_address else None,
                     'customer_address': customer.customer_address.to_model_view() if customer.customer_address else None,
                 })
-        if hasattr(request.user, 'worker_profile'):
-            worker = request.user.worker_profile
+        if hasattr(self.user, 'worker_profile'):
+            worker = self.user.worker_profile
             if worker is not None:
                 data.update({
                     'iban': worker.iban,
@@ -276,8 +272,8 @@ class ProfileMeView(JWTBaseAuthView):
                     'accepted': worker.accepted,
                     'hours': worker.hours,
                 })
-        if hasattr(request.user, 'admin_profile'):
-            admin = request.user.admin_profile
+        if hasattr(self.user, 'admin_profile'):
+            admin = self.user.admin_profile
             if admin is not None:
                 data.update({
                     'session_duration': admin.session_duration,
@@ -307,12 +303,12 @@ class ProfileMeView(JWTBaseAuthView):
         except Exception as e:
             return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        request.user.first_name = first_name or request.user.first_name
-        request.user.last_name = last_name or request.user.last_name
-        request.user.email = email or request.user.email
-        request.user.description = description or request.user.description
+        self.user.first_name = first_name or self.user.first_name
+        self.user.last_name = last_name or self.user.last_name
+        self.user.email = email or self.user.email
+        self.user.description = description or self.user.description
 
-        if hasattr(request.user, 'customer_profile'):
+        if hasattr(self.user, 'customer_profile'):
             try:
                 tax_number = formatter.get_value('tax_number')
                 company_name = formatter.get_value('company_name')
@@ -323,7 +319,7 @@ class ProfileMeView(JWTBaseAuthView):
             except Exception as e:
                 return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            customer = request.user.customer_profile
+            customer = self.user.customer_profile
             customer.tax_number = tax_number or customer.tax_number
             customer.company_name = company_name or customer.company_name
             customer.customer_address = customer_address or customer.customer_address
@@ -332,7 +328,7 @@ class ProfileMeView(JWTBaseAuthView):
             customer.customer_billing_address.save()
             customer.save()
 
-        if hasattr(request.user, 'worker_profile'):
+        if hasattr(self.user, 'worker_profile'):
             try:
                 iban = formatter.get_value('iban')
                 ssn = formatter.get_value('ssn')
@@ -346,7 +342,7 @@ class ProfileMeView(JWTBaseAuthView):
             except Exception as e:
                 return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            worker = request.user.worker_profile
+            worker = self.user.worker_profile
             worker.iban = iban or worker.iban
             worker.ssn = ssn or worker.ssn
             worker.worker_address = worker_address or worker.worker_address
@@ -357,7 +353,7 @@ class ProfileMeView(JWTBaseAuthView):
             worker.worker_address.save()
             worker.save()
 
-        if hasattr(request.user, 'admin_profile'):
+        if hasattr(self.user, 'admin_profile'):
             try:
                 session_duration = formatter.get_value('session_duration')
             except DeserializationException as e:
@@ -365,13 +361,13 @@ class ProfileMeView(JWTBaseAuthView):
             except Exception as e:
                 return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            admin = request.user.admin_profile
+            admin = self.user.admin_profile
             admin.session_duration = session_duration or admin.session_duration
             admin.save()
 
-        request.user.save()
+        self.user.save()
 
-        return Response({'user_id': request.user.id})
+        return Response({'user_id': self.user.id})
 
 
 class LanguageSettingsView(JWTBaseAuthView):
@@ -412,13 +408,13 @@ class LanguageSettingsView(JWTBaseAuthView):
             return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if language:
-            settings = request.user.settings or Settings.objects.create(language=language)
+            settings = self.user.settings or Settings.objects.create(language=language)
             settings.language = language
             settings.save()
-            request.user.settings = settings
-            request.user.save()
+            self.user.settings = settings
+            self.user.save()
 
-        return Response({'language': request.user.settings.language})
+        return Response({'language': self.user.settings.language})
 
 
 class UploadUserProfilePictureView(JWTBaseAuthView):
@@ -1326,7 +1322,7 @@ class OnboardingFlowView(APIView):
     """
 
     def post(self, request, *args, **kwargs):
-        user = request.user
+        user = self.user
         worker_profile = get_object_or_404(WorkerProfile, user=user)
 
         # Save data to DashboardFlow

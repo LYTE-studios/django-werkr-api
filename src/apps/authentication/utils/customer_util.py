@@ -27,7 +27,6 @@ class CustomerUtil:
             k_billing_address: customer_profile.customer_billing_address.to_model_view(),
             k_tax_number: customer_profile.tax_number,
             k_company: customer_profile.company_name,
-            k_hours: customer.hours,
             k_has_active_job: has_active_job,
         }
 
