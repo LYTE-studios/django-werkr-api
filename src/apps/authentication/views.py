@@ -170,6 +170,8 @@ class JWTBaseAuthView(APIView):
 
         self.token = auth_token
 
+        request.user = self.user
+
         return super(JWTBaseAuthView, self).dispatch(request, *args, **kwargs)
 
 
