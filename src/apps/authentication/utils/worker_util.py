@@ -15,7 +15,6 @@ class WorkerUtil:
         data = {k_id: worker.id, k_first_name: worker.first_name,
                 k_last_name: worker.last_name,
                 k_email: worker.email, k_created_at: FormattingUtil.to_timestamp(worker.date_joined),
-                k_phone_number: worker.phone_number,
                 k_tax_number: worker.tax_number,
                 k_company: worker.company_name,
                 k_hours: worker.hours,

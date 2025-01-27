@@ -124,21 +124,19 @@ class ProfileMeViewTest(TestCase):
         self.assertEqual(self.user.description, 'new_description')
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_value',
-           side_effect=lambda key, required=False: 'new_value' if key in ['phone_number', 'tax_number',
+           side_effect=lambda key, required=False: 'new_value' if key in ['tax_number',
                                                                           'company_name'] else None)
     @patch('apps.core.utils.formatters.FormattingUtil.get_address', return_value=None)
     def test_put_customer_profile(self, mock_get_address, mock_get_value):
-        customer_profile = CustomerProfile.objects.create(user=self.user, phone_number='1234567890', tax_number='12345',
+        customer_profile = CustomerProfile.objects.create(user=self.user, tax_number='12345',
                                                           company_name='Test Company')
         data = {
-            'phone_number': 'new_phone_number',
             'tax_number': 'new_tax_number',
             'company_name': 'new_company_name'
         }
         response = self.client.put(reverse('profile_me'), data, content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         customer_profile.refresh_from_db()
-        self.assertEqual(customer_profile.phone_number, 'new_phone_number')
         self.assertEqual(customer_profile.tax_number, 'new_tax_number')
         self.assertEqual(customer_profile.company_name, 'new_company_name')
 

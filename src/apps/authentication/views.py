@@ -2,7 +2,6 @@ import datetime
 from http import HTTPStatus
 
 from apps.authentication.managers.user_manager import UserManager
-from apps.authentication.models import User
 from apps.authentication.utils.customer_util import CustomerUtil
 from apps.authentication.utils.encryption_util import EncryptionUtil
 from apps.authentication.utils.pass_reset_util import CustomPasswordResetUtil
@@ -30,11 +29,14 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from .models import User, DashboardFlow
+from .models import DashboardFlow
 from .utils.authentication_util import AuthenticationUtil
 from .utils.jwt_auth_util import JWTAuthUtil
 from .serializers import WorkerProfileSerializer, DashboardFlowSerializer
 from .models.profiles.worker_profile import WorkerProfile
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 class BaseClientView(APIView):
@@ -239,40 +241,43 @@ class ProfileMeView(JWTBaseAuthView):
             request.user) if ProfileUtil.get_user_profile_picture_url(request.user) else None
 
         data = {
-            'user_id': request.user.id,
-            'first_name': request.user.first_name,
-            'last_name': request.user.last_name,
-            'email': request.user.email,
-            'description': request.user.description,
+            'user_id': request.user.id if request.user.is_authenticated else None,
+            'first_name': request.user.first_name if request.user.is_authenticated else None,
+            'last_name': request.user.last_name if request.user.is_authenticated else None,
+            'email': request.user.email if request.user.is_authenticated else None,
+            'description': request.user.description if request.user.is_authenticated else None,
             'profile_picture': profile_picture,
-            'language': getattr(Settings.objects.filter(id=request.user.settings_id).first(), 'language', None)
+            'language': getattr(Settings.objects.filter(id=request.user.settings_id).first(), 'language',
+                                None) if request.user.is_authenticated else None
         }
 
         if hasattr(request.user, 'customer_profile'):
-            customer = request.user.customer_profile
-            data.update({
-                'phone_number': customer.phone_number,
-                'tax_number': customer.tax_number,
-                'company_name': customer.company_name,
-                'customer_billing_address': customer.customer_billing_address.to_model_view() if customer.customer_billing_address else None,
-                'customer_address': customer.customer_address.to_model_view() if customer.customer_address else None,
-            })
+            customer = request.user.customer_profile if request.user.is_authenticated else None
+            if customer is not None:
+                data.update({
+                    'tax_number': customer.tax_number,
+                    'company_name': customer.company_name,
+                    'customer_billing_address': customer.customer_billing_address.to_model_view() if customer.customer_billing_address else None,
+                    'customer_address': customer.customer_address.to_model_view() if customer.customer_address else None,
+                })
         if hasattr(request.user, 'worker_profile'):
-            worker = request.user.worker_profile
-            data.update({
-                'iban': worker.iban,
-                'ssn': worker.ssn,
-                'worker_address': worker.worker_address.to_model_view() if worker.worker_address else None,
-                'date_of_birth': FormattingUtil.to_timestamp(worker.date_of_birth),
-                'place_of_birth': worker.place_of_birth,
-                'accepted': worker.accepted,
-                'hours': worker.hours,
-            })
+            worker = request.user.worker_profile if request.user.is_authenticated else None
+            if worker is not None:
+                data.update({
+                    'iban': worker.iban,
+                    'ssn': worker.ssn,
+                    'worker_address': worker.worker_address.to_model_view() if worker.worker_address else None,
+                    'date_of_birth': FormattingUtil.to_timestamp(worker.date_of_birth),
+                    'place_of_birth': worker.place_of_birth,
+                    'accepted': worker.accepted,
+                    'hours': worker.hours,
+                })
         if hasattr(request.user, 'admin_profile'):
-            admin = request.user.admin_profile
-            data.update({
-                'session_duration': admin.session_duration,
-            })
+            admin = request.user.admin_profile if request.user.is_authenticated else None
+            if admin is not None:
+                data.update({
+                    'session_duration': admin.session_duration,
+                })
 
         return Response(data)
 
@@ -305,7 +310,6 @@ class ProfileMeView(JWTBaseAuthView):
 
         if hasattr(request.user, 'customer_profile'):
             try:
-                phone_number = formatter.get_value('phone_number')
                 tax_number = formatter.get_value('tax_number')
                 company_name = formatter.get_value('company_name')
                 customer_address = formatter.get_address('address')
@@ -316,7 +320,6 @@ class ProfileMeView(JWTBaseAuthView):
                 return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             customer = request.user.customer_profile
-            customer.phone_number = phone_number or customer.phone_number
             customer.tax_number = tax_number or customer.tax_number
             customer.company_name = company_name or customer.company_name
             customer.customer_address = customer_address or customer.customer_address
@@ -638,7 +641,6 @@ class WorkerRegisterView(BaseClientView):
             last_name = formatter.get_value(k_last_name, required=True)
             email = formatter.get_email(k_email, required=True)
             password = formatter.get_value(k_password, required=True)
-            phone_number = formatter.get_value(k_phone_number, required=False)
             date_of_birth = formatter.get_date(k_date_of_birth, required=False)
             iban = formatter.get_value(k_tax_number, required=False)
             place_of_birth = formatter.get_value(k_place_of_birth, required=False)
@@ -665,7 +667,6 @@ class WorkerRegisterView(BaseClientView):
             password=password,
             salt=salt,
             email=email,
-            phone_number=phone_number,
         )
 
         # Use the manager to create the user
@@ -845,7 +846,6 @@ class WorkerDetailView(JWTBaseAuthView):
         try:
             first_name = formatter.get_value(k_first_name)
             last_name = formatter.get_value(k_last_name)
-            phone_number = formatter.get_value(k_phone_number)
             email = formatter.get_email(k_email)
             address = formatter.get_address(k_address)
             date_of_birth = formatter.get_date(k_date_of_birth)
@@ -860,7 +860,6 @@ class WorkerDetailView(JWTBaseAuthView):
         worker.first_name = first_name or worker.first_name
         worker.last_name = last_name or worker.last_name
         worker.email = email or worker.email
-        worker.phone_number = phone_number or worker.phone_number
         worker.worker_address = address or worker.worker_address
         worker.tax_number = tax_number or worker.tax_number
         worker.company_name = company or worker.company_name
@@ -1029,7 +1028,6 @@ class CreateCustomerView(JWTBaseAuthView):
             billing_address = formatter.get_address(k_billing_address)
             tax_number = formatter.get_value(k_tax_number)
             company = formatter.get_value(k_company)
-            phone_number = formatter.get_value(k_phone_number)
         except DeserializationException as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
@@ -1066,7 +1064,6 @@ class CreateCustomerView(JWTBaseAuthView):
         # Create customer profile
         UserManager.create_customer_profile(
             user=user,
-            phone_number=phone_number,
             tax_number=tax_number,
             company_name=company,
             customer_address=address,
@@ -1246,7 +1243,6 @@ class CustomerDetailView(JWTBaseAuthView):
             first_name = formatter.get_value('first_name')
             last_name = formatter.get_value('last_name')
             email = formatter.get_email('email')
-            phone_number = formatter.get_value('phone_number')
             address = formatter.get_address('address')
             billing_address = formatter.get_address('billing_address')
             tax_number = formatter.get_value('tax_number')
@@ -1261,7 +1257,6 @@ class CustomerDetailView(JWTBaseAuthView):
         customer.email = email or customer.email
 
         customer_profile = customer.customer_profile
-        customer_profile.phone_number = phone_number or customer_profile.phone_number
         customer_profile.customer_address = address or customer_profile.customer_address
         customer_profile.customer_billing_address = billing_address or customer_profile.customer_billing_address
         customer_profile.tax_number = tax_number or customer_profile.tax_number
@@ -1340,7 +1335,8 @@ class OnboardingFlowView(APIView):
             return Response(dashboard_flow_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         # Update WorkerProfile onboard_flow to True
-        worker_profile_serializer = WorkerProfileSerializer(worker_profile, data={"has_passed_onboarding": True}, partial=True)
+        worker_profile_serializer = WorkerProfileSerializer(worker_profile, data={"has_passed_onboarding": True},
+                                                            partial=True)
         if worker_profile_serializer.is_valid():
             worker_profile_serializer.save()
             return Response(worker_profile_serializer.data, status=status.HTTP_200_OK)

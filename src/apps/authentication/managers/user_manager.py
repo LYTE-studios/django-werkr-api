@@ -41,11 +41,10 @@ class UserManager:
         worker_profile.save()
 
     @staticmethod
-    def create_customer_profile(user: User, phone_number: str = None, tax_number: str = None, company_name: str = None,
+    def create_customer_profile(user: User, tax_number: str = None, company_name: str = None,
                                 customer_address: Address = None, customer_billing_address: Address = None):
         customer_profile = CustomerProfile(
             user=user,
-            phone_number=phone_number,
             tax_number=tax_number,
             company_name=company_name,
             customer_address=customer_address,
