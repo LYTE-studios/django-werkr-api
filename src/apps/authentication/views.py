@@ -171,6 +171,7 @@ class JWTBaseAuthView(APIView):
         self.token = auth_token
 
         request.user = self.user
+        request.user.is_authenticated = True
 
         return super(JWTBaseAuthView, self).dispatch(request, *args, **kwargs)
 
