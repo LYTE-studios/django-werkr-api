@@ -15,10 +15,8 @@ import uuid
 import datetime
 from time import sleep
 
-from cryptography.x509 import load_pem_x509_certificate
-from cryptography.hazmat.backends import default_backend
-
 from apps.notifications.managers.notification_manager import NotificationManager
+
 
 class DimonaService:
 
@@ -50,21 +48,21 @@ class DimonaService:
 
         response = requests.post(
             url,
-                headers={
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                data={
-                    'grant_type': 'client_credentials',
-                    'client_assertion_type': 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
-                    'client_assertion': token,
-                }
-            )
+            headers={
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            data={
+                'grant_type': 'client_credentials',
+                'client_assertion_type': 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+                'client_assertion': token,
+            }
+        )
 
         if response.status_code == 200:
             return json.loads(response.content)['access_token']
 
-
-        raise Exception('{}: {} for {}'.format(response.status_code, response.content, '{} -- {}'.format(response.request.headers, response.request.url),))
+        raise Exception('{}: {} for {}'.format(response.status_code, response.content,
+                                               '{} -- {}'.format(response.request.headers, response.request.url), ))
 
     @staticmethod
     def _make_post(url: str, data: dict):
@@ -74,8 +72,8 @@ class DimonaService:
         return requests.post(url, json=data, headers={
             'Content-Type': 'application/json',
             'Authorization': 'Bearer {}'.format(token),
-            },
-        )
+        },
+                             )
 
     @staticmethod
     def _make_get(url: str):
@@ -85,17 +83,17 @@ class DimonaService:
         return requests.get(url, headers={
             'Content-Type': 'application/json',
             'Authorization': 'Bearer {}'.format(token),
-            },
-        )
+        },
+                            )
 
     @staticmethod
     def format_ssn(ssn: str):
         ssn = ssn.replace('-', '').replace('.', '')
 
-        if(len(ssn) > 11):
+        if (len(ssn) > 11):
             raise Exception('User has an incorrect ssn')
 
-        while(len(ssn) < 11):
+        while (len(ssn) < 11):
             ssn = '0' + ssn
 
         return ssn
@@ -106,11 +104,10 @@ class DimonaService:
 
         if worker_profile.ssn is None:
             raise Exception('User does not have an SSN.')
-        
+
         ssn = DimonaService.format_ssn(worker_profile.ssn)
 
         if ssn != worker_profile.ssn:
-            
             worker_profile.ssn = ssn
 
             worker_profile.save()
@@ -206,8 +203,8 @@ class DimonaService:
         if user.first_name is None or user.last_name is None or ssn is None:
             raise Exception('Worker doesn\'t have enough Data')
 
-        start_time = FormattingUtil.to_user_timezone(application.job.start_time) 
-        end_time = FormattingUtil.to_user_timezone(application.job.end_time)  
+        start_time = FormattingUtil.to_user_timezone(application.job.start_time)
+        end_time = FormattingUtil.to_user_timezone(application.job.end_time)
 
         dimona_data = {
             "employer": settings.EMPLOYER_DATA,
@@ -248,7 +245,8 @@ class DimonaService:
 
         raise Exception('{} {}'.format(response.content, response.request.body))
 
-async def fetch_dimona(id: str, tries = 0):
+
+async def fetch_dimona(id: str, tries=0):
     sleep(2)
 
     if tries > 5:
@@ -266,13 +264,12 @@ async def fetch_dimona(id: str, tries = 0):
     search = DimonaService._make_get(settings.DIMONA_URL + '/declarations/{}'.format(id))
 
     if search.status_code == 404:
-        asyncio.create_task(fetch_dimona(id=id, tries=tries+1))
+        asyncio.create_task(fetch_dimona(id=id, tries=tries + 1))
         return
 
     json_data = search.json()
 
     dimona = Dimona.objects.get(id=id)
-
 
     if json_data['declarationStatus']['result'] == "A":
         dimona.success = True

@@ -568,6 +568,7 @@ class DirectionsView(JWTBaseAuthView):
         # Return a bad request response if fetching directions fails
         return HttpResponseBadRequest(response)
 
+
 class MyApplicationsView(JWTBaseAuthView):
     """
     [Workers]
