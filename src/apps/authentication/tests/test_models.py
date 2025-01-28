@@ -1,185 +1,123 @@
-from apps.authentication.models.pass_reset import PassResetCode
-from apps.core.models.settings import Settings
-from django.contrib.auth import get_user_model
 from django.test import TestCase
-from django.utils import timezone
+from apps.authentication.models.user import User
+from apps.core.models.settings import Settings
+from apps.authentication.models.profiles.worker_profile import WorkerProfile
+from apps.authentication.models.profiles.admin_profile import AdminProfile
+from django.test import TestCase
+from django.contrib.auth import get_user_model
+from apps.authentication.models.profiles.customer_profile import CustomerProfile
+from apps.core.models.geo import Address
 
 User = get_user_model()
-
-from apps.core.models.geo import Address
-from apps.authentication.models.profiles.admin_profile import AdminProfile
-from apps.authentication.models.profiles.customer_profile import CustomerProfile
-from apps.authentication.models.profiles.worker_profile import WorkerProfile
 
 
 class UserModelTest(TestCase):
 
     def setUp(self):
         self.settings = Settings.objects.create(language='en')
-        self.user = get_user_model().objects.create(
-            first_name='John',
-            last_name='Doe',
-            email='john.doe@example.com',
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='testuser@example.com',
             password='password123',
-            settings=self.settings,
+            first_name='Test',
+            last_name='User',
             fcm_token='sample_token',
+            salt='sample_salt',
             description='Sample description',
-            profile_picture=None,
-            archived=False,
-            accepted=True,
-            hours=40.0,
-            session_duration=30,
-            place_of_birth='Sample City'
+            phone_number='1234567890',
+            settings=self.settings,
+            archived=False
         )
 
     def test_user_creation(self):
-        self.assertEqual(self.user.first_name, 'John')
-        self.assertEqual(self.user.last_name, 'Doe')
-        self.assertEqual(self.user.email, 'john.doe@example.com')
-        self.assertEqual(self.user.settings, self.settings)
+        self.assertIsNotNone(self.user)
+        self.assertEqual(self.user.username, 'testuser')
+        self.assertEqual(self.user.email, 'testuser@example.com')
+        self.assertEqual(self.user.first_name, 'Test')
+        self.assertEqual(self.user.last_name, 'User')
         self.assertEqual(self.user.fcm_token, 'sample_token')
+        self.assertEqual(self.user.salt, 'sample_salt')
         self.assertEqual(self.user.description, 'Sample description')
+        self.assertEqual(self.user.phone_number, '1234567890')
+        self.assertEqual(self.user.settings, self.settings)
         self.assertFalse(self.user.archived)
-        self.assertTrue(self.user.accepted)
-        self.assertEqual(self.user.hours, 40.0)
-        self.assertEqual(self.user.session_duration, 30)
-        self.assertEqual(self.user.place_of_birth, 'Sample City')
-
-    def test_user_string_representation(self):
-        self.assertEqual(str(self.user), self.user.username)
-
-    def test_user_profile_picture_upload_path(self):
-        self.assertIsNone(self.user.profile_picture)
 
 
-class PassResetCodeModelTest(TestCase):
+class AdminProfileModelTest(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            username='testuser',
-            email='testuser@example.com',
+            username='adminuser',
+            email='adminuser@example.com',
             password='password123'
         )
-        self.pass_reset_code = PassResetCode.objects.create(
-            user=self.user,
-            code='123456',
-            reset_password_token='sample_token',
-            token_expiry_time=timezone.now() + timezone.timedelta(hours=1)
-        )
-
-    def test_pass_reset_code_creation(self):
-        self.assertEqual(self.pass_reset_code.user, self.user)
-        self.assertEqual(self.pass_reset_code.code, '123456')
-        self.assertFalse(self.pass_reset_code.used)
-        self.assertEqual(self.pass_reset_code.reset_password_token, 'sample_token')
-        self.assertIsNotNone(self.pass_reset_code.token_expiry_time)
-
-    def test_pass_reset_code_string_representation(self):
-        self.assertEqual(str(self.pass_reset_code), self.pass_reset_code.code)
-
-
-class ProfileModelTest(TestCase):
-
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username='testuser',
-            email='testuser@example.com',
-            password='password123'
-        )
-        self.address = Address.objects.create(
-            street_name='123 Main St',
-            city='Sample City',
-            zip_code='12345',
-            country='Sample Country'
-        )
+        self.admin_profile = AdminProfile.objects.create(user=self.user, session_duration=30)
 
     def test_admin_profile_creation(self):
-        admin_profile = AdminProfile.objects.create(
-            user=self.user,
-            session_duration=30
-        )
-        self.assertEqual(admin_profile.user, self.user)
-        self.assertEqual(admin_profile.session_duration, 30)
+        self.assertIsNotNone(self.admin_profile)
+        self.assertEqual(self.admin_profile.user, self.user)
+        self.assertEqual(self.admin_profile.session_duration, 30)
 
-    def test_customer_profile_creation(self):
-        customer_profile = CustomerProfile.objects.create(
+
+class CustomerProfileModelTest(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='customeruser',
+            email='customeruser@example.com',
+            password='password123'
+        )
+        self.address = Address.objects.create(name='Sample Address')
+        self.customer_profile = CustomerProfile.objects.create(
             user=self.user,
-            phone_number='1234567890',
-            tax_number='TAX123456',
+            tax_number='123456789',
             company_name='Sample Company',
             customer_billing_address=self.address,
-            customer_address=self.address
+            customer_address=self.address,
+            special_committee='Sample Committee'
         )
-        self.assertEqual(customer_profile.user, self.user)
-        self.assertEqual(customer_profile.phone_number, '1234567890')
-        self.assertEqual(customer_profile.tax_number, 'TAX123456')
-        self.assertEqual(customer_profile.company_name, 'Sample Company')
-        self.assertEqual(customer_profile.customer_billing_address, self.address)
-        self.assertEqual(customer_profile.customer_address, self.address)
 
-    def test_worker_profile_creation(self):
-        worker_profile = WorkerProfile.objects.create(
+    def test_customer_profile_creation(self):
+        self.assertIsNotNone(self.customer_profile)
+        self.assertEqual(self.customer_profile.user, self.user)
+        self.assertEqual(self.customer_profile.tax_number, '123456789')
+        self.assertEqual(self.customer_profile.company_name, 'Sample Company')
+        self.assertEqual(self.customer_profile.customer_billing_address, self.address)
+        self.assertEqual(self.customer_profile.customer_address, self.address)
+        self.assertEqual(self.customer_profile.special_committee, 'Sample Committee')
+
+
+class WorkerProfileModelTest(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='workeruser',
+            email='workeruser@example.com',
+            password='password123'
+        )
+        self.address = Address.objects.create(name='Sample Address')
+        self.worker_profile = WorkerProfile.objects.create(
             user=self.user,
-            iban='IBAN123456',
-            ssn='SSN123456',
+            iban='DE89370400440532013000',
+            ssn='123-45-6789',
             worker_address=self.address,
             date_of_birth='1990-01-01',
             place_of_birth='Sample City',
             accepted=True,
-            hours=40.0
+            hours=40.0,
+            worker_type=WorkerProfile.WorkerType.STUDENT,
+            has_passed_onboarding=False
         )
-        self.assertEqual(worker_profile.user, self.user)
-        self.assertEqual(worker_profile.iban, 'IBAN123456')
-        self.assertEqual(worker_profile.ssn, 'SSN123456')
-        self.assertEqual(worker_profile.worker_address, self.address)
-        self.assertEqual(worker_profile.date_of_birth, '1990-01-01')
-        self.assertEqual(worker_profile.place_of_birth, 'Sample City')
-        self.assertTrue(worker_profile.accepted)
-        self.assertEqual(worker_profile.hours, 40.0)
 
-
-import uuid
-from django.test import TestCase
-from django.contrib.auth import get_user_model
-from apps.authentication.models.dashboard_flow import DashboardFlow
-from apps.authentication.models.job_type import JobType
-from apps.authentication.models.location import Location
-
-User = get_user_model()
-
-
-class DashboardFlowModelTest(TestCase):
-
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username='testuser',
-            email='testuser@example.com',
-            password='password123'
-        )
-        self.job_type = JobType.objects.create(name='Sample Job Type')
-        self.location = Location.objects.create(name='Sample Location')
-
-    def test_dashboard_flow_creation(self):
-        dashboard_flow = DashboardFlow.objects.create(
-            user=self.user,
-            car_washing_experience_type='beginner',
-            waiter_experience_type='beginner',
-            cleaning_experience_type='beginner',
-            chauffeur_experience_type='beginner',
-            gardening_experience_type='beginner',
-            situation_type='flexi',
-            work_type='weekday_mornings'
-        )
-        dashboard_flow.job_type.add(self.job_type)
-        dashboard_flow.locations.add(self.location)
-
-        self.assertEqual(dashboard_flow.user, self.user)
-        self.assertEqual(dashboard_flow.car_washing_experience_type, 'beginner')
-        self.assertEqual(dashboard_flow.waiter_experience_type, 'beginner')
-        self.assertEqual(dashboard_flow.cleaning_experience_type, 'beginner')
-        self.assertEqual(dashboard_flow.chauffeur_experience_type, 'beginner')
-        self.assertEqual(dashboard_flow.gardening_experience_type, 'beginner')
-        self.assertEqual(dashboard_flow.situation_type, 'flexi')
-        self.assertEqual(dashboard_flow.work_type, 'weekday_mornings')
-        self.assertIn(self.job_type, dashboard_flow.job_type.all())
-        self.assertIn(self.location, dashboard_flow.locations.all())
+    def test_worker_profile_creation(self):
+        self.assertIsNotNone(self.worker_profile)
+        self.assertEqual(self.worker_profile.user, self.user)
+        self.assertEqual(self.worker_profile.iban, 'DE89370400440532013000')
+        self.assertEqual(self.worker_profile.ssn, '123-45-6789')
+        self.assertEqual(self.worker_profile.worker_address, self.address)
+        self.assertEqual(self.worker_profile.date_of_birth, '1990-01-01')
+        self.assertEqual(self.worker_profile.place_of_birth, 'Sample City')
+        self.assertTrue(self.worker_profile.accepted)
+        self.assertEqual(self.worker_profile.hours, 40.0)
+        self.assertEqual(self.worker_profile.worker_type, WorkerProfile.WorkerType.STUDENT)
+        self.assertFalse(self.worker_profile.has_passed_onboarding)

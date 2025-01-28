@@ -23,12 +23,10 @@ class CustomerUtil:
             k_last_name: customer.last_name,
             k_email: customer.email,
             k_created_at: FormattingUtil.to_timestamp(customer.date_joined),
-            k_phone_number: customer_profile.phone_number,
             k_address: customer_profile.customer_address.to_model_view(),
             k_billing_address: customer_profile.customer_billing_address.to_model_view(),
             k_tax_number: customer_profile.tax_number,
             k_company: customer_profile.company_name,
-            k_hours: customer.hours,
             k_has_active_job: has_active_job,
         }
 

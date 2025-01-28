@@ -15,7 +15,6 @@ class ProfileUtil:
         url = None
 
         try:
-
             url = user.profile_picture.url
         except Exception:
             pass

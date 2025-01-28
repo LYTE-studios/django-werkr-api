@@ -1,8 +1,5 @@
 import uuid
-from apps.authentication.utils.media_util import MediaUtil
-
 from apps.core.models.settings import Settings
-from apps.core.utils.formatters import FormattingUtil
 from apps.core.utils.wire_names import *
 from django.contrib.auth.models import AbstractUser
 from django.db import models

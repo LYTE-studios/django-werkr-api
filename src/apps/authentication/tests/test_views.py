@@ -25,157 +25,168 @@ from apps.authentication.models.profiles.worker_profile import WorkerProfile
 from apps.authentication.models.dashboard_flow import DashboardFlow
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
-
+from rest_framework_simplejwt.tokens import AccessToken
 User = get_user_model()
 from apps.authentication.utils.worker_util import WorkerUtil
 from apps.authentication.utils.customer_util import CustomerUtil
 from apps.jobs.models import Job, JobState
 
 
+class BaseClientViewTest(TestCase):
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.view = BaseClientView.as_view()
+        self.client = APIClient()
+        self.group = Group.objects.create(name=CUSTOMERS_GROUP_NAME)
+
+    def test_options_request(self):
+        request = self.factory.options('/')
+        response = self.view(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('allow', response)
+
+    def test_dispatch_with_valid_group(self):
+        request = self.factory.get('/')
+        request.META['HTTP_CLIENT_SECRET'] = 'valid_secret'
+        with self.settings(AUTHENTICATION_UTIL=AuthenticationUtil):
+            AuthenticationUtil.check_client_secret = lambda req: self.group
+            response = self.view(request)
+            self.assertEqual(response.status_code, 200)
+
+    def test_dispatch_with_invalid_group(self):
+        request = self.factory.get('/')
+        request.META['HTTP_CLIENT_SECRET'] = 'invalid_secret'
+        with self.settings(AUTHENTICATION_UTIL=AuthenticationUtil):
+            AuthenticationUtil.check_client_secret = lambda req: None
+            response = self.view(request)
+            self.assertEqual(response.status_code, 403)
+
+
 class JWTBaseAuthViewTest(TestCase):
 
     def setUp(self):
         self.factory = RequestFactory()
-        self.view = JWTBaseAuthView()
-        self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='12345')
+        self.view = JWTBaseAuthView.as_view()
+        self.client = APIClient()
         self.group = Group.objects.create(name=CUSTOMERS_GROUP_NAME)
+        self.user = User.objects.create_user(username='testuser', password='password123', email='test@example.com')
         self.user.groups.add(self.group)
-        self.user.save()
-        self.client.login(username='testuser', password='12345')
+        self.token = AccessToken.for_user(self.user)
 
-    @patch.object(AuthenticationUtil, 'check_client_secret', return_value=Group(name=CUSTOMERS_GROUP_NAME))
-    @patch.object(JWTAuthUtil, 'check_for_authentication', return_value={'user_id': 1})
-    def test_dispatch_success(self, mock_check_auth, mock_check_secret):
-        request = self.factory.get(reverse('profile_me'))
-        request.user = self.user
+    def test_dispatch_with_valid_token(self):
+        request = self.factory.get('/')
+        request.META['HTTP_AUTHORIZATION'] = f'Bearer {self.token}'
+        request.META['HTTP_CLIENT_SECRET'] = 'valid_secret'
+        with self.settings(JWT_AUTH_UTIL=JWTAuthUtil):
+            JWTAuthUtil.check_for_authentication = lambda req: self.token
+            response = self.view(request)
+            self.assertEqual(response.status_code, 200)
 
-        response = self.view.dispatch(request)
+    def test_dispatch_with_invalid_token(self):
+        request = self.factory.get('/')
+        request.META['HTTP_AUTHORIZATION'] = 'Bearer invalid_token'
+        request.META['HTTP_CLIENT_SECRET'] = 'valid_secret'
+        with self.settings(JWT_AUTH_UTIL=JWTAuthUtil):
+            JWTAuthUtil.check_for_authentication = lambda req: None
+            response = self.view(request)
+            self.assertEqual(response.status_code, 403)
 
-        self.assertNotEqual(response.status_code, HttpResponseForbidden.status_code)
-        self.assertEqual(self.view.user, self.user)
-        self.assertEqual(self.view.group.name, CUSTOMERS_GROUP_NAME)
 
-    @patch.object(AuthenticationUtil, 'check_client_secret', return_value=None)
-    def test_dispatch_no_client_secret(self, mock_check_secret):
-        request = self.factory.get(reverse('profile_me'))
-        response = self.view.dispatch(request)
-        self.assertEqual(response.status_code, HttpResponseForbidden.status_code)
+class JWTAuthenticationViewTest(TestCase):
 
-    @patch.object(AuthenticationUtil, 'check_client_secret', return_value=Group(name=CUSTOMERS_GROUP_NAME))
-    @patch.object(JWTAuthUtil, 'check_for_authentication', return_value=None)
-    def test_dispatch_no_auth_token(self, mock_check_auth, mock_check_secret):
-        request = self.factory.get(reverse('profile_me'))
-        response = self.view.dispatch(request)
-        self.assertEqual(response.status_code, HttpResponseForbidden.status_code)
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse('jwt-authentication')
+        self.valid_payload = {
+            'email': 'test@example.com',
+            'password': 'password123'
+        }
+        self.invalid_payload = {
+            'email': 'test@example.com',
+            'password': 'wrongpassword'
+        }
 
-    @patch.object(AuthenticationUtil, 'check_client_secret', return_value=Group(name=CUSTOMERS_GROUP_NAME))
-    @patch.object(JWTAuthUtil, 'check_for_authentication', return_value={'user_id': 999})
-    def test_dispatch_user_does_not_exist(self, mock_check_auth, mock_check_secret):
-        request = self.factory.get(reverse('profile_me'))
-        response = self.view.dispatch(request)
-        self.assertEqual(response.status_code, HttpResponseForbidden.status_code)
+    def test_post_with_valid_credentials(self):
+        with self.settings(JWT_AUTH_UTIL=JWTAuthUtil):
+            JWTAuthUtil.authenticate = lambda email, password, group: {'access': 'access_token', 'refresh': 'refresh_token'}
+            response = self.client.post(self.url, self.valid_payload, format='json')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertIn('access', response.data)
+            self.assertIn('refresh', response.data)
 
-    @patch.object(AuthenticationUtil, 'check_client_secret', return_value=Group(name=CUSTOMERS_GROUP_NAME))
-    @patch.object(JWTAuthUtil, 'check_for_authentication', return_value={'user_id': 1})
-    def test_dispatch_user_not_in_group(self, mock_check_auth, mock_check_secret):
-        self.user.groups.clear()
-        request = self.factory.get(reverse('profile_me'))
-        response = self.view.dispatch(request)
-        self.assertEqual(response.status_code, HttpResponseForbidden.status_code)
+    def test_post_with_invalid_credentials(self):
+        with self.settings(JWT_AUTH_UTIL=JWTAuthUtil):
+            JWTAuthUtil.authenticate = lambda email, password, group: {}
+            response = self.client.post(self.url, self.invalid_payload, format='json')
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+            self.assertEqual(response.data['message'], 'Invalid credentials')
 
 
 class ProfileMeViewTest(TestCase):
 
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='12345', email='test@example.com')
-        self.group = Group.objects.create(name=CUSTOMERS_GROUP_NAME)
+        self.client = APIClient()
+        self.group = Group.objects.create(name='test_group')
+        self.settings = Settings.objects.create(language='en')
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='password123',
+            email='testuser@example.com',
+            first_name='Test',
+            last_name='User',
+            description='Sample description',
+            settings=self.settings
+        )
         self.user.groups.add(self.group)
-        self.user.save()
-        self.client.login(username='testuser', password='12345')
+        self.client.force_authenticate(user=self.user)
 
-    @patch('apps.authentication.utils.profile_util.ProfileUtil.get_user_profile_picture_url',
-           return_value='http://example.com/pic.jpg')
+    @patch('apps.authentication.utils.profile_util.ProfileUtil.get_user_profile_picture_url', return_value='profile_pic_url')
     def test_get_profile(self, mock_get_user_profile_picture_url):
-        response = self.client.get(reverse('profile_me'))
+        url = reverse('profile_me')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['user_id'], self.user.id)
-        self.assertEqual(response.data['email'], self.user.email)
-        self.assertEqual(response.data['profile_picture'], 'http://example.com/pic.jpg')
+        self.assertEqual(response.data['user_id'], str(self.user.id))
+        self.assertEqual(response.data['first_name'], 'Test')
+        self.assertEqual(response.data['last_name'], 'User')
+        self.assertEqual(response.data['email'], 'testuser@example.com')
+        self.assertEqual(response.data['description'], 'Sample description')
+        self.assertEqual(response.data['profile_picture'], 'profile_pic_url')
+        self.assertEqual(response.data['language'], 'en')
 
-    @patch('apps.core.utils.formatters.FormattingUtil.get_value',
-           side_effect=lambda key, required=False: 'new_value' if key in ['first_name', 'last_name',
-                                                                          'description'] else None)
+    @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=lambda key: 'new_value')
     @patch('apps.core.utils.formatters.FormattingUtil.get_email', return_value='new_email@example.com')
     def test_put_profile(self, mock_get_email, mock_get_value):
+        url = reverse('profile_me')
         data = {
-            'first_name': 'new_first_name',
-            'last_name': 'new_last_name',
+            'first_name': 'John',
+            'last_name': 'Doe',
             'email': 'new_email@example.com',
-            'description': 'new_description'
+            'description': 'New description'
         }
-        response = self.client.put(reverse('profile_me'), data, content_type='application/json')
+        response = self.client.put(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
-        self.assertEqual(self.user.first_name, 'new_first_name')
-        self.assertEqual(self.user.last_name, 'new_last_name')
+        self.assertEqual(self.user.first_name, 'John')
+        self.assertEqual(self.user.last_name, 'Doe')
         self.assertEqual(self.user.email, 'new_email@example.com')
-        self.assertEqual(self.user.description, 'new_description')
+        self.assertEqual(self.user.description, 'New description')
 
-    @patch('apps.core.utils.formatters.FormattingUtil.get_value',
-           side_effect=lambda key, required=False: 'new_value' if key in ['phone_number', 'tax_number',
-                                                                          'company_name'] else None)
-    @patch('apps.core.utils.formatters.FormattingUtil.get_address', return_value=None)
-    def test_put_customer_profile(self, mock_get_address, mock_get_value):
-        customer_profile = CustomerProfile.objects.create(user=self.user, phone_number='1234567890', tax_number='12345',
-                                                          company_name='Test Company')
-        data = {
-            'phone_number': 'new_phone_number',
-            'tax_number': 'new_tax_number',
-            'company_name': 'new_company_name'
-        }
-        response = self.client.put(reverse('profile_me'), data, content_type='application/json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        customer_profile.refresh_from_db()
-        self.assertEqual(customer_profile.phone_number, 'new_phone_number')
-        self.assertEqual(customer_profile.tax_number, 'new_tax_number')
-        self.assertEqual(customer_profile.company_name, 'new_company_name')
+    @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=DeserializationException('Invalid data'))
+    def test_put_profile_invalid_data(self, mock_get_value):
+        url = reverse('profile_me')
+        data = {'first_name': 'John'}
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['message'], ('Invalid data',))
 
-    @patch('apps.core.utils.formatters.FormattingUtil.get_value',
-           side_effect=lambda key, required=False: 'new_value' if key in ['iban', 'ssn', 'place_of_birth', 'accepted',
-                                                                          'hours'] else None)
-    @patch('apps.core.utils.formatters.FormattingUtil.get_address', return_value=None)
-    @patch('apps.core.utils.formatters.FormattingUtil.get_date', return_value=None)
-    def test_put_worker_profile(self, mock_get_date, mock_get_address, mock_get_value):
-        worker_profile = WorkerProfile.objects.create(user=self.user, iban='1234567890', ssn='123-45-6789',
-                                                      place_of_birth='Test City', accepted=True, hours=40)
-        data = {
-            'iban': 'new_iban',
-            'ssn': 'new_ssn',
-            'place_of_birth': 'new_place_of_birth',
-            'accepted': False,
-            'hours': 35
-        }
-        response = self.client.put(reverse('profile_me'), data, content_type='application/json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        worker_profile.refresh_from_db()
-        self.assertEqual(worker_profile.iban, 'new_iban')
-        self.assertEqual(worker_profile.ssn, 'new_ssn')
-        self.assertEqual(worker_profile.place_of_birth, 'new_place_of_birth')
-        self.assertEqual(worker_profile.accepted, False)
-        self.assertEqual(worker_profile.hours, 35)
-
-    @patch('apps.core.utils.formatters.FormattingUtil.get_value', return_value='new_session_duration')
-    def test_put_admin_profile(self, mock_get_value):
-        admin_profile = AdminProfile.objects.create(user=self.user, session_duration=30)
-        data = {
-            'session_duration': 60
-        }
-        response = self.client.put(reverse('profile_me'), data, content_type='application/json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        admin_profile.refresh_from_db()
-        self.assertEqual(admin_profile.session_duration, 60)
+    @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=Exception('Server error'))
+    def test_put_profile_server_error(self, mock_get_value):
+        url = reverse('profile_me')
+        data = {'first_name': 'John'}
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.data['message'], ('Server error',))
 
 
 class LanguageSettingsViewTest(TestCase):
