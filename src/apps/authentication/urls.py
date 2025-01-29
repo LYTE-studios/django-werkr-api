@@ -3,11 +3,11 @@ from django.urls import path
 from .views import (
     JWTAuthenticationView, JWTRefreshView, JWTTestConnectionView,
     ProfileMeView, LanguageSettingsView, UploadUserProfilePictureView,
-    PasswordResetRequestView, VerifyCodeView, ResetPasswordView,
+    PasswordResetRequestView, ValidateRegistrationView, VerifyCodeView, ResetPasswordView,
     WorkerRegisterView, StatisticsView, WorkerDetailView,
     WorkersListView, AcceptWorkerView,
     CreateCustomerView, CustomersListView, CustomerDetailView,
-    CustomerSearchTermView, OnboardingFlowView, WorkerProfileDetailView
+    CustomerSearchTermView, DashboardFlowView, WorkerProfileDetailView
 )
 
 urlpatterns = [
@@ -20,8 +20,10 @@ urlpatterns = [
     path('password_reset', PasswordResetRequestView.as_view(), name="password_reset"),
     path('password_reset/verify', VerifyCodeView.as_view(), name="password_reset_verify"),
     path('password_reset/reset', ResetPasswordView.as_view(), name="password_reset_reset"),
+    path('registration/verify', ValidateRegistrationView.as_view(), name="validate_registration"),
 
     # Workers
+    path('workers/onboarding', DashboardFlowView.as_view(), name="onboarding_flow"),
     path('workers/register', WorkerRegisterView.as_view(), name="worker_register"),
     path('workers/statistics/me', StatisticsView.as_view(), name="statistics_view"),
     path('workers/details/<str:id>', WorkerDetailView.as_view(), name="worker_detail"),
@@ -33,7 +35,6 @@ urlpatterns = [
     path('<str:state>/workers/<str:sort_term>/<str:algorithm>/<int:count>/<int:page>', WorkersListView.as_view()),
     path('<str:state>/workers/<int:count>/<int:page>', WorkersListView.as_view()),
     path('<str:state>/workers/<int:count>/<int:page>/<str:search_term>', WorkersListView.as_view()),
-    path('workers/onboarding/', OnboardingFlowView.as_view(), name='onboarding_flow'),
     path('admin/workers/profile/<str:user_id>', WorkerProfileDetailView.as_view(), name='worker_profile_detail'),
 
     # Customers

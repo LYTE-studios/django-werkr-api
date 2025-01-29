@@ -5,10 +5,9 @@ import asyncio
 class MailTemplate:
 
     template_id: int = 5794325
-    subject: str = 'Get A Wash | New message'
+    subject: str = 'Werkr | New message'
 
-    async def _send_task(self, recipients: list[str], data: dict):
-        """Async task to send emails asynchronously"""
+    def send(self, recipients: list[str], data: dict):
 
         mailjet = Client(auth=(settings.MAILJET_API_KEY, settings.MAILJET_API_SECRET), version='v3.1')
 
@@ -31,17 +30,10 @@ class MailTemplate:
         )
 
         return response.status_code == 200
-        
-
-    from apps.core.decorators import ensure_event_loop
-    @ensure_event_loop
-    def send(self, recipients: list[str], data: dict, loop=None):
-        """Sends email synchronously"""
-        loop.create_task(self._send_task(recipients=recipients, data=data),)
 
 class ApprovedMailTemplate(MailTemplate):
     template_id = 5792978
-    subject = "Get A Wash | You\'ve been approved!"
+    subject = "Werkr | You\'ve been approved!"
 
 class CodeMailTemplate(MailTemplate):
     template_id = 5798048
@@ -50,19 +42,19 @@ class CodeMailTemplate(MailTemplate):
 
 class DeniedMailTemplate(MailTemplate):
     template_id = 5771049
-    subject = 'Get A Wash | Job was full!'
+    subject = 'Werkr | Job was full!'
 
 
 class SelectedWorkerTemplate(MailTemplate):
     template_id = 6150888
-    subject = 'Get A Wash | A washer has been selected for your job!'
+    subject = 'Werkr | A washer has been selected for your job!'
 
 
 class TimeRegisteredTemplate(MailTemplate):
     template_id = 6095618
-    subject = 'Get A Wash | A washer registered time for your job!'
+    subject = 'Werkr | A washer registered time for your job!'
 
 
 class CancelledMailTemplate(MailTemplate):
     template_id = 5792996
-    subject = 'Get A Wash | Your job was cancelled!'
+    subject = 'Werkr | Your job was cancelled!'

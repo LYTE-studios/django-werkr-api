@@ -14,6 +14,7 @@ k_session_duration = 'session_duration'
 
 k_exports = 'exports'
 k_name = 'name'
+k_icon = 'icon'
 k_file_url = 'file_url'
 k_file_name = 'file_name'
 
