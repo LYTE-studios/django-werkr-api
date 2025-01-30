@@ -29,7 +29,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from apps.authentication.models.dashboard_flow import JobType, Location, SituationType, WorkType
+from apps.authentication.models.dashboard_flow import JobType, Location, SituationType, WorkType, UserJobType
 
 from .models import DashboardFlow
 from .utils.authentication_util import AuthenticationUtil
@@ -648,10 +648,13 @@ class DashboardFlowView(BaseClientView):
 
     def get(self, request):
 
-        job_types = [job_type.to_model_view() for job_type in JobType.objects.all()] 
-        situation_types = [situation_type.to_model_view() for situation_type in SituationType.objects.all()]
-        work_types = [work_type.to_model_view() for work_type in WorkType.objects.all()]
-        locations = [location.to_model_view() for location in Location.objects.all()]
+        job_types = [job_type.to_model_view() for job_type in JobType.objects.all().order_by('weight')] 
+
+        situation_types = [situation_type.to_model_view() for situation_type in SituationType.objects.all().order_by('weight')]
+
+        work_types = [work_type.to_model_view() for work_type in WorkType.objects.all().order_by('weight')]
+
+        locations = [location.to_model_view() for location in Location.objects.all().order_by('weight')]
 
         return Response({
             'job_types': job_types,
@@ -690,8 +693,29 @@ class WorkerRegisterView(BaseClientView):
             email = formatter.get_email(k_email, required=True)
             password = formatter.get_value(k_password, required=True)
 
+            work_type_ids = formatter.get_value('work_types', required=False)
+            situation_type_ids = formatter.get_value('situation_types', required=False)
+            job_type_ids = formatter.get_value('job_types', required=False)
+            location_ids = formatter.get_value('locations', required=False)
 
-
+            if work_type_ids:
+                work_types = WorkType.objects.filter(id__in=[work_type.get('id', None) for work_type in work_type_ids])
+            else:
+                work_types = []
+            if situation_type_ids:
+                situation_types = SituationType.objects.filter(id__in=[situation_type.get('id', None) for situation_type in situation_type_ids])
+            else:
+                situation_types = []
+            if job_type_ids:
+                job_types = []
+                for job_type in job_type_ids:
+                    job_types.append(UserJobType.objects.create(name_id=job_type.get('id', None), experience_type=job_type.get('mastery', None)))
+            else:
+                job_types = []
+            if location_ids:
+                locations = Location.objects.filter(id__in=[location.get('id', None) for location in location_ids])
+            else:    
+                locations = []
 
             first_name = formatter.get_value(k_first_name, required=False)
             last_name = formatter.get_value(k_last_name, required=False)
@@ -724,7 +748,7 @@ class WorkerRegisterView(BaseClientView):
         )
 
         # Use the manager to create the user
-        UserManager.create_user(user)
+        user = UserManager.create_user(user)
 
         # Create the worker profile
         UserManager.create_worker_profile(
@@ -735,6 +759,18 @@ class WorkerRegisterView(BaseClientView):
             date_of_birth=date_of_birth,
             place_of_birth=place_of_birth,
         )
+
+        dashboard_flow = DashboardFlow.objects.create(
+            user=user,
+        )
+
+        dashboard_flow.situation_types.add(*situation_types)
+        dashboard_flow.work_types.add(*work_types)
+        dashboard_flow.locations.add(*locations)
+
+        dashboard_flow.job_types.add(*job_types)
+
+        dashboard_flow.save()
 
         # Get the workers group
         group = Group.objects.get(name=WORKERS_GROUP_NAME)

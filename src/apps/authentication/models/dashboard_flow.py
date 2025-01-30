@@ -15,6 +15,11 @@ class ExperienceType(models.TextChoices):
 class Location(models.Model):
     name = models.CharField(max_length=64, null=True)
 
+    weight = models.IntegerField(max_length=16,default=0)
+
+    def __str__(self):
+        return self.name + ' at ' + str(self.weight)
+
     def to_model_view(self):
         return {
             k_id: self.id,
@@ -23,9 +28,14 @@ class Location(models.Model):
 
 class JobType(models.Model):
 
-    icon = models.CharField(max_length=64, null=True)
+    icon = models.CharField(max_length=32768, null=True)
 
     name = models.CharField(max_length=32, unique=True, null=False)
+
+    weight = models.IntegerField(max_length=16,default=0)
+
+    def __str__(self):
+        return self.name + ' at ' + str(self.weight)
 
     def to_model_view(self):
         return {
@@ -43,6 +53,11 @@ class UserJobType(models.Model):
 class SituationType(models.Model):
     name = models.CharField(max_length=32, unique=True, null=False)
 
+    weight = models.IntegerField(max_length=16,default=0)
+
+    def __str__(self):
+        return self.name + ' at ' + str(self.weight)
+
     def to_model_view(self):
         return {
             k_id: self.id,
@@ -50,14 +65,20 @@ class SituationType(models.Model):
         }
 
 class WorkType(models.Model):
-    icon = models.CharField(max_length=64, null=True)
+    icon = models.CharField(max_length=32768, null=True)
 
     name = models.CharField(max_length=32, unique=True, null=False)
+
+    weight = models.IntegerField(max_length=16,default=0)
+
+    def __str__(self):
+        return self.name + ' at ' + str(self.weight)
 
     def to_model_view(self):
         return {
             k_id: self.id,
             k_name: self.name,
+            k_icon: self.icon,
         }
 
 class DashboardFlow(models.Model):
