@@ -1,6 +1,8 @@
 import datetime
 from http import HTTPStatus
 
+from django.shortcuts import get_object_or_404
+
 from apps.authentication.views import JWTBaseAuthView
 from apps.core.assumptions import *
 from apps.core.model_exceptions import DeserializationException
@@ -8,9 +10,12 @@ from apps.core.utils.formatters import FormattingUtil
 from apps.core.utils.wire_names import *
 from apps.jobs.services.contract_service import JobApplicationService
 from apps.jobs.services.job_service import JobService
+from apps.jobs.models.job import Job
+from apps.jobs.models.time_registration import TimeRegistration
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, Http404
 from rest_framework.response import Response
+
 
 
 class JobView(JWTBaseAuthView):
@@ -262,7 +267,7 @@ class TimeRegistrationView(JWTBaseAuthView):
         WORKERS_GROUP_NAME
     ]
 
-    def get(self, request: HttpRequest):
+    def get(self, request: HttpRequest, job_id: str) -> Response:
         """
         Handle GET request to retrieve time registrations.
 
@@ -272,13 +277,15 @@ class TimeRegistrationView(JWTBaseAuthView):
         Returns:
             Response: A response object containing the list of time registrations.
         """
-        formatter = FormattingUtil(data=request.data)
+        get_object_or_404(Job, id=job_id)
+
         try:
-            job_id = formatter.get_value(k_job_id, required=True)
-        except Exception as e:
-            return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
-        times = JobService.get_time_registrations(job_id)
-        return Response({k_times: times})
+            registration = TimeRegistration.objects.get(job_id=job_id, worker_id=request.user.id)
+
+            return Response({k_time_registration: registration.to_model_view()})
+
+        except TimeRegistration.DoesNotExist:
+            return Response()
 
     def post(self, request: HttpRequest, *args, **kwargs):
         """

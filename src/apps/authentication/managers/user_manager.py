@@ -18,13 +18,14 @@ class UserManager:
     def create_user(user: User):
         # Get the default settings
         settings = Settings.get_default()
-        settings.save()
 
         # Set the settings
         user.settings = settings
 
         # Save the user
         user.save()
+
+        return User.objects.get(email=user.email)
 
     @staticmethod
     def create_worker_profile(user: User, iban: str = None, ssn: str = None, worker_address: Address = None,

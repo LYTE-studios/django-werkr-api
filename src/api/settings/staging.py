@@ -1,12 +1,11 @@
 # api/settings/staging.py
-from .production import *
+from .base import *
 
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-# Less strict security settings for staging
-SECURE_SSL_REDIRECT = False
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
+# Add this line to include your trusted origin
+CSRF_TRUSTED_ORIGINS = ['https://staging.api.werkr.lytestudios.be']
+
 
 # Database
 DATABASES = {

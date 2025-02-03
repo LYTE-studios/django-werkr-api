@@ -124,11 +124,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOWED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:3000,http://127.0.0.1:3000',
-    cast=lambda v: [s.strip() for s in v.split(',')]
-)
+
+ALLOWED_HOSTS = ['*']
 
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
@@ -147,7 +144,7 @@ SWAGGER_SETTINGS = {
 MAILJET_API_KEY = config('MAILJET_API_KEY')
 MAILJET_API_SECRET = config('MAILJET_API_SECRET')
 DEFAULT_FROM_EMAIL = 'hello@getawash.be'
-DEFAULT_FROM_NAME = 'Get A Work'
+DEFAULT_FROM_NAME = 'Werkr'
 
 AUTH_USER_MODEL = 'authentication.User'
 
@@ -181,12 +178,28 @@ GOOGLE_DIRECTIONS_EXPIRES_IN_DAYS = 60
 GOOGLE_BASE_URL = "https://maps.googleapis.com"
 GOOGLE_ROUTES_URL = "https://routes.googleapis.com"
 
-# DIMONA_URL = config('DIMONA_URL')
-# DIMONA_AUTH_URL = config('DIMONA_AUTH_URL')
-#
-# EMPLOYER_DATA = {
-#     "enterpriseNumber": config('ENTERPRISE_NUMBER'),
-# }
-#
-# DIMONA_CLIENT_ID = config('DIMONA_CLIENT_ID')
-# JWT_SECRET = config('JWT_SECRET')
+DIMONA_URL = config('DIMONA_URL')
+DIMONA_AUTH_URL = config('DIMONA_AUTH_URL')
+
+EMPLOYER_DATA = {
+    "enterpriseNumber": config('ENTERPRISE_NUMBER'),
+} 
+
+DIMONA_CLIENT_ID = config('DIMONA_CLIENT_ID')
+JWT_SECRET = config('JWT_SECRET')
+
+# Sentry configuration
+SENTRY_DSN = config('SENTRY_DSN', default=None)
+
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            DjangoIntegration(),
+        ],
+        traces_sample_rate=1.0,
+        send_default_pii=True
+    )

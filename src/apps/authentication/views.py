@@ -29,6 +29,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
+from apps.authentication.models.dashboard_flow import JobType, Location, SituationType, WorkType, UserJobType
+
 from .models import DashboardFlow
 from .utils.authentication_util import AuthenticationUtil
 from .utils.jwt_auth_util import JWTAuthUtil
@@ -195,6 +197,39 @@ class JWTAuthenticationView(BaseClientView):
             return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
         return Response(tokens)
+
+
+class ValidateRegistrationView(BaseClientView):
+
+    def post(self, request):
+        """
+        Handles POST requests to validate a registration.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            Response: A JSON response indicating the result of the registration validation.
+        """
+        formatter = FormattingUtil(data=request.data)
+
+        try:
+            email = formatter.get_email(k_email, required=True)
+        except Exception as e:
+            return Response({'message': e.args}, status=status.HTTP_400_BAD_REQUEST)
+
+
+        try:
+            User.objects.get(email=email)
+            
+            return Response({'message': 'User already exists'}, status=status.HTTP_409_CONFLICT)
+        except User.DoesNotExist:
+
+            return Response()
+        except Exception as e:
+
+            return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
 
 
 class JWTRefreshView(TokenRefreshView):
@@ -609,6 +644,25 @@ class ResetPasswordView(BaseClientView):
             return Response({k_message: 'Invalid or expired token'}, status=HTTPStatus.BAD_REQUEST)
 
 
+class DashboardFlowView(BaseClientView):
+
+    def get(self, request):
+
+        job_types = [job_type.to_model_view() for job_type in JobType.objects.all().order_by('weight')] 
+
+        situation_types = [situation_type.to_model_view() for situation_type in SituationType.objects.all().order_by('weight')]
+
+        work_types = [work_type.to_model_view() for work_type in WorkType.objects.all().order_by('weight')]
+
+        locations = [location.to_model_view() for location in Location.objects.all().order_by('weight')]
+
+        return Response({
+            'job_types': job_types,
+            'situation_types': situation_types,
+            'work_types': work_types,
+            'locations': locations,
+        })
+
 class WorkerRegisterView(BaseClientView):
     """
     [WORKERS]
@@ -636,10 +690,35 @@ class WorkerRegisterView(BaseClientView):
 
         # Required fields
         try:
-            first_name = formatter.get_value(k_first_name, required=True)
-            last_name = formatter.get_value(k_last_name, required=True)
             email = formatter.get_email(k_email, required=True)
             password = formatter.get_value(k_password, required=True)
+
+            work_type_ids = formatter.get_value('work_types', required=False)
+            situation_type_ids = formatter.get_value('situation_types', required=False)
+            job_type_ids = formatter.get_value('job_types', required=False)
+            location_ids = formatter.get_value('locations', required=False)
+
+            if work_type_ids:
+                work_types = WorkType.objects.filter(id__in=[work_type.get('id', None) for work_type in work_type_ids])
+            else:
+                work_types = []
+            if situation_type_ids:
+                situation_types = SituationType.objects.filter(id__in=[situation_type.get('id', None) for situation_type in situation_type_ids])
+            else:
+                situation_types = []
+            if job_type_ids:
+                job_types = []
+                for job_type in job_type_ids:
+                    job_types.append(UserJobType.objects.create(name_id=job_type.get('id', None), experience_type=job_type.get('mastery', None)))
+            else:
+                job_types = []
+            if location_ids:
+                locations = Location.objects.filter(id__in=[location.get('id', None) for location in location_ids])
+            else:    
+                locations = []
+
+            first_name = formatter.get_value(k_first_name, required=False)
+            last_name = formatter.get_value(k_last_name, required=False)
             date_of_birth = formatter.get_date(k_date_of_birth, required=False)
             iban = formatter.get_value(k_tax_number, required=False)
             place_of_birth = formatter.get_value(k_place_of_birth, required=False)
@@ -669,7 +748,7 @@ class WorkerRegisterView(BaseClientView):
         )
 
         # Use the manager to create the user
-        UserManager.create_user(user)
+        user = UserManager.create_user(user)
 
         # Create the worker profile
         UserManager.create_worker_profile(
@@ -680,6 +759,18 @@ class WorkerRegisterView(BaseClientView):
             date_of_birth=date_of_birth,
             place_of_birth=place_of_birth,
         )
+
+        dashboard_flow = DashboardFlow.objects.create(
+            user=user,
+        )
+
+        dashboard_flow.situation_types.add(*situation_types)
+        dashboard_flow.work_types.add(*work_types)
+        dashboard_flow.locations.add(*locations)
+
+        dashboard_flow.job_types.add(*job_types)
+
+        dashboard_flow.save()
 
         # Get the workers group
         group = Group.objects.get(name=WORKERS_GROUP_NAME)
@@ -859,10 +950,10 @@ class WorkerDetailView(JWTBaseAuthView):
         worker.first_name = first_name or worker.first_name
         worker.last_name = last_name or worker.last_name
         worker.email = email or worker.email
-        worker.worker_address = address or worker.worker_address
-        worker.tax_number = tax_number or worker.tax_number
-        worker.company_name = company or worker.company_name
-        worker.date_of_birth = date_of_birth or worker.date_of_birth
+        worker.worker_profile.worker_address = address or worker.worker_profile.worker_address
+        worker.worker_profile.iban = tax_number or worker.worker_profile.iban
+        worker.worker_profile.ssn = company or worker.worker_profile.ssn
+        worker.worker_profile.date_of_birth = date_of_birth or worker.worker_profile.date_of_birth
 
         if address:
             address.save()
@@ -870,6 +961,7 @@ class WorkerDetailView(JWTBaseAuthView):
             billing_address.save()
 
         worker.save()
+        worker.worker_profile.save()
 
         return Response()
 
@@ -1315,34 +1407,34 @@ class CustomerSearchTermView(JWTBaseAuthView):
         return Response({k_customers: list(data)})
 
 
-class OnboardingFlowView(APIView):
-    """
-    API view to handle the onboarding flow for workers.
-    """
+# class OnboardingFlowView(BaseClientView):
+#     """
+#     API view to handle the onboarding flow for workers.
+#     """
 
-    def post(self, request, *args, **kwargs):
-        user = self.user
-        worker_profile = get_object_or_404(WorkerProfile, user=user)
+#     def post(self, request, *args, **kwargs):
+#         user = self.user
+#         worker_profile = get_object_or_404(WorkerProfile, user=user)
 
-        # Save data to DashboardFlow
-        dashboard_flow_data = request.data.copy()
-        dashboard_flow_data["user"] = user.id  # Use user ID for the serializer
-        dashboard_flow_serializer = DashboardFlowSerializer(data=dashboard_flow_data)
-        if dashboard_flow_serializer.is_valid():
-            dashboard_flow_serializer.save(user=user)
-        else:
-            return Response(dashboard_flow_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#         # Save data to DashboardFlow
+#         dashboard_flow_data = request.data.copy()
+#         dashboard_flow_data["user"] = user.id  # Use user ID for the serializer
+#         dashboard_flow_serializer = DashboardFlowSerializer(data=dashboard_flow_data)
+#         if dashboard_flow_serializer.is_valid():
+#             dashboard_flow_serializer.save(user=user)
+#         else:
+#             return Response(dashboard_flow_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        # Update WorkerProfile onboard_flow to True
-        worker_profile_serializer = WorkerProfileSerializer(worker_profile, data={"has_passed_onboarding": True},
-                                                            partial=True)
-        if worker_profile_serializer.is_valid():
-            worker_profile_serializer.save()
-            return Response(worker_profile_serializer.data, status=status.HTTP_200_OK)
-        return Response(worker_profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#         # Update WorkerProfile onboard_flow to True
+#         worker_profile_serializer = WorkerProfileSerializer(worker_profile, data={"has_passed_onboarding": True},
+#                                                             partial=True)
+#         if worker_profile_serializer.is_valid():
+#             worker_profile_serializer.save()
+#             return Response(worker_profile_serializer.data, status=status.HTTP_200_OK)
+#         return Response(worker_profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class WorkerProfileDetailView(APIView):
+class WorkerProfileDetailView(JWTBaseAuthView):
     """
     API view to fetch and view worker profile data for a specific user.
     """
