@@ -31,7 +31,8 @@ LOCAL_APPS = [
     'apps.core',
     'apps.jobs',
     'apps.notifications',
-    'apps.legal'
+    'apps.legal',
+    'apps.exports',
 ]
 
 DATABASES = {
@@ -175,17 +176,17 @@ STATIC_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/'
 # Google Maps
 GOOGLE_DIRECTIONS_EXPIRES_IN_DAYS = 60
 
-GOOGLE_API_KEY = config('GOOGLE_API_KEY')
+# GOOGLE_API_KEY = config('GOOGLE_API_KEY')
 
 GOOGLE_BASE_URL = "https://maps.googleapis.com"
 GOOGLE_ROUTES_URL = "https://routes.googleapis.com"
 
-DIMONA_URL = config('DIMONA_URL')
-DIMONA_AUTH_URL = config('DIMONA_AUTH_URL')
-
-EMPLOYER_DATA = {
-    "enterpriseNumber": config('ENTERPRISE_NUMBER'),
-} 
-
-DIMONA_CLIENT_ID = config('DIMONA_CLIENT_ID')
-JWT_SECRET = config('JWT_SECRET')
+# DIMONA_URL = config('DIMONA_URL')
+# DIMONA_AUTH_URL = config('DIMONA_AUTH_URL')
+#
+# EMPLOYER_DATA = {
+#     "enterpriseNumber": config('ENTERPRISE_NUMBER'),
+# }
+#
+# DIMONA_CLIENT_ID = config('DIMONA_CLIENT_ID')
+# JWT_SECRET = config('JWT_SECRET')
