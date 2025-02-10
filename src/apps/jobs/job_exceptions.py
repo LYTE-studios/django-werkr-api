@@ -6,6 +6,6 @@ class JobNotFoundException(NotFoundException):
     Exception used when a worker could not be found.
     """
 
-    name = 'Job'
+    name = "Job"
 
     pass

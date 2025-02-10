@@ -8,7 +8,9 @@ User = get_user_model()
 
 class PassResetCode(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pass_reset_user')
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="pass_reset_user"
+    )
     code = models.CharField(max_length=6, null=False)
     generated_at = models.DateTimeField(auto_now_add=True)
     used = models.BooleanField(default=False, null=False)

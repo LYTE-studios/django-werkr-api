@@ -12,19 +12,24 @@ class WorkerUtil:
     @staticmethod
     def to_worker_view(worker: User):
         # Required data
-        data = {k_id: worker.id, k_first_name: worker.first_name,
-                k_last_name: worker.last_name,
-                k_email: worker.email, k_created_at: FormattingUtil.to_timestamp(worker.date_joined),
-                k_iban: worker.worker_profile.iban,
-                k_ssn: worker.worker_profile.ssn,
-                }
+        data = {
+            k_id: worker.id,
+            k_first_name: worker.first_name,
+            k_last_name: worker.last_name,
+            k_email: worker.email,
+            k_created_at: FormattingUtil.to_timestamp(worker.date_joined),
+            k_iban: worker.worker_profile.iban,
+            k_ssn: worker.worker_profile.ssn,
+        }
 
         try:
             data[k_address] = worker.worker_profile.worker_address.to_model_view()
         except Exception:
             pass
         try:
-            data[k_date_of_birth] = FormattingUtil.to_timestamp(worker.worker_profile.date_of_birth)
+            data[k_date_of_birth] = FormattingUtil.to_timestamp(
+                worker.worker_profile.date_of_birth
+            )
         except Exception:
             pass
         try:

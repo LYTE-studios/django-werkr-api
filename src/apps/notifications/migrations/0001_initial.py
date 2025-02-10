@@ -17,26 +17,56 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Notification',
+            name="Notification",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('title', models.CharField(max_length=128, null=True)),
-                ('description', models.CharField(max_length=256, null=True)),
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
-                ('sent', models.DateTimeField(default=django.utils.timezone.now)),
-                ('is_global', models.BooleanField(default=False)),
-                ('has_mail', models.BooleanField(default=False)),
-                ('pfp_url', models.CharField(max_length=128, null=True)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("title", models.CharField(max_length=128, null=True)),
+                ("description", models.CharField(max_length=256, null=True)),
+                ("created", models.DateTimeField(default=django.utils.timezone.now)),
+                ("sent", models.DateTimeField(default=django.utils.timezone.now)),
+                ("is_global", models.BooleanField(default=False)),
+                ("has_mail", models.BooleanField(default=False)),
+                ("pfp_url", models.CharField(max_length=128, null=True)),
             ],
         ),
         migrations.CreateModel(
-            name='NotificationStatus',
+            name="NotificationStatus",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('seen', models.BooleanField(default=False)),
-                ('archived', models.BooleanField(default=False)),
-                ('notification', models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, to='notifications.notification')),
-                ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("seen", models.BooleanField(default=False)),
+                ("archived", models.BooleanField(default=False)),
+                (
+                    "notification",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="notifications.notification",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]

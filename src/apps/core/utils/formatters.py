@@ -9,7 +9,6 @@ from apps.core.models.geo import Address
 from datetime import datetime, time, date
 
 
-
 class FormattingUtil:
     data: dict
 
@@ -91,7 +90,7 @@ class FormattingUtil:
 
     @staticmethod
     def to_user_timezone(time: timezone.datetime):
-        return time.astimezone(pytz.timezone('Europe/Brussels'))
+        return time.astimezone(pytz.timezone("Europe/Brussels"))
 
     @staticmethod
     def to_time_interval(time1: timezone.datetime, time2: timezone.datetime):
@@ -100,19 +99,24 @@ class FormattingUtil:
 
         time2 = FormattingUtil.to_user_timezone(time2)
 
-        return '{}:{} - {}:{}'.format(time1.hour, FormattingUtil.format_date_number(time1.minute), time2.hour,
-                                      FormattingUtil.format_date_number(time2.minute), )
-
+        return "{}:{} - {}:{}".format(
+            time1.hour,
+            FormattingUtil.format_date_number(time1.minute),
+            time2.hour,
+            FormattingUtil.format_date_number(time2.minute),
+        )
 
     @staticmethod
     def to_readable_duration(delta: timezone.timedelta):
 
-        hours = delta.seconds//3600
+        hours = delta.seconds // 3600
 
         minutes = (delta.seconds - (hours * 3600)) // 60
 
-        return '{}:{}'.format(FormattingUtil.format_date_number(hours), FormattingUtil.format_date_number(minutes))
-
+        return "{}:{}".format(
+            FormattingUtil.format_date_number(hours),
+            FormattingUtil.format_date_number(minutes),
+        )
 
     @staticmethod
     def to_readable_time(date_time: timezone.datetime, use_timezone: bool = True):
@@ -121,7 +125,10 @@ class FormattingUtil:
         if use_timezone:
             time = FormattingUtil.to_user_timezone(date_time)
 
-        return '{}:{}'.format(FormattingUtil.format_date_number(time.hour), FormattingUtil.format_date_number(time.minute))
+        return "{}:{}".format(
+            FormattingUtil.format_date_number(time.hour),
+            FormattingUtil.format_date_number(time.minute),
+        )
 
     @staticmethod
     def format_date_number(number):
@@ -134,12 +141,18 @@ class FormattingUtil:
 
         date = FormattingUtil.to_user_timezone(date)
 
-        return '{}/{}'.format(str(date.day), FormattingUtil.format_date_number(date.month))
+        return "{}/{}".format(
+            str(date.day), FormattingUtil.format_date_number(date.month)
+        )
 
     @staticmethod
     def to_full_date(date: timezone.datetime):
         try:
-            return '{}/{}/{}'.format(FormattingUtil.format_date_number(date.month), FormattingUtil.format_date_number(date.month), str(date.year))
+            return "{}/{}/{}".format(
+                FormattingUtil.format_date_number(date.month),
+                FormattingUtil.format_date_number(date.month),
+                str(date.year),
+            )
         except Exception as e:
             return None
 
@@ -147,27 +160,27 @@ class FormattingUtil:
     def to_day_of_the_week(date: timezone.datetime):
         weekday = date.weekday()
         if weekday == 0:
-            return 'Monday'
+            return "Monday"
         if weekday == 1:
-            return 'Tuesday'
+            return "Tuesday"
         if weekday == 2:
-            return 'Wednesday'
+            return "Wednesday"
         if weekday == 3:
-            return 'Thursday'
+            return "Thursday"
         if weekday == 4:
-            return 'Friday'
+            return "Friday"
         if weekday == 5:
-            return 'Saturday'
+            return "Saturday"
         if weekday == 6:
-            return 'Sunday'
+            return "Sunday"
 
-        return 'Monday'
+        return "Monday"
 
     @staticmethod
     def to_time(timestamp):
         try:
             hour = timestamp // 60
-            minute = (timestamp - (hour * 60))
+            minute = timestamp - (hour * 60)
 
             date_time = timezone.time(hour, minute)
 
@@ -210,21 +223,21 @@ class FormattingUtil:
         if value == 0:
             return False
 
-        if value == u'true':
+        if value == "true":
             return True
-        if value == u'false':
+        if value == "false":
             return False
 
-        if value == 'true':
+        if value == "true":
             return True
-        if value == 'false':
+        if value == "false":
             return False
 
         return None
 
     @staticmethod
     def to_email(value):
-        value = value.replace(' ', '')
+        value = value.replace(" ", "")
 
         try:
             validate_email(value)

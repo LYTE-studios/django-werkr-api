@@ -6,13 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('authentication', '0010_jobtype_weight_location_weight_worktype_weight_and_more'),
+        (
+            "authentication",
+            "0010_jobtype_weight_location_weight_worktype_weight_and_more",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='situationtype',
-            name='weight',
+            model_name="situationtype",
+            name="weight",
             field=models.IntegerField(default=0, max_length=16),
         ),
     ]

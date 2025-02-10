@@ -39,8 +39,12 @@ class JobUtil:
             },
             k_start_time: FormattingUtil.to_timestamp(job.start_time),
             k_end_time: FormattingUtil.to_timestamp(job.end_time),
-            k_application_start_time: FormattingUtil.to_timestamp(job.application_start_time),
-            k_application_end_time: FormattingUtil.to_timestamp(job.application_end_time),
+            k_application_start_time: FormattingUtil.to_timestamp(
+                job.application_start_time
+            ),
+            k_application_end_time: FormattingUtil.to_timestamp(
+                job.application_end_time
+            ),
             k_max_workers: job.max_workers,
             k_is_draft: job.is_draft,
             k_selected_workers: job.selected_workers,

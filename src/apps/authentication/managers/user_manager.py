@@ -28,8 +28,14 @@ class UserManager:
         return User.objects.get(email=user.email)
 
     @staticmethod
-    def create_worker_profile(user: User, iban: str = None, ssn: str = None, worker_address: Address = None,
-                              date_of_birth: datetime.date = None, place_of_birth: str = None):
+    def create_worker_profile(
+        user: User,
+        iban: str = None,
+        ssn: str = None,
+        worker_address: Address = None,
+        date_of_birth: datetime.date = None,
+        place_of_birth: str = None,
+    ):
         worker_profile = WorkerProfile(
             user=user,
             iban=iban,
@@ -42,13 +48,18 @@ class UserManager:
         worker_profile.save()
 
     @staticmethod
-    def create_customer_profile(user: User, tax_number: str = None, company_name: str = None,
-                                customer_address: Address = None, customer_billing_address: Address = None):
+    def create_customer_profile(
+        user: User,
+        tax_number: str = None,
+        company_name: str = None,
+        customer_address: Address = None,
+        customer_billing_address: Address = None,
+    ):
         customer_profile = CustomerProfile(
             user=user,
             tax_number=tax_number,
             company_name=company_name,
             customer_address=customer_address,
-            customer_billing_address=customer_billing_address
+            customer_billing_address=customer_billing_address,
         )
         customer_profile.save()

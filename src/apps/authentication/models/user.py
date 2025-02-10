@@ -15,6 +15,10 @@ class User(AbstractUser):
     salt = models.CharField(max_length=256, null=True)
     description = models.CharField(max_length=256, null=True, blank=True)
     phone_number = models.CharField(max_length=64, null=True, blank=True)
-    profile_picture = models.ImageField(upload_to='users/{}/profile_picture'.format(id), null=True)
-    settings = models.ForeignKey(Settings, null=True, on_delete=models.CASCADE, related_name='settings')
+    profile_picture = models.ImageField(
+        upload_to="users/{}/profile_picture".format(id), null=True
+    )
+    settings = models.ForeignKey(
+        Settings, null=True, on_delete=models.CASCADE, related_name="settings"
+    )
     archived = models.BooleanField(default=False)

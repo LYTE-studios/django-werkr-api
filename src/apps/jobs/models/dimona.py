@@ -4,18 +4,19 @@ from apps.core.utils.wire_names import *
 from .application import JobApplication
 
 
-class Dimona(models.Model):    
-    
+class Dimona(models.Model):
+
     id = models.CharField(primary_key=True, null=False, max_length=32)
 
-    application = models.ForeignKey(JobApplication, on_delete=models.PROTECT, default=None)
+    application = models.ForeignKey(
+        JobApplication, on_delete=models.PROTECT, default=None
+    )
 
     success = models.BooleanField(null=True)
 
     reason = models.CharField(max_length=256, null=True)
 
     created = models.DateTimeField(null=True)
-
 
     def to_model_view(self):
         return {

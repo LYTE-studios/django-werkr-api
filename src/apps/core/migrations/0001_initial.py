@@ -10,40 +10,68 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Address',
+            name="Address",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('street_name', models.CharField(max_length=256, null=True)),
-                ('house_number', models.CharField(max_length=8, null=True)),
-                ('box_number', models.CharField(max_length=8, null=True)),
-                ('city', models.CharField(max_length=128, null=True)),
-                ('zip_code', models.CharField(max_length=16, null=True)),
-                ('country', models.CharField(max_length=64, null=True)),
-                ('latitude', models.FloatField(max_length=16, null=True)),
-                ('longitude', models.FloatField(max_length=16, null=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("street_name", models.CharField(max_length=256, null=True)),
+                ("house_number", models.CharField(max_length=8, null=True)),
+                ("box_number", models.CharField(max_length=8, null=True)),
+                ("city", models.CharField(max_length=128, null=True)),
+                ("zip_code", models.CharField(max_length=16, null=True)),
+                ("country", models.CharField(max_length=64, null=True)),
+                ("latitude", models.FloatField(max_length=16, null=True)),
+                ("longitude", models.FloatField(max_length=16, null=True)),
             ],
         ),
         migrations.CreateModel(
-            name='ExportFile',
+            name="ExportFile",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=128)),
-                ('file_name', models.CharField(max_length=128)),
-                ('description', models.CharField(max_length=256, null=True)),
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
-                ('file', models.FileField(upload_to=apps.core.models.export_file.ExportFile.get_upload_path)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("name", models.CharField(max_length=128)),
+                ("file_name", models.CharField(max_length=128)),
+                ("description", models.CharField(max_length=256, null=True)),
+                ("created", models.DateTimeField(default=django.utils.timezone.now)),
+                (
+                    "file",
+                    models.FileField(
+                        upload_to=apps.core.models.export_file.ExportFile.get_upload_path
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Settings',
+            name="Settings",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('language', models.CharField(max_length=8, null=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("language", models.CharField(max_length=8, null=True)),
             ],
         ),
     ]

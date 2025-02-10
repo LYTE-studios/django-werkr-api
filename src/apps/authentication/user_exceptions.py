@@ -6,7 +6,7 @@ class UserNotFoundException(NotFoundException):
     Exception used when a user could not be found.
     """
 
-    name = 'User'
+    name = "User"
 
     pass
 
@@ -16,7 +16,7 @@ class WorkerNotFoundException(NotFoundException):
     Exception used when a worker could not be found.
     """
 
-    name = 'Worker'
+    name = "Worker"
 
     pass
 
@@ -26,6 +26,6 @@ class CustomerNotFoundException(NotFoundException):
     Exception used when a worker could not be found.
     """
 
-    name = 'Customer'
+    name = "Customer"
 
     pass

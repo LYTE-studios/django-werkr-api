@@ -9,24 +9,25 @@ from apps.notifications.models.mail_template import CodeMailTemplate
 
 
 def generate_code():
-    return ''.join([str(random.randint(0, 9)) for _ in range(6)])
+    return "".join([str(random.randint(0, 9)) for _ in range(6)])
 
 
 class CustomPasswordResetUtil:
     def send_reset_code(self, user):
         code = generate_code()
-        pass_code = PassResetCode(
-            user=user,
-            code=code
-        )
+        pass_code = PassResetCode(user=user, code=code)
 
         pass_code.save()
 
         CodeMailTemplate().send([user.email], {"code": code})
 
     def verify_code(self, user, code):
-        pass_code = PassResetCode.objects.filter(user=user, code=code, used=False).first()
-        if pass_code and pass_code.generated_at > timezone.now() - timezone.timedelta(minutes=5):
+        pass_code = PassResetCode.objects.filter(
+            user=user, code=code, used=False
+        ).first()
+        if pass_code and pass_code.generated_at > timezone.now() - timezone.timedelta(
+            minutes=5
+        ):
             pass_code.used = True
             pass_code.save()
             return True
@@ -38,7 +39,9 @@ class CustomPasswordResetUtil:
         token = secrets.token_urlsafe()
 
         # Set the token and its expiry time (e.g., 30 minutes from now)
-        pass_code = PassResetCode.objects.filter(user=user, code=code, used=True).first()
+        pass_code = PassResetCode.objects.filter(
+            user=user, code=code, used=True
+        ).first()
         pass_code.reset_password_token = token
         pass_code.token_expiry_time = timezone.now() + timedelta(minutes=10)
         pass_code.save()
@@ -46,7 +49,9 @@ class CustomPasswordResetUtil:
         return token
 
     def get_user_by_token_and_code(self, token, code):
-        pass_code = PassResetCode.objects.filter(reset_password_token=token, code=code, used=True).first()
+        pass_code = PassResetCode.objects.filter(
+            reset_password_token=token, code=code, used=True
+        ).first()
         if pass_code and pass_code.token_expiry_time > timezone.now():
             return pass_code.user
         else:

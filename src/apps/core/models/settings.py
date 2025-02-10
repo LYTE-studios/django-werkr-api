@@ -6,9 +6,7 @@ class Settings(models.Model):
 
     @staticmethod
     def get_default():
-        return Settings.objects.get(language='en')
-    
+        return Settings.objects.get(language="en")
+
     def to_model_view(self):
-        return {
-            'language': self.language
-        }
+        return {"language": self.language}

@@ -6,7 +6,7 @@ class GeoUtil:
     @staticmethod
     def get_distance(lat1: float, lon1: float, lat2: float, lon2: float):
         r = 6373.0
-        
+
         lat1 = radians(lat1)
         lon1 = radians(lon1)
         lat2 = radians(lat2)

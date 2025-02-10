@@ -6,6 +6,7 @@ class Address(models.Model):
     """
     Generic model for creating addresses.
     """
+
     id = models.BigAutoField(primary_key=True, auto_created=True)
 
     street_name = models.CharField(max_length=256, null=True)
@@ -28,25 +29,25 @@ class Address(models.Model):
         if self.country is not None:
             return self.country
 
-        return 'Belgium'
+        return "Belgium"
 
     def to_readable(self):
-        readable = ''
+        readable = ""
 
         if self.street_name is not None:
-            readable += '{} '.format(self.street_name)
+            readable += "{} ".format(self.street_name)
 
         if self.house_number is not None:
-            readable += '{} '.format(self.house_number)
+            readable += "{} ".format(self.house_number)
 
         if self.zip_code is not None:
-            readable += '{} '.format(self.zip_code)
+            readable += "{} ".format(self.zip_code)
 
         if self.city is not None:
-            readable += '{} '.format(self.city)
+            readable += "{} ".format(self.city)
 
-        if readable == '':
-            return 'Unknown'
+        if readable == "":
+            return "Unknown"
 
         return readable
 
@@ -104,5 +105,12 @@ class Address(models.Model):
             pass
 
         # Create model from validated fields
-        return Address(street_name=street_name, house_number=house_number, zip_code=zip_code, city=city,
-                       country=country, latitude=latitude, longitude=longitude)
+        return Address(
+            street_name=street_name,
+            house_number=house_number,
+            zip_code=zip_code,
+            city=city,
+            country=country,
+            latitude=latitude,
+            longitude=longitude,
+        )

@@ -33,10 +33,14 @@ class NotificationManager:
         notification.save()
 
         for user in users:
-            NotificationManager.assign_notification(user, notification, send_push=True, send_mail=send_mail)
+            NotificationManager.assign_notification(
+                user, notification, send_push=True, send_mail=send_mail
+            )
 
     @staticmethod
-    def create_notification_for_user(user: User, title: str, description: str, image_url, send_mail=False):
+    def create_notification_for_user(
+        user: User, title: str, description: str, image_url, send_mail=False
+    ):
         """
         Create a new notification and assign it to a single user.
 
@@ -50,13 +54,18 @@ class NotificationManager:
         Returns:
             NotificationStatus: The status of the notification.
         """
-        notification = NotificationManager.create_notification(title, description, image_url)
-        notification_status = NotificationManager.assign_notification(user, notification, send_push=True,
-                                                                      send_mail=send_mail)
+        notification = NotificationManager.create_notification(
+            title, description, image_url
+        )
+        notification_status = NotificationManager.assign_notification(
+            user, notification, send_push=True, send_mail=send_mail
+        )
         return notification_status
 
     @staticmethod
-    def assign_notification(user: User, notification: Notification, send_push=True, send_mail=False):
+    def assign_notification(
+        user: User, notification: Notification, send_push=True, send_mail=False
+    ):
         """
         Assign a notification to a user.
 
@@ -69,17 +78,22 @@ class NotificationManager:
         Returns:
             NotificationStatus: The status of the notification.
         """
-        notification_status = NotificationStatus(user=user, notification_id=notification.id)
+        notification_status = NotificationStatus(
+            user=user, notification_id=notification.id
+        )
         notification_status.save()
 
         if send_push and user.fcm_token is not None:
             NotificationManager.send_push_notification(user.fcm_token, notification)
 
         if send_mail:
-            MailTemplate().send(recipients=[{'Email': user.email}], data={
-                "title": notification.title,
-                "description": notification.description,
-            })
+            MailTemplate().send(
+                recipients=[{"Email": user.email}],
+                data={
+                    "title": notification.title,
+                    "description": notification.description,
+                },
+            )
 
         return notification_status
 
@@ -96,7 +110,9 @@ class NotificationManager:
         Returns:
             Notification: The created notification.
         """
-        notification = Notification(title=title, description=description, pfp_url=image_url)
+        notification = Notification(
+            title=title, description=description, pfp_url=image_url
+        )
         notification.save()
         return notification
 
@@ -117,7 +133,7 @@ class NotificationManager:
             ),
             apns=messaging.APNSConfig(
                 payload=messaging.APNSPayload(
-                    aps=messaging.Aps(sound='default'),
+                    aps=messaging.Aps(sound="default"),
                 ),
             ),
             token=token,
@@ -148,12 +164,18 @@ def get_user_set(group_name: str = WORKERS_GROUP_NAME, language: str = None):
 
     if language is not None:
         setting = Settings.objects.filter(language=language.lower())
-        users = users.filter(settings_id__in=setting.values_list('id'))
+        users = users.filter(settings_id__in=setting.values_list("id"))
 
     return users
 
-def create_global_mail(title: str, description: str, user_id: str = None, group_name: str = WORKERS_GROUP_NAME,
-                       language: str = None):
+
+def create_global_mail(
+    title: str,
+    description: str,
+    user_id: str = None,
+    group_name: str = WORKERS_GROUP_NAME,
+    language: str = None,
+):
     """
     Send a mail to the specified group without saving it as a notification.
 
@@ -164,16 +186,19 @@ def create_global_mail(title: str, description: str, user_id: str = None, group_
         group_name (str): The name of the group. Defaults to WORKERS_GROUP_NAME.
         language (str): The language filter. Defaults to None.
     """
-    if user_id is not None and user_id != '':
+    if user_id is not None and user_id != "":
         try:
             user = User.objects.get(id=user_id)
-            MailTemplate().send(recipients=[{'Email': user.email}], data={
-                "title": title,
-                "description": description,
-            })
+            MailTemplate().send(
+                recipients=[{"Email": user.email}],
+                data={
+                    "title": title,
+                    "description": description,
+                },
+            )
             return
         except User.DoesNotExist:
-            raise Exception('User does not exist')
+            raise Exception("User does not exist")
 
     users = get_user_set(group_name, language)
 
@@ -183,13 +208,22 @@ def create_global_mail(title: str, description: str, user_id: str = None, group_
         if user.archived:
             continue
 
-        MailTemplate().send(recipients=[{'Email': user.email}], data={
-            "title": title,
-            "description": description,
-        })
+        MailTemplate().send(
+            recipients=[{"Email": user.email}],
+            data={
+                "title": title,
+                "description": description,
+            },
+        )
 
-def send_lonely_push(title: str, description: str, user_id: str = None, group_name: str = WORKERS_GROUP_NAME,
-                     language: str = None) -> None:
+
+def send_lonely_push(
+    title: str,
+    description: str,
+    user_id: str = None,
+    group_name: str = WORKERS_GROUP_NAME,
+    language: str = None,
+) -> None:
     """
     Send a push notification without saving it to the notification center.
 
@@ -200,14 +234,15 @@ def send_lonely_push(title: str, description: str, user_id: str = None, group_na
         group_name (str): The name of the group. Defaults to WORKERS_GROUP_NAME.
         language (str): The language filter. Defaults to None.
     """
-    if user_id is not None and user_id != '':
+    if user_id is not None and user_id != "":
         try:
             user = User.objects.get(id=user_id)
-            NotificationManager.send_push_notification(user.fcm_token,
-                                                       Notification(title=title, description=description))
+            NotificationManager.send_push_notification(
+                user.fcm_token, Notification(title=title, description=description)
+            )
             return
         except User.DoesNotExist:
-            raise Exception('User does not exist')
+            raise Exception("User does not exist")
 
     users = get_user_set(group_name, language)
 
@@ -217,11 +252,20 @@ def send_lonely_push(title: str, description: str, user_id: str = None, group_na
         if user.archived:
             continue
 
-        NotificationManager.send_push_notification(user.fcm_token, Notification(title=title, description=description))
+        NotificationManager.send_push_notification(
+            user.fcm_token, Notification(title=title, description=description)
+        )
 
-def create_global_notification(title: str, description: str, image_url: str = None, user_id: str = None,
-                               send_push: bool = False, group_name: str = WORKERS_GROUP_NAME,
-                               language: str = None) -> None:
+
+def create_global_notification(
+    title: str,
+    description: str,
+    image_url: str = None,
+    user_id: str = None,
+    send_push: bool = False,
+    group_name: str = WORKERS_GROUP_NAME,
+    language: str = None,
+) -> None:
     """
     Create a global notification for all users in a group.
 
@@ -234,15 +278,19 @@ def create_global_notification(title: str, description: str, image_url: str = No
         group_name (str): The name of the group. Defaults to WORKERS_GROUP_NAME.
         language (str): The language filter. Defaults to None.
     """
-    notification = NotificationManager.create_notification(title, description, image_url)
+    notification = NotificationManager.create_notification(
+        title, description, image_url
+    )
 
-    if user_id is not None and user_id != '':
+    if user_id is not None and user_id != "":
         try:
             user = User.objects.get(id=user_id)
-            NotificationManager.assign_notification(user, notification, send_push=send_push)
+            NotificationManager.assign_notification(
+                user, notification, send_push=send_push
+            )
             return
         except User.DoesNotExist:
-            raise Exception('User does not exist')
+            raise Exception("User does not exist")
 
     users = get_user_set(group_name, language)
 

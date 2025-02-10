@@ -6,13 +6,13 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('authentication', '0005_jobtype_location_workerprofile_onboard_flow_and_more'),
+        ("authentication", "0005_jobtype_location_workerprofile_onboard_flow_and_more"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='workerprofile',
-            old_name='onboard_flow',
-            new_name='has_passed_onboarding',
+            model_name="workerprofile",
+            old_name="onboard_flow",
+            new_name="has_passed_onboarding",
         ),
     ]
