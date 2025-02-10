@@ -9,7 +9,7 @@ class AuthenticationUtil:
     Util for authentication services.
     """
 
-    k_client = 'Client'
+    k_client = "Client"
 
     @staticmethod
     def check_client_secret(request: HttpRequest):

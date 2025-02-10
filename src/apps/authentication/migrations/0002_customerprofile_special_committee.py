@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('authentication', '0001_initial'),
+        ("authentication", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='customerprofile',
-            name='special_committee',
+            model_name="customerprofile",
+            name="special_committee",
             field=models.CharField(max_length=30, null=True),
         ),
     ]

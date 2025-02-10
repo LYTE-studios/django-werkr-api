@@ -4,10 +4,19 @@ from apps.core.model_exceptions import DeserializationException
 from apps.core.utils.formatters import FormattingUtil
 from apps.core.utils.wire_names import *
 from apps.jobs.managers.job_manager import JobManager
-from apps.jobs.models import Job, JobApplication, JobApplicationState, JobState, TimeRegistration
+from apps.jobs.models import (
+    Job,
+    JobApplication,
+    JobApplicationState,
+    JobState,
+    TimeRegistration,
+)
 from apps.jobs.utils.job_util import JobUtil
 from apps.notifications.managers.notification_manager import NotificationManager
-from apps.notifications.models.mail_template import CancelledMailTemplate, TimeRegisteredTemplate
+from apps.notifications.models.mail_template import (
+    CancelledMailTemplate,
+    TimeRegisteredTemplate,
+)
 from django.db.models import F
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -25,18 +34,28 @@ class JobService:
         job = get_object_or_404(Job, id=job_id)
         job.archived = True
         job.selected_workers = 0
-        job.save(update_fields=['archived', 'selected_workers'])
+        job.save(update_fields=["archived", "selected_workers"])
 
-        applications = JobApplication.objects.filter(job_id=job.id, application_state=JobApplicationState.approved)
+        applications = JobApplication.objects.filter(
+            job_id=job.id, application_state=JobApplicationState.approved
+        )
         applications.update(application_state=JobApplicationState.rejected)
 
         for application in applications:
             NotificationManager.create_notification_for_user(
-                application.worker, 'Your job got cancelled!', application.job.title, send_mail=False, image_url=None
+                application.worker,
+                "Your job got cancelled!",
+                application.job.title,
+                send_mail=False,
+                image_url=None,
             )
 
-            CancelledMailTemplate().send(recipients=[{'Email': application.worker.email}],   
-                                         data={"job_title": application.job.title,})
+            CancelledMailTemplate().send(
+                recipients=[{"Email": application.worker.email}],
+                data={
+                    "job_title": application.job.title,
+                },
+            )
 
     @staticmethod
     def update_job(job_id, data):
@@ -62,35 +81,35 @@ class JobService:
         fields_to_update = []
         if title:
             job.title = title
-            fields_to_update.append('title')
+            fields_to_update.append("title")
         if start_time:
             job.start_time = start_time
-            fields_to_update.append('start_time')
+            fields_to_update.append("start_time")
         if end_time:
             job.end_time = end_time
-            fields_to_update.append('end_time')
+            fields_to_update.append("end_time")
         if customer_id:
             job.customer_id = customer_id
-            fields_to_update.append('customer_id')
+            fields_to_update.append("customer_id")
         if address:
             job.address = address
             address.save()
-            fields_to_update.append('address')
+            fields_to_update.append("address")
         if max_workers:
             job.max_workers = max_workers
-            fields_to_update.append('max_workers')
+            fields_to_update.append("max_workers")
         if description:
             job.description = description
-            fields_to_update.append('description')
+            fields_to_update.append("description")
         if application_start_time:
             job.application_start_time = application_start_time
-            fields_to_update.append('application_start_time')
+            fields_to_update.append("application_start_time")
         if application_end_time:
             job.application_end_time = application_end_time
-            fields_to_update.append('application_end_time')
+            fields_to_update.append("application_end_time")
         if is_draft is not None:
             job.is_draft = is_draft
-            fields_to_update.append('is_draft')
+            fields_to_update.append("is_draft")
 
         job.save(update_fields=fields_to_update)
 
@@ -125,7 +144,7 @@ class JobService:
             application_end_time=application_end_time,
             max_workers=max_workers,
             selected_workers=0,
-            is_draft=is_draft
+            is_draft=is_draft,
         )
 
         JobManager.create(job)
@@ -134,25 +153,25 @@ class JobService:
     @staticmethod
     def get_upcoming_jobs(user, is_worker=True, start=None, end=None):
         now = timezone.now()
-        
+
         if is_worker:
             jobs = Job.objects.filter(
                 start_time__gte=now,
                 application_start_time__lte=now,
                 application_end_time__gte=now,
                 job_state=JobState.pending,
-                selected_workers__lt=F('max_workers'),
+                selected_workers__lt=F("max_workers"),
                 is_draft=False,
-                archived=False
-            ).order_by('start_time')[:50]
+                archived=False,
+            ).order_by("start_time")[:50]
         else:
             if not start or not end:
                 jobs = Job.objects.filter(
                     start_time__gt=now,
                     job_state=JobState.pending,
                     is_draft=False,
-                    archived=False
-                ).order_by('start_time')[:50]
+                    archived=False,
+                ).order_by("start_time")[:50]
             else:
                 if start < now:
                     start = now
@@ -160,8 +179,8 @@ class JobService:
                     start_time__range=[start, end],
                     job_state=JobState.pending,
                     is_draft=False,
-                    archived=False
-                ).order_by('start_time')[:50]
+                    archived=False,
+                ).order_by("start_time")[:50]
 
         return [JobUtil.to_model_view(job) for job in jobs]
 
@@ -171,7 +190,7 @@ class JobService:
             job__start_time__lt=end,
             job__start_time__gt=start,
             worker_id=user.id,
-            application_state=JobApplicationState.approved
+            application_state=JobApplicationState.approved,
         )[:50]
 
         return [JobUtil.to_model_view(application.job) for application in applications]
@@ -183,19 +202,15 @@ class JobService:
                 jobapplication__worker__id=worker_id,
                 customer_id=customer_id,
                 is_draft=False,
-                archived=False
+                archived=False,
             )[:50]
         elif worker_id:
             jobs = Job.objects.filter(
-                jobapplication__worker__id=worker_id,
-                is_draft=False,
-                archived=False
+                jobapplication__worker__id=worker_id, is_draft=False, archived=False
             )[:50]
         elif customer_id:
             jobs = Job.objects.filter(
-                customer_id=customer_id,
-                is_draft=False,
-                archived=False
+                customer_id=customer_id, is_draft=False, archived=False
             )[:50]
         else:
             jobs = Job.objects.all()[:50]
@@ -213,8 +228,12 @@ class JobService:
         formatter = FormattingUtil(data=data)
         try:
             job_id = formatter.get_value(k_job_id, required=True)
-            start_time = FormattingUtil.to_date_time(int(formatter.get_value(k_start_time, required=True)))
-            end_time = FormattingUtil.to_date_time(int(formatter.get_value(k_end_time, required=True)))
+            start_time = FormattingUtil.to_date_time(
+                int(formatter.get_value(k_start_time, required=True))
+            )
+            end_time = FormattingUtil.to_date_time(
+                int(formatter.get_value(k_end_time, required=True))
+            )
             break_time = formatter.get_time(k_break_time, required=False)
             worker_signature = data.get(k_worker_signature)
             customer_signature = data.get(k_customer_signature)
@@ -227,7 +246,9 @@ class JobService:
         query = TimeRegistration.objects.filter(job_id=job_id, worker_id=worker.id)
         if query.exists():
             registration = query.first()
-            job.customer.hours -= (registration.start_time - registration.end_time).seconds / 3600
+            job.customer.hours -= (
+                registration.start_time - registration.end_time
+            ).seconds / 3600
             job.customer.save()
             registration.delete()
 
@@ -242,13 +263,21 @@ class JobService:
         )
         time_registration.save()
 
-        TimeRegisteredTemplate().send(recipients=[{'Email': job.customer.email}], 
-                                      data={"title": job.title, "interval": FormattingUtil.to_time_interval(start_time, end_time), "worker": user.get_full_name(),})
+        TimeRegisteredTemplate().send(
+            recipients=[{"Email": job.customer.email}],
+            data={
+                "title": job.title,
+                "interval": FormattingUtil.to_time_interval(start_time, end_time),
+                "worker": user.get_full_name(),
+            },
+        )
 
         time_registration_count = TimeRegistration.objects.filter(job_id=job.id).count()
         if time_registration_count >= job.selected_workers:
             job.job_state = JobState.done
-            job.customer.hours += (time_registration.start_time - time_registration.end_time).seconds / 3600
+            job.customer.hours += (
+                time_registration.start_time - time_registration.end_time
+            ).seconds / 3600
             job.customer.save()
             job.save()
 
@@ -277,8 +306,8 @@ class JobService:
             job_state__in=[JobState.pending, JobState.fulfilled],
             start_time__lt=datetime.datetime.utcnow(),
             archived=False,
-            is_draft=False
-        ).order_by('start_time')[:50]
+            is_draft=False,
+        ).order_by("start_time")[:50]
 
         jobs_model_list = []
         for job in jobs:
@@ -294,15 +323,14 @@ class JobService:
     def get_done_jobs(start, end):
         if not start or not end:
             jobs = Job.objects.filter(
-                job_state__in=[JobState.done, JobState.cancelled],
-                archived=False
-            ).order_by('-start_time')[:50]
+                job_state__in=[JobState.done, JobState.cancelled], archived=False
+            ).order_by("-start_time")[:50]
         else:
             jobs = Job.objects.filter(
                 job_state__in=[JobState.done, JobState.cancelled],
                 archived=False,
-                start_time__range=[start, end]
-            ).order_by('-start_time')[:50]
+                start_time__range=[start, end],
+            ).order_by("-start_time")[:50]
 
         return [JobUtil.to_model_view(job) for job in jobs]
 

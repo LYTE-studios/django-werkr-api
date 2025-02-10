@@ -36,6 +36,6 @@ class DownloadContractView(JWTBaseAuthView):
             job_application.contract.path
         else:
             # Generate a new contract and save the path to the job application
-             ContractUtil.generate_contract(job_application)
+            ContractUtil.generate_contract(job_application)
 
         return Response()

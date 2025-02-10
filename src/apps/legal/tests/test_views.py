@@ -23,22 +23,22 @@ class DownloadContractViewTest(TestCase):
             worker=self.worker_profile,
             address=self.address,
             application_state=JobApplicationState.approved,
-            created_at='2023-01-01T00:00:00Z',
-            modified_at='2023-01-01T00:00:00Z'
+            created_at="2023-01-01T00:00:00Z",
+            modified_at="2023-01-01T00:00:00Z",
         )
-        self.url = reverse('download_contract', kwargs={k_id: self.job_application.id})
+        self.url = reverse("download_contract", kwargs={k_id: self.job_application.id})
 
-    @patch('apps.legal.views.generate_contract')
+    @patch("apps.legal.views.generate_contract")
     def test_download_contract_success(self, mock_generate_contract):
-        mock_generate_contract.return_value = 'contract.pdf'
-        with open('contract.pdf', 'wb') as f:
-            f.write(b'Test PDF content')
+        mock_generate_contract.return_value = "contract.pdf"
+        with open("contract.pdf", "wb") as f:
+            f.write(b"Test PDF content")
 
         response = self.client.post(self.url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response['Content-Type'], 'application/pdf')
-        self.assertIn('attachment; filename=', response['Content-Disposition'])
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertIn("attachment; filename=", response["Content-Disposition"])
 
     def test_download_contract_not_approved(self):
         self.job_application.application_state = JobApplicationState.pending
@@ -47,4 +47,4 @@ class DownloadContractViewTest(TestCase):
         response = self.client.post(self.url)
 
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content.decode(), 'Worker not approved')
+        self.assertEqual(response.content.decode(), "Worker not approved")

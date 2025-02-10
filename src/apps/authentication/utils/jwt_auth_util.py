@@ -7,6 +7,7 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
+
 User = get_user_model()
 
 from apps.core.assumptions import *
@@ -18,7 +19,7 @@ from apps.core.utils.wire_names import k_access_token, k_refresh_token, k_sessio
 
 
 class JWTAuthUtil:
-    k_token = 'Authorization'
+    k_token = "Authorization"
 
     @staticmethod
     def check_for_authentication(request: HttpRequest):
@@ -42,7 +43,7 @@ class JWTAuthUtil:
 
             # Here, instead of checking if the token is active (because that's
             # implicitly done when we initialize AccessToken), we're checking its payload.
-            if 'user_id' in token:
+            if "user_id" in token:
                 return token
             else:
                 return None
@@ -61,17 +62,20 @@ class JWTAuthUtil:
             user = User.objects.get(email=email, groups__id__contains=group.id)
         except User.DoesNotExist:
             return None
-        
+
         session_expiry = 0
 
         if group.name == CMS_GROUP_NAME:
             admin_profile = user.admin_profile
             if admin_profile.session_duration is not None:
-                session_expiry = FormattingUtil.to_timestamp(datetime.utcnow()) + admin_profile.session_duration
+                session_expiry = (
+                    FormattingUtil.to_timestamp(datetime.utcnow())
+                    + admin_profile.session_duration
+                )
 
         if group.name == WORKERS_GROUP_NAME:
             worker = user.worker_profile
-            
+
             if not worker.accepted:
                 return None
 
@@ -94,5 +98,5 @@ class JWTAuthUtil:
         return {
             k_access_token: str(refresh.access_token),
             k_refresh_token: str(refresh),
-            k_session_expiry: session_expiry
+            k_session_expiry: session_expiry,
         }

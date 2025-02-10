@@ -9,10 +9,8 @@ class CustomerUtil:
     @staticmethod
     def to_customer_view(customer, has_active_job: bool = False):
         # Check if the related CustomerProfile exists
-        if not hasattr(customer, 'customer_profile'):
-            return {
-                "error": "Customer profile does not exist for this user."
-            }
+        if not hasattr(customer, "customer_profile"):
+            return {"error": "Customer profile does not exist for this user."}
 
         customer_profile = customer.customer_profile
 

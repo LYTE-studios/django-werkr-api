@@ -15,80 +15,207 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('core', '0001_initial'),
+        ("core", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Job',
+            name="Job",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('title', models.CharField(default='', max_length=64)),
-                ('description', models.CharField(default='', max_length=256)),
-                ('job_state', models.CharField(choices=[('fulfilled', 'Fulfilled'), ('pending', 'Pending'), ('done', 'Done'), ('cancelled', 'Cancelled')], default='pending', max_length=64)),
-                ('start_time', models.DateTimeField()),
-                ('end_time', models.DateTimeField(blank=True, null=True)),
-                ('application_start_time', models.DateTimeField(blank=True, null=True)),
-                ('application_end_time', models.DateTimeField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
-                ('modified_at', models.DateTimeField(blank=True, null=True)),
-                ('is_draft', models.BooleanField(default=False)),
-                ('archived', models.BooleanField(default=False)),
-                ('max_workers', models.IntegerField(blank=True, null=True)),
-                ('selected_workers', models.IntegerField(blank=True, null=True)),
-                ('address', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.address')),
-                ('customer', models.ForeignKey(default=None, on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("title", models.CharField(default="", max_length=64)),
+                ("description", models.CharField(default="", max_length=256)),
+                (
+                    "job_state",
+                    models.CharField(
+                        choices=[
+                            ("fulfilled", "Fulfilled"),
+                            ("pending", "Pending"),
+                            ("done", "Done"),
+                            ("cancelled", "Cancelled"),
+                        ],
+                        default="pending",
+                        max_length=64,
+                    ),
+                ),
+                ("start_time", models.DateTimeField()),
+                ("end_time", models.DateTimeField(blank=True, null=True)),
+                ("application_start_time", models.DateTimeField(blank=True, null=True)),
+                ("application_end_time", models.DateTimeField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
+                ("modified_at", models.DateTimeField(blank=True, null=True)),
+                ("is_draft", models.BooleanField(default=False)),
+                ("archived", models.BooleanField(default=False)),
+                ("max_workers", models.IntegerField(blank=True, null=True)),
+                ("selected_workers", models.IntegerField(blank=True, null=True)),
+                (
+                    "address",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="core.address"
+                    ),
+                ),
+                (
+                    "customer",
+                    models.ForeignKey(
+                        default=None,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='StoredDirections',
+            name="StoredDirections",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('from_lat', models.IntegerField()),
-                ('from_lon', models.IntegerField()),
-                ('to_lat', models.IntegerField()),
-                ('to_lon', models.IntegerField()),
-                ('directions_response', models.TextField()),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("from_lat", models.IntegerField()),
+                ("from_lon", models.IntegerField()),
+                ("to_lat", models.IntegerField()),
+                ("to_lon", models.IntegerField()),
+                ("directions_response", models.TextField()),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
             ],
         ),
         migrations.CreateModel(
-            name='TimeRegistration',
+            name="TimeRegistration",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('start_time', models.DateTimeField()),
-                ('end_time', models.DateTimeField()),
-                ('break_time', models.TimeField(null=True)),
-                ('worker_signature', models.ImageField(blank=True, null=True, upload_to=apps.jobs.models.time_registration.TimeRegistration.get_upload_path)),
-                ('customer_signature', models.ImageField(blank=True, null=True, upload_to=apps.jobs.models.time_registration.TimeRegistration.get_upload_path)),
-                ('job', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='worked_times', to='jobs.job')),
-                ('worker', models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("start_time", models.DateTimeField()),
+                ("end_time", models.DateTimeField()),
+                ("break_time", models.TimeField(null=True)),
+                (
+                    "worker_signature",
+                    models.ImageField(
+                        blank=True,
+                        null=True,
+                        upload_to=apps.jobs.models.time_registration.TimeRegistration.get_upload_path,
+                    ),
+                ),
+                (
+                    "customer_signature",
+                    models.ImageField(
+                        blank=True,
+                        null=True,
+                        upload_to=apps.jobs.models.time_registration.TimeRegistration.get_upload_path,
+                    ),
+                ),
+                (
+                    "job",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="worked_times",
+                        to="jobs.job",
+                    ),
+                ),
+                (
+                    "worker",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='JobApplication',
+            name="JobApplication",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('application_state', models.CharField(choices=[('approved', 'Approved'), ('pending', 'Pending'), ('rejected', 'Rejected')], default='pending', max_length=64)),
-                ('distance', models.FloatField(null=True)),
-                ('no_travel_cost', models.BooleanField(default=True)),
-                ('created_at', models.DateTimeField()),
-                ('modified_at', models.DateTimeField()),
-                ('note', models.CharField(max_length=256, null=True)),
-                ('contract', models.FileField(null=True, upload_to=apps.jobs.models.application.JobApplication.get_contract_upload_path)),
-                ('address', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.address')),
-                ('job', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='jobs.job')),
-                ('worker', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "application_state",
+                    models.CharField(
+                        choices=[
+                            ("approved", "Approved"),
+                            ("pending", "Pending"),
+                            ("rejected", "Rejected"),
+                        ],
+                        default="pending",
+                        max_length=64,
+                    ),
+                ),
+                ("distance", models.FloatField(null=True)),
+                ("no_travel_cost", models.BooleanField(default=True)),
+                ("created_at", models.DateTimeField()),
+                ("modified_at", models.DateTimeField()),
+                ("note", models.CharField(max_length=256, null=True)),
+                (
+                    "contract",
+                    models.FileField(
+                        null=True,
+                        upload_to=apps.jobs.models.application.JobApplication.get_contract_upload_path,
+                    ),
+                ),
+                (
+                    "address",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="core.address"
+                    ),
+                ),
+                (
+                    "job",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT, to="jobs.job"
+                    ),
+                ),
+                (
+                    "worker",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Dimona',
+            name="Dimona",
             fields=[
-                ('id', models.CharField(max_length=32, primary_key=True, serialize=False)),
-                ('success', models.BooleanField(null=True)),
-                ('reason', models.CharField(max_length=256, null=True)),
-                ('created', models.DateTimeField(null=True)),
-                ('application', models.ForeignKey(default=None, on_delete=django.db.models.deletion.PROTECT, to='jobs.jobapplication')),
+                (
+                    "id",
+                    models.CharField(max_length=32, primary_key=True, serialize=False),
+                ),
+                ("success", models.BooleanField(null=True)),
+                ("reason", models.CharField(max_length=256, null=True)),
+                ("created", models.DateTimeField(null=True)),
+                (
+                    "application",
+                    models.ForeignKey(
+                        default=None,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="jobs.jobapplication",
+                    ),
+                ),
             ],
         ),
     ]

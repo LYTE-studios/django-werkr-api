@@ -1,6 +1,5 @@
-
-
 import pandas as pd
+
 
 class ExportUtil:
 
@@ -17,6 +16,6 @@ class ExportUtil:
     @staticmethod
     def format_ssn(ssn: str):
         if ssn is None:
-            return ''
+            return ""
 
         return ssn.zfill(10)

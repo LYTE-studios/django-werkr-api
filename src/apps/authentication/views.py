@@ -8,9 +8,7 @@ from apps.authentication.utils.pass_reset_util import CustomPasswordResetUtil
 from apps.authentication.utils.worker_util import WorkerUtil
 from apps.authentication.utils.profile_util import ProfileUtil
 from apps.core.assumptions import CMS_GROUP_NAME, CUSTOMERS_GROUP_NAME
-from apps.core.assumptions import (
-    WORKERS_GROUP_NAME
-)
+from apps.core.assumptions import WORKERS_GROUP_NAME
 from apps.core.model_exceptions import DeserializationException
 from apps.core.models.settings import Settings
 from apps.core.utils.formatters import FormattingUtil
@@ -23,13 +21,19 @@ from django.http import HttpResponseForbidden, HttpRequest, HttpResponse
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from apps.authentication.models.dashboard_flow import JobType, Location, SituationType, WorkType, UserJobType
+from apps.authentication.models.dashboard_flow import (
+    JobType,
+    Location,
+    SituationType,
+    WorkType,
+    UserJobType,
+)
 
 from .models import DashboardFlow
 from .utils.authentication_util import AuthenticationUtil
@@ -46,7 +50,7 @@ class BaseClientView(APIView):
     Base view for authentication using only the client secret.
     """
 
-    permission_classes = []
+    permission_classes = [AllowAny]
 
     group = None
 
@@ -56,7 +60,7 @@ class BaseClientView(APIView):
         WORKERS_GROUP_NAME,
         CMS_GROUP_NAME,
     ]
-    allowed_methods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+    allowed_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 
     def options(self, request, **kwargs):
         """
@@ -70,7 +74,7 @@ class BaseClientView(APIView):
             HttpResponse: An HTTP response with allowed methods.
         """
         response = HttpResponse()
-        response['allow'] = ','.join(self.allowed_methods)
+        response["allow"] = ",".join(self.allowed_methods)
         return response
 
     def dispatch(self, request: HttpRequest, *args, **kwargs):
@@ -88,7 +92,7 @@ class BaseClientView(APIView):
         Returns:
             HttpResponse: The HTTP response object.
         """
-        if request.method == 'OPTIONS':
+        if request.method == "OPTIONS":
             return super(BaseClientView, self).dispatch(request, *args, **kwargs)
 
         self.group = AuthenticationUtil.check_client_secret(request)
@@ -157,7 +161,7 @@ class JWTBaseAuthView(APIView):
             return HttpResponseForbidden()
 
         try:
-            self.user = User.objects.get(id=auth_token.get('user_id'))
+            self.user = User.objects.get(id=auth_token.get("user_id"))
         except User.DoesNotExist:
             return HttpResponseForbidden()
 
@@ -184,17 +188,23 @@ class JWTAuthenticationView(BaseClientView):
         formatter = FormattingUtil(data=request.data)
 
         try:
-            password = formatter.get_value('password', required=True)
-            email = formatter.get_value('email', required=True)
+            password = formatter.get_value("password", required=True)
+            email = formatter.get_value("email", required=True)
         except DeserializationException as e:
-            return Response({'message': e.args}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": e.args}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"message": e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
-        tokens = JWTAuthUtil.authenticate(email=email, password=password, group=self.group)
+        tokens = JWTAuthUtil.authenticate(
+            email=email, password=password, group=self.group
+        )
 
         if not tokens or tokens == {}:
-            return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {"message": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
+            )
 
         return Response(tokens)
 
@@ -216,26 +226,29 @@ class ValidateRegistrationView(BaseClientView):
         try:
             email = formatter.get_email(k_email, required=True)
         except Exception as e:
-            return Response({'message': e.args}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({"message": e.args}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             User.objects.get(email=email)
-            
-            return Response({'message': 'User already exists'}, status=status.HTTP_409_CONFLICT)
+
+            return Response(
+                {"message": "User already exists"}, status=status.HTTP_409_CONFLICT
+            )
         except User.DoesNotExist:
 
             return Response()
         except Exception as e:
 
-            return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
+            return Response(
+                {"message": e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class JWTRefreshView(TokenRefreshView):
     """
     View for refreshing JWT tokens.
     """
+
     pass
 
 
@@ -272,46 +285,69 @@ class ProfileMeView(JWTBaseAuthView):
         Returns:
             Response: A JSON response containing the user's profile data.
         """
-        profile_picture = ProfileUtil.get_user_profile_picture_url(self.user) 
+        profile_picture = ProfileUtil.get_user_profile_picture_url(self.user)
 
         data = {
-            'user_id': self.user.id,
-            'first_name': self.user.first_name,
-            'last_name': self.user.last_name,
-            'email': self.user.email,
-            'description': self.user.description,
-            'profile_picture': profile_picture,
-            'language': getattr(Settings.objects.filter(id=self.user.settings_id).first(), 'language',
-                                None)
+            "user_id": self.user.id,
+            "first_name": self.user.first_name,
+            "last_name": self.user.last_name,
+            "email": self.user.email,
+            "description": self.user.description,
+            "profile_picture": profile_picture,
+            "language": getattr(
+                Settings.objects.filter(id=self.user.settings_id).first(),
+                "language",
+                None,
+            ),
         }
 
-        if hasattr(self.user, 'customer_profile'):
+        if hasattr(self.user, "customer_profile"):
             customer = self.user.customer_profile
             if customer is not None:
-                data.update({
-                    'tax_number': customer.tax_number,
-                    'company_name': customer.company_name,
-                    'customer_billing_address': customer.customer_billing_address.to_model_view() if customer.customer_billing_address else None,
-                    'customer_address': customer.customer_address.to_model_view() if customer.customer_address else None,
-                })
-        if hasattr(self.user, 'worker_profile'):
+                data.update(
+                    {
+                        "tax_number": customer.tax_number,
+                        "company_name": customer.company_name,
+                        "customer_billing_address": (
+                            customer.customer_billing_address.to_model_view()
+                            if customer.customer_billing_address
+                            else None
+                        ),
+                        "customer_address": (
+                            customer.customer_address.to_model_view()
+                            if customer.customer_address
+                            else None
+                        ),
+                    }
+                )
+        if hasattr(self.user, "worker_profile"):
             worker = self.user.worker_profile
             if worker is not None:
-                data.update({
-                    'iban': worker.iban,
-                    'ssn': worker.ssn,
-                    'worker_address': worker.worker_address.to_model_view() if worker.worker_address else None,
-                    'date_of_birth': FormattingUtil.to_timestamp(worker.date_of_birth),
-                    'place_of_birth': worker.place_of_birth,
-                    'accepted': worker.accepted,
-                    'hours': worker.hours,
-                })
-        if hasattr(self.user, 'admin_profile'):
+                data.update(
+                    {
+                        "iban": worker.iban,
+                        "ssn": worker.ssn,
+                        "worker_address": (
+                            worker.worker_address.to_model_view()
+                            if worker.worker_address
+                            else None
+                        ),
+                        "date_of_birth": FormattingUtil.to_timestamp(
+                            worker.date_of_birth
+                        ),
+                        "place_of_birth": worker.place_of_birth,
+                        "accepted": worker.accepted,
+                        "hours": worker.hours,
+                    }
+                )
+        if hasattr(self.user, "admin_profile"):
             admin = self.user.admin_profile
             if admin is not None:
-                data.update({
-                    'session_duration': admin.session_duration,
-                })
+                data.update(
+                    {
+                        "session_duration": admin.session_duration,
+                    }
+                )
 
         return Response(data)
 
@@ -328,53 +364,61 @@ class ProfileMeView(JWTBaseAuthView):
         formatter = FormattingUtil(data=request.data)
 
         try:
-            first_name = formatter.get_value('first_name')
-            last_name = formatter.get_value('last_name')
-            email = formatter.get_email('email')
-            description = formatter.get_value('description')
+            first_name = formatter.get_value("first_name")
+            last_name = formatter.get_value("last_name")
+            email = formatter.get_email("email")
+            description = formatter.get_value("description")
         except DeserializationException as e:
-            return Response({'message': e.args}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": e.args}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"message": e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         self.user.first_name = first_name or self.user.first_name
         self.user.last_name = last_name or self.user.last_name
         self.user.email = email or self.user.email
         self.user.description = description or self.user.description
 
-        if hasattr(self.user, 'customer_profile'):
+        if hasattr(self.user, "customer_profile"):
             try:
-                tax_number = formatter.get_value('tax_number')
-                company_name = formatter.get_value('company_name')
-                customer_address = formatter.get_address('address')
-                customer_billing_address = formatter.get_address('billing_address')
+                tax_number = formatter.get_value("tax_number")
+                company_name = formatter.get_value("company_name")
+                customer_address = formatter.get_address("address")
+                customer_billing_address = formatter.get_address("billing_address")
             except DeserializationException as e:
-                return Response({'message': e.args}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": e.args}, status=status.HTTP_400_BAD_REQUEST)
             except Exception as e:
-                return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response(
+                    {"message": e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
             customer = self.user.customer_profile
             customer.tax_number = tax_number or customer.tax_number
             customer.company_name = company_name or customer.company_name
             customer.customer_address = customer_address or customer.customer_address
-            customer.customer_billing_address = customer_billing_address or customer.customer_billing_address
+            customer.customer_billing_address = (
+                customer_billing_address or customer.customer_billing_address
+            )
             customer.customer_address.save()
             customer.customer_billing_address.save()
             customer.save()
 
-        if hasattr(self.user, 'worker_profile'):
+        if hasattr(self.user, "worker_profile"):
             try:
-                iban = formatter.get_value('iban')
-                ssn = formatter.get_value('ssn')
-                worker_address = formatter.get_address('address')
-                date_of_birth = formatter.get_date('date_of_birth')
-                place_of_birth = formatter.get_value('place_of_birth')
-                accepted = formatter.get_value('accepted')
-                hours = formatter.get_value('hours')
+                iban = formatter.get_value("iban")
+                ssn = formatter.get_value("ssn")
+                worker_address = formatter.get_address("address")
+                date_of_birth = formatter.get_date("date_of_birth")
+                place_of_birth = formatter.get_value("place_of_birth")
+                accepted = formatter.get_value("accepted")
+                hours = formatter.get_value("hours")
             except DeserializationException as e:
-                return Response({'message': e.args}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": e.args}, status=status.HTTP_400_BAD_REQUEST)
             except Exception as e:
-                return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response(
+                    {"message": e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
             worker = self.user.worker_profile
             worker.iban = iban or worker.iban
@@ -387,13 +431,15 @@ class ProfileMeView(JWTBaseAuthView):
             worker.worker_address.save()
             worker.save()
 
-        if hasattr(self.user, 'admin_profile'):
+        if hasattr(self.user, "admin_profile"):
             try:
-                session_duration = formatter.get_value('session_duration')
+                session_duration = formatter.get_value("session_duration")
             except DeserializationException as e:
-                return Response({'message': e.args}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": e.args}, status=status.HTTP_400_BAD_REQUEST)
             except Exception as e:
-                return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response(
+                    {"message": e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
             admin = self.user.admin_profile
             admin.session_duration = session_duration or admin.session_duration
@@ -401,7 +447,7 @@ class ProfileMeView(JWTBaseAuthView):
 
         self.user.save()
 
-        return Response({'user_id': self.user.id})
+        return Response({"user_id": self.user.id})
 
 
 class LanguageSettingsView(JWTBaseAuthView):
@@ -419,8 +465,14 @@ class LanguageSettingsView(JWTBaseAuthView):
         Returns:
             JsonResponse: A JSON response containing the list of available languages.
         """
-        languages = sorted(set(setting.language for setting in Settings.objects.all() if setting.language))
-        return JsonResponse({'languages': languages})
+        languages = sorted(
+            set(
+                setting.language
+                for setting in Settings.objects.all()
+                if setting.language
+            )
+        )
+        return JsonResponse({"languages": languages})
 
     def put(self, request):
         """
@@ -435,11 +487,13 @@ class LanguageSettingsView(JWTBaseAuthView):
         formatter = FormattingUtil(data=request.data)
 
         try:
-            language = formatter.get_value('language', required=True)
+            language = formatter.get_value("language", required=True)
         except DeserializationException as e:
-            return Response({'message': e.args}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": e.args}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"message": e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         if language:
             settings = self.user.settings or Settings.objects.create(language=language)
@@ -448,7 +502,7 @@ class LanguageSettingsView(JWTBaseAuthView):
             self.user.settings = settings
             self.user.save()
 
-        return Response({'language': self.user.settings.language})
+        return Response({"language": self.user.settings.language})
 
 
 class UploadUserProfilePictureView(JWTBaseAuthView):
@@ -471,13 +525,15 @@ class UploadUserProfilePictureView(JWTBaseAuthView):
         profile_user = self.user
 
         try:
-            user_id = kwargs['id']
+            user_id = kwargs["id"]
             profile_user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return HttpResponseNotFound()
 
-        profile_picture_url = profile_user.profile_picture.url if profile_user.profile_picture else None
-        return Response({'profile_picture': profile_picture_url})
+        profile_picture_url = (
+            profile_user.profile_picture.url if profile_user.profile_picture else None
+        )
+        return Response({"profile_picture": profile_picture_url})
 
     def put(self, request, *args, **kwargs):
         """
@@ -495,7 +551,7 @@ class UploadUserProfilePictureView(JWTBaseAuthView):
         profile_user = self.user
 
         try:
-            user_id = kwargs['id']
+            user_id = kwargs["id"]
             profile_user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return HttpResponseNotFound()
@@ -512,7 +568,7 @@ class UploadUserProfilePictureView(JWTBaseAuthView):
         profile_user = self.user
 
         try:
-            user_id = kwargs['id']
+            user_id = kwargs["id"]
             profile_user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return HttpResponseNotFound()
@@ -553,12 +609,16 @@ class PasswordResetRequestView(BaseClientView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            return Response({k_message: 'Email not found.'}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return Response(
+                {k_message: "Email not found."}, status=HTTPStatus.INTERNAL_SERVER_ERROR
+            )
 
         pass_reset_util = CustomPasswordResetUtil()
         pass_reset_util.send_reset_code(user)
 
-        return Response({k_message: 'Password reset email has been sent.'}, status=HTTPStatus.OK)
+        return Response(
+            {k_message: "Password reset email has been sent."}, status=HTTPStatus.OK
+        )
 
 
 class VerifyCodeView(BaseClientView):
@@ -590,14 +650,18 @@ class VerifyCodeView(BaseClientView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            return Response({k_message: 'Email not found.'}, status=HTTPStatus.BAD_REQUEST)
+            return Response(
+                {k_message: "Email not found."}, status=HTTPStatus.BAD_REQUEST
+            )
 
         pass_reset_util = CustomPasswordResetUtil()
         if pass_reset_util.verify_code(user, code):
             token = pass_reset_util.create_temporary_token_for_user(user, code)
             return Response({k_token: token}, status=HTTPStatus.OK)
         else:
-            return Response({k_message: 'Code not verified.'}, status=HTTPStatus.FORBIDDEN)
+            return Response(
+                {k_message: "Code not verified."}, status=HTTPStatus.FORBIDDEN
+            )
 
 
 class ResetPasswordView(BaseClientView):
@@ -638,30 +702,48 @@ class ResetPasswordView(BaseClientView):
             user.save()
 
             # Return a success response
-            return Response({k_message: 'Password has been reset.'}, status=HTTPStatus.OK)
+            return Response(
+                {k_message: "Password has been reset."}, status=HTTPStatus.OK
+            )
         else:
             # Return a bad request response if the token or code is invalid or expired
-            return Response({k_message: 'Invalid or expired token'}, status=HTTPStatus.BAD_REQUEST)
+            return Response(
+                {k_message: "Invalid or expired token"}, status=HTTPStatus.BAD_REQUEST
+            )
 
 
 class DashboardFlowView(BaseClientView):
 
     def get(self, request):
+        job_types = [
+            job_type.to_model_view()
+            for job_type in JobType.objects.all().order_by("weight")
+        ]
 
-        job_types = [job_type.to_model_view() for job_type in JobType.objects.all().order_by('weight')] 
+        situation_types = [
+            situation_type.to_model_view()
+            for situation_type in SituationType.objects.all().order_by("weight")
+        ]
 
-        situation_types = [situation_type.to_model_view() for situation_type in SituationType.objects.all().order_by('weight')]
+        work_types = [
+            work_type.to_model_view()
+            for work_type in WorkType.objects.all().order_by("weight")
+        ]
 
-        work_types = [work_type.to_model_view() for work_type in WorkType.objects.all().order_by('weight')]
+        locations = [
+            location.to_model_view()
+            for location in Location.objects.all().order_by("weight")
+        ]
 
-        locations = [location.to_model_view() for location in Location.objects.all().order_by('weight')]
+        return Response(
+            {
+                "job_types": job_types,
+                "situation_types": situation_types,
+                "work_types": work_types,
+                "locations": locations,
+            }
+        )
 
-        return Response({
-            'job_types': job_types,
-            'situation_types': situation_types,
-            'work_types': work_types,
-            'locations': locations,
-        })
 
 class WorkerRegisterView(BaseClientView):
     """
@@ -693,28 +775,42 @@ class WorkerRegisterView(BaseClientView):
             email = formatter.get_email(k_email, required=True)
             password = formatter.get_value(k_password, required=True)
 
-            work_type_ids = formatter.get_value('work_types', required=False)
-            situation_type_ids = formatter.get_value('situation_types', required=False)
-            job_type_ids = formatter.get_value('job_types', required=False)
-            location_ids = formatter.get_value('locations', required=False)
+            work_type_ids = formatter.get_value("work_types", required=False)
+            situation_type_ids = formatter.get_value("situation_types", required=False)
+            job_type_ids = formatter.get_value("job_types", required=False)
+            location_ids = formatter.get_value("locations", required=False)
 
             if work_type_ids:
-                work_types = WorkType.objects.filter(id__in=[work_type.get('id', None) for work_type in work_type_ids])
+                work_types = WorkType.objects.filter(
+                    id__in=[work_type.get("id", None) for work_type in work_type_ids]
+                )
             else:
                 work_types = []
             if situation_type_ids:
-                situation_types = SituationType.objects.filter(id__in=[situation_type.get('id', None) for situation_type in situation_type_ids])
+                situation_types = SituationType.objects.filter(
+                    id__in=[
+                        situation_type.get("id", None)
+                        for situation_type in situation_type_ids
+                    ]
+                )
             else:
                 situation_types = []
             if job_type_ids:
                 job_types = []
                 for job_type in job_type_ids:
-                    job_types.append(UserJobType.objects.create(name_id=job_type.get('id', None), experience_type=job_type.get('mastery', None)))
+                    job_types.append(
+                        UserJobType.objects.create(
+                            name_id=job_type.get("id", None),
+                            experience_type=job_type.get("mastery", None),
+                        )
+                    )
             else:
                 job_types = []
             if location_ids:
-                locations = Location.objects.filter(id__in=[location.get('id', None) for location in location_ids])
-            else:    
+                locations = Location.objects.filter(
+                    id__in=[location.get("id", None) for location in location_ids]
+                )
+            else:
                 locations = []
 
             first_name = formatter.get_value(k_first_name, required=False)
@@ -729,10 +825,14 @@ class WorkerRegisterView(BaseClientView):
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
             # Unhandled exception
-            return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return Response(
+                {k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR
+            )
 
         if User.objects.filter(email=email).exists():
-            return Response({k_message: 'User already exists'}, status=HTTPStatus.METHOD_NOT_ALLOWED)
+            return Response(
+                {k_message: "User already exists"}, status=HTTPStatus.METHOD_NOT_ALLOWED
+            )
 
         # Encrypt the password
         password, salt = EncryptionUtil.encrypt(password)
@@ -817,10 +917,14 @@ class StatisticsView(JWTBaseAuthView):
         except DeserializationException as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
-            return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return Response(
+                {k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR
+            )
 
         if time_frame not in [k_week, k_month]:
-            return Response({k_message: 'Invalid time frame'}, status=HTTPStatus.BAD_REQUEST)
+            return Response(
+                {k_message: "Invalid time frame"}, status=HTTPStatus.BAD_REQUEST
+            )
 
         return self.statistics_view(request, time_frame, worker_id)
 
@@ -843,13 +947,17 @@ class StatisticsView(JWTBaseAuthView):
             for i in range(3):
                 week_start = today - datetime.timedelta(days=(today.weekday() + 7 * i))
                 week_end = week_start + datetime.timedelta(days=6)
-                week_stats = StatisticsService.get_weekly_stats(worker_id, week_start, week_end)
+                week_stats = StatisticsService.get_weekly_stats(
+                    worker_id, week_start, week_end
+                )
                 stats.append(week_stats)
 
         elif time_frame == k_month:
             stats = []
             for i in range(3):
-                year_stats = StatisticsService.get_monthly_stats(worker_id, today.year - i)
+                year_stats = StatisticsService.get_monthly_stats(
+                    worker_id, today.year - i
+                )
                 stats.append(year_stats)
 
         return JsonResponse({k_statistics: stats})
@@ -883,7 +991,9 @@ class WorkerDetailView(JWTBaseAuthView):
             HttpResponseNotFound: If the worker does not exist.
         """
         try:
-            worker = User.objects.get(id=kwargs['id'], groups__name__contains=WORKERS_GROUP_NAME)
+            worker = User.objects.get(
+                id=kwargs["id"], groups__name__contains=WORKERS_GROUP_NAME
+            )
         except User.DoesNotExist:
             return HttpResponseNotFound()
 
@@ -903,7 +1013,9 @@ class WorkerDetailView(JWTBaseAuthView):
             HttpResponseNotFound: If the worker does not exist.
         """
         try:
-            worker = User.objects.get(id=kwargs['id'], groups__name__contains=WORKERS_GROUP_NAME)
+            worker = User.objects.get(
+                id=kwargs["id"], groups__name__contains=WORKERS_GROUP_NAME
+            )
         except User.DoesNotExist:
             return HttpResponseNotFound()
 
@@ -927,7 +1039,9 @@ class WorkerDetailView(JWTBaseAuthView):
             Response: A response with an error message and status code if there is an error in the request data.
         """
         try:
-            worker = User.objects.get(id=kwargs['id'], groups__name__contains=WORKERS_GROUP_NAME)
+            worker = User.objects.get(
+                id=kwargs["id"], groups__name__contains=WORKERS_GROUP_NAME
+            )
         except User.DoesNotExist:
             return HttpResponseNotFound()
 
@@ -945,15 +1059,21 @@ class WorkerDetailView(JWTBaseAuthView):
         except DeserializationException as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
-            return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return Response(
+                {k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR
+            )
 
         worker.first_name = first_name or worker.first_name
         worker.last_name = last_name or worker.last_name
         worker.email = email or worker.email
-        worker.worker_profile.worker_address = address or worker.worker_profile.worker_address
+        worker.worker_profile.worker_address = (
+            address or worker.worker_profile.worker_address
+        )
         worker.worker_profile.iban = tax_number or worker.worker_profile.iban
         worker.worker_profile.ssn = company or worker.worker_profile.ssn
-        worker.worker_profile.date_of_birth = date_of_birth or worker.worker_profile.date_of_birth
+        worker.worker_profile.date_of_birth = (
+            date_of_birth or worker.worker_profile.date_of_birth
+        )
 
         if address:
             address.save()
@@ -992,31 +1112,31 @@ class WorkersListView(JWTBaseAuthView):
         Returns:
             Response: A JSON response containing the list of workers, items per page, and total count.
         """
-        item_count = kwargs.get('count', 25)
-        page = kwargs.get('page', 1)
-        search_term = kwargs.get('search_term')
-        sort_term = kwargs.get('sort_term')
-        algorithm = kwargs.get('algorithm')
-        state = kwargs.get('state')
+        item_count = kwargs.get("count", 25)
+        page = kwargs.get("page", 1)
+        search_term = kwargs.get("search_term")
+        sort_term = kwargs.get("sort_term")
+        algorithm = kwargs.get("algorithm")
+        state = kwargs.get("state")
 
-        block_unaccepted_workers = state != 'registered'
+        block_unaccepted_workers = state != "registered"
 
         workers = User.objects.filter(
             groups__name__contains=WORKERS_GROUP_NAME,
             archived=False,
-            accepted=block_unaccepted_workers
+            accepted=block_unaccepted_workers,
         )
 
         if sort_term:
-            if algorithm == 'descending':
-                sort_term = f'-{sort_term}'
+            if algorithm == "descending":
+                sort_term = f"-{sort_term}"
             workers = workers.order_by(sort_term)
 
         if search_term:
             queries = [
                 workers.filter(first_name__icontains=search_term)[:10],
                 workers.filter(last_name__icontains=search_term)[:10],
-                workers.filter(email__icontains=search_term)[:10]
+                workers.filter(email__icontains=search_term)[:10],
             ]
             data = list({worker for query in queries for worker in query})
         else:
@@ -1026,15 +1146,16 @@ class WorkersListView(JWTBaseAuthView):
         paginated_workers = paginator.page(page).object_list
 
         response_data = [
-            WorkerUtil.to_worker_view(worker)
-            for worker in paginated_workers
+            WorkerUtil.to_worker_view(worker) for worker in paginated_workers
         ]
 
-        return Response({
-            k_workers: response_data,
-            k_items_per_page: paginator.per_page,
-            k_total: paginator.count
-        })
+        return Response(
+            {
+                k_workers: response_data,
+                k_items_per_page: paginator.per_page,
+                k_total: paginator.count,
+            }
+        )
 
 
 class AcceptWorkerView(JWTBaseAuthView):
@@ -1066,7 +1187,9 @@ class AcceptWorkerView(JWTBaseAuthView):
         """
         try:
             # Retrieve the worker by id and group
-            worker = User.objects.get(id=kwargs['id'], groups__name__contains=WORKERS_GROUP_NAME)
+            worker = User.objects.get(
+                id=kwargs["id"], groups__name__contains=WORKERS_GROUP_NAME
+            )
         except User.DoesNotExist:
             return HttpResponseNotFound()
 
@@ -1122,7 +1245,9 @@ class CreateCustomerView(JWTBaseAuthView):
         except DeserializationException as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
-            return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return Response(
+                {k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR
+            )
 
         # Save addresses if provided
         if address:
@@ -1134,10 +1259,10 @@ class CreateCustomerView(JWTBaseAuthView):
         user, created = User.objects.get_or_create(
             email=email,
             defaults={
-                'username': email,
-                'first_name': first_name,
-                'last_name': last_name,
-            }
+                "username": email,
+                "first_name": first_name,
+                "last_name": last_name,
+            },
         )
 
         if not created:
@@ -1158,7 +1283,7 @@ class CreateCustomerView(JWTBaseAuthView):
             tax_number=tax_number,
             company_name=company,
             customer_address=address,
-            customer_billing_address=billing_address
+            customer_billing_address=billing_address,
         )
 
         if created:
@@ -1197,28 +1322,26 @@ class CustomersListView(JWTBaseAuthView):
             Response: A JSON response containing the list of customers, items per page, and total count.
         """
         # Get pagination parameters from kwargs, with default values
-        item_count = kwargs.get('count', 25)
-        page = kwargs.get('page', 1)
-        search_term = kwargs.get('search_term')
-        sort_term = kwargs.get('sort_term')
-        algorithm = kwargs.get('algorithm')
+        item_count = kwargs.get("count", 25)
+        page = kwargs.get("page", 1)
+        search_term = kwargs.get("search_term")
+        sort_term = kwargs.get("sort_term")
+        algorithm = kwargs.get("algorithm")
 
         # Get customers with active jobs
         active_job_customers = Job.objects.filter(
-            start_time__lt=datetime.datetime.utcnow(),
-            job_state=JobState.pending
-        ).values_list('customer', flat=True)
+            start_time__lt=datetime.datetime.utcnow(), job_state=JobState.pending
+        ).values_list("customer", flat=True)
 
         # Filter customers by group and archived status
         customers = User.objects.filter(
-            groups__name__contains=CUSTOMERS_GROUP_NAME,
-            archived=False
+            groups__name__contains=CUSTOMERS_GROUP_NAME, archived=False
         )
 
         # Apply sorting if sort_term is provided
         if sort_term:
-            if algorithm == 'descending':
-                sort_term = f'-{sort_term}'
+            if algorithm == "descending":
+                sort_term = f"-{sort_term}"
             customers = customers.order_by(sort_term)
 
         # Apply search if search_term is provided
@@ -1226,7 +1349,7 @@ class CustomersListView(JWTBaseAuthView):
             queries = [
                 customers.filter(first_name__icontains=search_term)[:10],
                 customers.filter(last_name__icontains=search_term)[:10],
-                customers.filter(email__icontains=search_term)[:10]
+                customers.filter(email__icontains=search_term)[:10],
             ]
             data = list({customer for query in queries for customer in query})
         else:
@@ -1238,16 +1361,20 @@ class CustomersListView(JWTBaseAuthView):
 
         # Convert customers to view format and check for active jobs
         response_data = [
-            CustomerUtil.to_customer_view(customer, has_active_job=customer.id in active_job_customers)
+            CustomerUtil.to_customer_view(
+                customer, has_active_job=customer.id in active_job_customers
+            )
             for customer in paginated_customers
         ]
 
         # Return the paginated customer data
-        return Response({
-            k_customers: response_data,
-            k_items_per_page: paginator.per_page,
-            k_total: paginator.count
-        })
+        return Response(
+            {
+                k_customers: response_data,
+                k_items_per_page: paginator.per_page,
+                k_total: paginator.count,
+            }
+        )
 
 
 class CustomerDetailView(JWTBaseAuthView):
@@ -1278,7 +1405,9 @@ class CustomerDetailView(JWTBaseAuthView):
             HttpResponseNotFound: If the customer does not exist.
         """
         try:
-            customer = User.objects.get(id=kwargs['id'], groups__name__contains=CUSTOMERS_GROUP_NAME)
+            customer = User.objects.get(
+                id=kwargs["id"], groups__name__contains=CUSTOMERS_GROUP_NAME
+            )
         except User.DoesNotExist:
             return HttpResponseNotFound()
 
@@ -1298,7 +1427,9 @@ class CustomerDetailView(JWTBaseAuthView):
             HttpResponseNotFound: If the customer does not exist.
         """
         try:
-            customer = User.objects.get(id=kwargs['id'], groups__name__contains=CUSTOMERS_GROUP_NAME)
+            customer = User.objects.get(
+                id=kwargs["id"], groups__name__contains=CUSTOMERS_GROUP_NAME
+            )
         except User.DoesNotExist:
             return HttpResponseNotFound()
 
@@ -1324,24 +1455,28 @@ class CustomerDetailView(JWTBaseAuthView):
             Response: A response with an error message and status code if there is an error in the request data.
         """
         try:
-            customer = User.objects.get(id=kwargs['id'], groups__name__contains=CUSTOMERS_GROUP_NAME)
+            customer = User.objects.get(
+                id=kwargs["id"], groups__name__contains=CUSTOMERS_GROUP_NAME
+            )
         except User.DoesNotExist:
             return HttpResponseNotFound()
 
         formatter = FormattingUtil(data=request.data)
 
         try:
-            first_name = formatter.get_value('first_name')
-            last_name = formatter.get_value('last_name')
-            email = formatter.get_email('email')
-            address = formatter.get_address('address')
-            billing_address = formatter.get_address('billing_address')
-            tax_number = formatter.get_value('tax_number')
-            company = formatter.get_value('company')
+            first_name = formatter.get_value("first_name")
+            last_name = formatter.get_value("last_name")
+            email = formatter.get_email("email")
+            address = formatter.get_address("address")
+            billing_address = formatter.get_address("billing_address")
+            tax_number = formatter.get_value("tax_number")
+            company = formatter.get_value("company")
         except DeserializationException as e:
-            return Response({'message': e.args}, status=HTTPStatus.BAD_REQUEST)
+            return Response({"message": e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
-            return Response({'message': e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return Response(
+                {"message": e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR
+            )
 
         customer.first_name = first_name or customer.first_name
         customer.last_name = last_name or customer.last_name
@@ -1349,7 +1484,9 @@ class CustomerDetailView(JWTBaseAuthView):
 
         customer_profile = customer.customer_profile
         customer_profile.customer_address = address or customer_profile.customer_address
-        customer_profile.customer_billing_address = billing_address or customer_profile.customer_billing_address
+        customer_profile.customer_billing_address = (
+            billing_address or customer_profile.customer_billing_address
+        )
         customer_profile.tax_number = tax_number or customer_profile.tax_number
         customer_profile.company_name = company or customer_profile.company_name
 
@@ -1391,7 +1528,7 @@ class CustomerSearchTermView(JWTBaseAuthView):
             Response: A JSON response containing the list of customers matching the search term.
             HttpResponseNotFound: If the search term is not provided.
         """
-        search_term = kwargs.get('search_term')
+        search_term = kwargs.get("search_term")
         if not search_term:
             return HttpResponseNotFound()
 
@@ -1399,39 +1536,16 @@ class CustomerSearchTermView(JWTBaseAuthView):
         queries = [
             customers.filter(first_name__icontains=search_term)[:5],
             customers.filter(last_name__icontains=search_term)[:5],
-            customers.filter(email__icontains=search_term)[:5]
+            customers.filter(email__icontains=search_term)[:5],
         ]
 
-        data = {CustomerUtil.to_customer_view(customer) for query in queries for customer in query}
+        data = {
+            CustomerUtil.to_customer_view(customer)
+            for query in queries
+            for customer in query
+        }
 
         return Response({k_customers: list(data)})
-
-
-# class OnboardingFlowView(BaseClientView):
-#     """
-#     API view to handle the onboarding flow for workers.
-#     """
-
-#     def post(self, request, *args, **kwargs):
-#         user = self.user
-#         worker_profile = get_object_or_404(WorkerProfile, user=user)
-
-#         # Save data to DashboardFlow
-#         dashboard_flow_data = request.data.copy()
-#         dashboard_flow_data["user"] = user.id  # Use user ID for the serializer
-#         dashboard_flow_serializer = DashboardFlowSerializer(data=dashboard_flow_data)
-#         if dashboard_flow_serializer.is_valid():
-#             dashboard_flow_serializer.save(user=user)
-#         else:
-#             return Response(dashboard_flow_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#         # Update WorkerProfile onboard_flow to True
-#         worker_profile_serializer = WorkerProfileSerializer(worker_profile, data={"has_passed_onboarding": True},
-#                                                             partial=True)
-#         if worker_profile_serializer.is_valid():
-#             worker_profile_serializer.save()
-#             return Response(worker_profile_serializer.data, status=status.HTTP_200_OK)
-#         return Response(worker_profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class WorkerProfileDetailView(JWTBaseAuthView):
@@ -1447,8 +1561,8 @@ class WorkerProfileDetailView(JWTBaseAuthView):
         dashboard_flow_serializer = DashboardFlowSerializer(dashboard_flow)
 
         response_data = {
-            'worker_profile': worker_profile_serializer.data,
-            'dashboard_flow': dashboard_flow_serializer.data
+            "worker_profile": worker_profile_serializer.data,
+            "dashboard_flow": dashboard_flow_serializer.data,
         }
 
         return Response(response_data, status=status.HTTP_200_OK)

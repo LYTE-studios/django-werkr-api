@@ -49,32 +49,28 @@ class JobApplicationService:
 
         if stored_directions and not stored_directions.check_expired():
             return stored_directions.directions_response
-        else: 
+        else:
             from django.conf import settings
+
             response = requests.post(
-                url='{}/directions/v2:computeRoutes'.format(settings.GOOGLE_ROUTES_URL),
+                url="{}/directions/v2:computeRoutes".format(settings.GOOGLE_ROUTES_URL),
                 headers={
                     "X-Goog-Api-Key": settings.GOOGLE_API_KEY,
                     "X-Goog-FieldMask": "routes.distanceMeters,routes.polyline",
                 },
                 json={
                     "origin": {
+                        "location": {"latLng": {"latitude": lat, "longitude": lon}}
+                    },
+                    "destination": {
                         "location": {
                             "latLng": {
-                                "latitude": lat,
-                                "longitude": lon
-                            }   
+                                "latitude": to_lat,
+                                "longitude": to_lon,
+                            }
                         }
                     },
-                "destination": {
-                    "location": {
-                        "latLng": {
-                            "latitude": to_lat,
-                            "longitude": to_lon,
-                        }
-                    }
-                },
-                "travelMode": "DRIVE",
+                    "travelMode": "DRIVE",
                 },
             )
 
@@ -86,7 +82,7 @@ class JobApplicationService:
                     from_lon=lon,
                     to_lat=to_lat,
                     to_lon=to_lon,
-                    directions_response=directions_response
+                    directions_response=directions_response,
                 ).save()
                 return directions_response
             else:
@@ -95,19 +91,27 @@ class JobApplicationService:
     @staticmethod
     def get_my_applications(user):
         now = datetime.datetime.now()
-        approved_applications = JobApplication.objects.filter(worker_id=user.id,
-                                                              job__start_time__gt=now,
-                                                              job__archived=False,
-                                                              application_state=JobApplicationState.approved)[:25]
+        approved_applications = JobApplication.objects.filter(
+            worker_id=user.id,
+            job__start_time__gt=now,
+            job__archived=False,
+            application_state=JobApplicationState.approved,
+        )[:25]
         applications = JobApplication.objects.filter(
             ~Q(application_state=JobApplicationState.approved),
             worker_id=user.id,
             job__start_time__gt=now,
-            job__archived=False)[:50]
+            job__archived=False,
+        )[:50]
 
-        application_model_list = [application.to_model_view() for application in approved_applications]
+        application_model_list = [
+            application.to_model_view() for application in approved_applications
+        ]
         for application in applications:
-            if application.application_state == JobApplicationState.pending and application.job.selected_workers >= application.job.max_workers:
+            if (
+                application.application_state == JobApplicationState.pending
+                and application.job.selected_workers >= application.job.max_workers
+            ):
                 continue
             application_model_list.append(application.to_model_view())
 
@@ -125,18 +129,25 @@ class JobApplicationService:
         distance = formatter.get_value(k_distance)
 
         if job.selected_workers >= job.max_workers:
-            raise ValueError('You were too late!')
+            raise ValueError("You were too late!")
 
         start_address.save()
         if address_title:
-            FavoriteAddress(address=start_address, title=address_title, user_id=user.id).save()
+            FavoriteAddress(
+                address=start_address, title=address_title, user_id=user.id
+            ).save()
 
         if distance is None:
             try:
-                distance = JobApplicationService.fetch_directions(
-                    lat=start_address.latitude, lon=start_address.longitude,
-                    to_lat=job.address.latitude, to_lon=job.address.longitude
-                ).json()["routes"][0]["distanceMeters"] / 1000
+                distance = (
+                    JobApplicationService.fetch_directions(
+                        lat=start_address.latitude,
+                        lon=start_address.longitude,
+                        to_lat=job.address.latitude,
+                        to_lon=job.address.longitude,
+                    ).json()["routes"][0]["distanceMeters"]
+                    / 1000
+                )
             except Exception:
                 pass
 
@@ -146,10 +157,15 @@ class JobApplicationService:
             return JobNotFoundException().get_response()
 
         application = JobApplication(
-            job_id=job_id, address=start_address, worker_id=user.id,
-            application_state=JobApplicationState.pending, no_travel_cost=no_travel_cost,
-            created_at=datetime.datetime.utcnow(), modified_at=datetime.datetime.utcnow(),
-            distance=distance, note=note
+            job_id=job_id,
+            address=start_address,
+            worker_id=user.id,
+            application_state=JobApplicationState.pending,
+            no_travel_cost=no_travel_cost,
+            created_at=datetime.datetime.utcnow(),
+            modified_at=datetime.datetime.utcnow(),
+            distance=distance,
+            note=note,
         )
         JobManager.apply(application)
         return application.id
@@ -163,8 +179,8 @@ class JobApplicationService:
             applications = JobApplication.objects.filter(
                 application_state=JobApplicationState.pending,
                 job__job_state=JobState.pending,
-                job__selected_workers__lt=F('job__max_workers'),
-                job__archived=False
-            ).order_by('job__start_time')
+                job__selected_workers__lt=F("job__max_workers"),
+                job__archived=False,
+            ).order_by("job__start_time")
 
         return applications

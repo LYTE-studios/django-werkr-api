@@ -11,7 +11,10 @@ class WerkrBaseException(Exception):
     """
 
     def get_response(self):
-        return Response({k_message: 'An unknown error occurred...'}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        return Response(
+            {k_message: "An unknown error occurred..."},
+            status=HTTPStatus.INTERNAL_SERVER_ERROR,
+        )
 
     pass
 
@@ -24,7 +27,10 @@ class DeserializationException(WerkrBaseException):
     """
 
     def get_response(self):
-        return Response({k_message: 'Model could not be deserialized.'}, status=HTTPStatus.BAD_REQUEST)
+        return Response(
+            {k_message: "Model could not be deserialized."},
+            status=HTTPStatus.BAD_REQUEST,
+        )
 
     pass
 
@@ -36,10 +42,12 @@ class NotFoundException(WerkrBaseException):
     Should produce a not found error.
     """
 
-    name = '_'
+    name = "_"
 
     def get_response(self):
-        return Response({k_message: '{} could not be found'.format(NotFoundException.name)},
-                        status=HTTPStatus.NOT_FOUND)
+        return Response(
+            {k_message: "{} could not be found".format(NotFoundException.name)},
+            status=HTTPStatus.NOT_FOUND,
+        )
 
     pass

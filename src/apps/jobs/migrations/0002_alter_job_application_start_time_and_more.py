@@ -7,18 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('jobs', '0001_initial'),
+        ("jobs", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='job',
-            name='application_start_time',
-            field=models.DateTimeField(blank=True, default=django.utils.timezone.now, null=True),
+            model_name="job",
+            name="application_start_time",
+            field=models.DateTimeField(
+                blank=True, default=django.utils.timezone.now, null=True
+            ),
         ),
         migrations.AlterField(
-            model_name='job',
-            name='start_time',
+            model_name="job",
+            name="start_time",
             field=models.DateTimeField(default=django.utils.timezone.now),
         ),
     ]

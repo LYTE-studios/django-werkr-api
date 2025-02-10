@@ -13,4 +13,3 @@ class FavoriteAddress(models.Model):
 
     def to_model_view(self):
         return self.address.to_model_view()
-

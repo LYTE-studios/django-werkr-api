@@ -8,4 +8,3 @@ class JobApplicationState(models.TextChoices):
     pending = "pending"
 
     rejected = "rejected"
-

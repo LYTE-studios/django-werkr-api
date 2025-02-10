@@ -12,21 +12,27 @@ from django.utils import timezone
 class Job(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, default=None)
+    customer = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, default=None
+    )
 
-    title = models.CharField(max_length=64, default='')
+    title = models.CharField(max_length=64, default="")
 
-    description = models.CharField(max_length=256, default='')
+    description = models.CharField(max_length=256, default="")
 
     address = models.ForeignKey(Address, on_delete=models.CASCADE)
 
-    job_state = models.CharField(max_length=64, choices=JobState.choices, default=JobState.pending)
+    job_state = models.CharField(
+        max_length=64, choices=JobState.choices, default=JobState.pending
+    )
 
     start_time = models.DateTimeField(default=timezone.now)
 
     end_time = models.DateTimeField(null=True, blank=True)
 
-    application_start_time = models.DateTimeField(null=True, blank=True, default=timezone.now)
+    application_start_time = models.DateTimeField(
+        null=True, blank=True, default=timezone.now
+    )
 
     application_end_time = models.DateTimeField(null=True, blank=True)
 
@@ -43,8 +49,11 @@ class Job(models.Model):
     selected_workers = models.IntegerField(null=True, blank=True)
 
     def is_visible(self):
-        time_window_check = self.application_start_time <= pytz.utc.localize(
-            datetime.datetime.utcnow()) <= self.application_end_time
+        time_window_check = (
+            self.application_start_time
+            <= pytz.utc.localize(datetime.datetime.utcnow())
+            <= self.application_end_time
+        )
 
         draft_check = not self.is_draft
 

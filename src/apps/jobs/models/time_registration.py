@@ -19,9 +19,10 @@ from apps.authentication.utils.worker_util import WorkerUtil
 #     # Return the formatted upload path
 #     return f'signatures/{instance.id}/{folder}/{filename}'
 
+
 class TimeRegistration(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    job = models.ForeignKey(Job, on_delete=models.PROTECT, related_name='worked_times')
+    job = models.ForeignKey(Job, on_delete=models.PROTECT, related_name="worked_times")
     worker = models.ForeignKey(User, on_delete=models.PROTECT, null=True)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
@@ -29,13 +30,17 @@ class TimeRegistration(models.Model):
 
     def get_upload_path(instance, filename):
         # Determine the folder based on the type of signature
-        folder = 'worker' if 'worker' in filename else 'customer'
+        folder = "worker" if "worker" in filename else "customer"
         # Return the formatted upload path
-        return f'signatures/{instance.id}/{folder}/{filename}'
+        return f"signatures/{instance.id}/{folder}/{filename}"
 
     # Use the named function for the upload_to argument
-    worker_signature = models.ImageField(upload_to=get_upload_path, null=True, blank=True)
-    customer_signature = models.ImageField(upload_to=get_upload_path, null=True, blank=True)
+    worker_signature = models.ImageField(
+        upload_to=get_upload_path, null=True, blank=True
+    )
+    customer_signature = models.ImageField(
+        upload_to=get_upload_path, null=True, blank=True
+    )
 
     def to_model_view(self):
         data = {
@@ -50,8 +55,12 @@ class TimeRegistration(models.Model):
 
         if self.worker_signature is not None:
             try:
-                data[k_worker_signature] = MediaUtil.to_media_url(self.worker_signature.url)
-                data[k_customer_signature] = MediaUtil.to_media_url(self.customer_signature.url)
+                data[k_worker_signature] = MediaUtil.to_media_url(
+                    self.worker_signature.url
+                )
+                data[k_customer_signature] = MediaUtil.to_media_url(
+                    self.customer_signature.url
+                )
             except Exception:
                 pass
 

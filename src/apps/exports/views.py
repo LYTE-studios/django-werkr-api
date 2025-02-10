@@ -1,21 +1,16 @@
-
-
-
 from http import HTTPStatus
 
+from apps.authentication.views import JWTBaseAuthView
+from apps.core.assumptions import *
+from apps.core.model_exceptions import DeserializationException
+from apps.core.utils.formatters import FormattingUtil
+from apps.core.utils.wire_names import *
+from apps.exports.managers.export_manager import ExportManager
+from django.core.paginator import Paginator
 from django.http import HttpRequest
 from rest_framework.response import Response
-from django.core.paginator import Paginator
 
-
-from core.assumptions import *
-from core.features.authentication.views.jwt_base_auth_view import JWTBaseAuthView
-from core.features.base.exceptions.core.model_exceptions import DeserializationException
-from core.features.base.util.formatting_util import FormattingUtil
-from core.features.base.util.wire_names import *
-from core.features.exports.managers.export_manager import ExportManager
-from core.features.exports.models.export_file import ExportFile
-from core.features.profile.utils.profile_util import ProfileUtil
+from .models import ExportFile
 
 
 class ExportsView(JWTBaseAuthView):
@@ -42,24 +37,24 @@ class ExportsView(JWTBaseAuthView):
         algorithm = None
 
         try:
-            item_count = kwargs['count']
-            page = kwargs['page']
+            item_count = kwargs["count"]
+            page = kwargs["page"]
         except KeyError:
             pass
         try:
-            sort_term = kwargs['sort_term']
-            algorithm = kwargs['algorithm']
+            sort_term = kwargs["sort_term"]
+            algorithm = kwargs["algorithm"]
         except KeyError:
             pass
 
         if sort_term is not None:
-            if algorithm == 'descending':
-                sort_term = '-{}'.format(sort_term)
+            if algorithm == "descending":
+                sort_term = "-{}".format(sort_term)
 
             export_files = ExportFile.objects.all().order_by(sort_term)
 
         else:
-            export_files = ExportFile.objects.all().order_by('-created')
+            export_files = ExportFile.objects.all().order_by("-created")
 
         paginator = Paginator(export_files, per_page=item_count)
 
@@ -68,12 +63,15 @@ class ExportsView(JWTBaseAuthView):
         for export in paginator.page(page).object_list:
             data.append(export.to_model_view())
 
-        return Response(data={
-            k_exports: data,
-            k_items_per_page: paginator.per_page, k_total: len(
-            export_files,),
-        })
-
+        return Response(
+            data={
+                k_exports: data,
+                k_items_per_page: paginator.per_page,
+                k_total: len(
+                    export_files,
+                ),
+            }
+        )
 
     def post(self, request: HttpRequest):
         """
@@ -91,13 +89,15 @@ class ExportsView(JWTBaseAuthView):
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
             # Unhandled exception
-            return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return Response(
+                {k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR
+            )
 
         if start is None or end is None:
-            start, end =  ExportManager.get_last_month_period()
+            start, end = ExportManager.get_last_month_period()
 
         ExportManager.create_time_registations_export(start, end)
 
-        ExportManager.create_active_washers_export(start, end)
+        ExportManager.create_active_werkers_export(start, end)
 
         return Response()

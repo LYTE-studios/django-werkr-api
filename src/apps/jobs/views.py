@@ -13,9 +13,14 @@ from apps.jobs.services.job_service import JobService
 from apps.jobs.models.job import Job
 from apps.jobs.models.time_registration import TimeRegistration
 from django.core.paginator import Paginator
-from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, Http404
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseNotFound,
+    Http404,
+)
 from rest_framework.response import Response
-
 
 
 class JobView(JWTBaseAuthView):
@@ -39,7 +44,7 @@ class JobView(JWTBaseAuthView):
         Returns:
             Response: A response object containing job details.
         """
-        job_id = kwargs['id']
+        job_id = kwargs["id"]
         job_details = JobService.get_job_details(job_id)
         return Response(data=job_details)
 
@@ -55,7 +60,7 @@ class JobView(JWTBaseAuthView):
         Returns:
             Response: A response object indicating the result of the delete operation.
         """
-        job_id = kwargs['id']
+        job_id = kwargs["id"]
         try:
             JobService.delete_job(job_id)
         except Http404:
@@ -75,13 +80,15 @@ class JobView(JWTBaseAuthView):
         Returns:
             Response: A response object indicating the result of the update operation.
         """
-        job_id = kwargs['id']
+        job_id = kwargs["id"]
         try:
             JobService.update_job(job_id, request.data)
         except DeserializationException as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
-            return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return Response(
+                {k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR
+            )
         return Response()
 
 
@@ -96,9 +103,7 @@ class CreateJobView(JWTBaseAuthView):
     Returns Job id when valid.
     """
 
-    app_types = [
-        CMS_GROUP_NAME
-    ]
+    app_types = [CMS_GROUP_NAME]
 
     def post(self, request: HttpRequest):
         """
@@ -115,7 +120,9 @@ class CreateJobView(JWTBaseAuthView):
         except DeserializationException as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
-            return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return Response(
+                {k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR
+            )
         return Response({k_job_id: job_id})
 
 
@@ -174,7 +181,9 @@ class AllUpcomingJobsView(JWTBaseAuthView):
         formatter = FormattingUtil(kwargs)
         start = formatter.get_date(value_key=k_start)
         end = formatter.get_date(value_key=k_end)
-        jobs = JobService.get_upcoming_jobs(self.user, is_worker=False, start=start, end=end)
+        jobs = JobService.get_upcoming_jobs(
+            self.user, is_worker=False, start=start, end=end
+        )
         return Response({k_jobs: jobs})
 
 
@@ -206,8 +215,8 @@ class HistoryJobsView(JWTBaseAuthView):
         end = datetime.datetime.now()
         start = datetime.datetime.fromtimestamp(0)
         try:
-            start = FormattingUtil.to_date_time(kwargs['start'])
-            end = FormattingUtil.to_date_time(kwargs['end'])
+            start = FormattingUtil.to_date_time(kwargs["start"])
+            end = FormattingUtil.to_date_time(kwargs["end"])
         except KeyError:
             pass
         jobs = JobService.get_history_jobs(self.user, start, end)
@@ -248,7 +257,9 @@ class GetJobsBasedOnUserView(JWTBaseAuthView):
         except DeserializationException as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
-            return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return Response(
+                {k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR
+            )
         jobs = JobService.get_jobs_based_on_user(worker_id, customer_id)
         return Response({k_jobs: jobs})
 
@@ -262,10 +273,7 @@ class TimeRegistrationView(JWTBaseAuthView):
     A view for time registration.
     """
 
-    app_types = [
-        CMS_GROUP_NAME,
-        WORKERS_GROUP_NAME
-    ]
+    app_types = [CMS_GROUP_NAME, WORKERS_GROUP_NAME]
 
     def get(self, request: HttpRequest, job_id: str) -> Response:
         """
@@ -280,7 +288,9 @@ class TimeRegistrationView(JWTBaseAuthView):
         get_object_or_404(Job, id=job_id)
 
         try:
-            registration = TimeRegistration.objects.get(job_id=job_id, worker_id=request.user.id)
+            registration = TimeRegistration.objects.get(
+                job_id=job_id, worker_id=request.user.id
+            )
 
             return Response({k_time_registration: registration.to_model_view()})
 
@@ -336,7 +346,9 @@ class SignTimeRegistrationView(JWTBaseAuthView):
         except DeserializationException as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
-            return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return Response(
+                {k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR
+            )
         return Response({k_id: time_registration_id}, status=HTTPStatus.OK)
 
 
@@ -452,7 +464,9 @@ class ApplicationView(JWTBaseAuthView):
             Response: A response object containing application details.
         """
         try:
-            application_data = JobApplicationService.get_application_details(kwargs['id'])
+            application_data = JobApplicationService.get_application_details(
+                kwargs["id"]
+            )
         except KeyError:
             return HttpResponseNotFound()
 
@@ -471,7 +485,7 @@ class ApplicationView(JWTBaseAuthView):
             Response: A response object indicating the result of the delete operation.
         """
         try:
-            JobApplicationService.delete_application(kwargs['id'])
+            JobApplicationService.delete_application(kwargs["id"])
         except KeyError:
             return HttpResponseNotFound()
 
@@ -500,7 +514,7 @@ class ApproveApplicationView(JWTBaseAuthView):
             Response: A response object indicating the result of the approval operation.
         """
         try:
-            JobApplicationService.approve_application(kwargs['id'])
+            JobApplicationService.approve_application(kwargs["id"])
         except KeyError:
             return HttpResponseNotFound()
 
@@ -529,7 +543,7 @@ class DenyApplicationView(JWTBaseAuthView):
             Response: A response object indicating the result of the denial operation.
         """
         try:
-            JobApplicationService.deny_application(kwargs['id'])
+            JobApplicationService.deny_application(kwargs["id"])
         except KeyError:
             return HttpResponseNotFound()
 
@@ -541,6 +555,7 @@ class DirectionsView(JWTBaseAuthView):
     View to handle fetching directions between two geographical points.
     Requires JWT authentication and user to be in specific groups.
     """
+
     groups = [
         CMS_GROUP_NAME,
         WORKERS_GROUP_NAME,
@@ -560,13 +575,15 @@ class DirectionsView(JWTBaseAuthView):
             HttpResponseBadRequest: The response if fetching directions fails.
         """
         # Extract and convert latitude and longitude from kwargs
-        from_lat = int(kwargs.get('from_lat', 0)) / 1000000
-        from_lon = int(kwargs.get('from_lon', 0)) / 1000000
-        to_lat = int(kwargs.get('to_lat', 0)) / 1000000
-        to_lon = int(kwargs.get('to_lon', 0)) / 1000000
+        from_lat = int(kwargs.get("from_lat", 0)) / 1000000
+        from_lon = int(kwargs.get("from_lon", 0)) / 1000000
+        to_lat = int(kwargs.get("to_lat", 0)) / 1000000
+        to_lon = int(kwargs.get("to_lon", 0)) / 1000000
 
         # Fetch directions using the JobApplicationService
-        response = JobApplicationService.fetch_directions(from_lat, from_lon, to_lat, to_lon)
+        response = JobApplicationService.fetch_directions(
+            from_lat, from_lon, to_lat, to_lon
+        )
 
         # Return the response if directions are fetched successfully
         if response is not None:
@@ -609,13 +626,17 @@ class MyApplicationsView(JWTBaseAuthView):
             Response: A response object containing the application id if creation is successful.
         """
         try:
-            application_id = JobApplicationService.create_application(request.data, self.user)
+            application_id = JobApplicationService.create_application(
+                request.data, self.user
+            )
         except DeserializationException as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except ValueError as e:
             return Response({k_message: str(e)}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
-            return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return Response(
+                {k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR
+            )
 
         return Response({k_id: application_id})
 
@@ -645,8 +666,14 @@ class ApplicationsListView(JWTBaseAuthView):
         Returns:
             Response: A response object containing the list of applications.
         """
-        applications = JobApplicationService.get_applications_list(kwargs.get('job_id'))
+        applications = JobApplicationService.get_applications_list(kwargs.get("job_id"))
         paginator = Paginator(applications, per_page=25)
         data = [application.to_model_view() for application in applications]
 
-        return Response({k_applications: data, k_items_per_page: paginator.per_page, k_total: len(applications)})
+        return Response(
+            {
+                k_applications: data,
+                k_items_per_page: paginator.per_page,
+                k_total: len(applications),
+            }
+        )

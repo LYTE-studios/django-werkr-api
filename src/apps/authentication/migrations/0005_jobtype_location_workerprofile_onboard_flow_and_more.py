@@ -7,38 +7,38 @@ from django.db import migrations, models
 
 
 def add_initial_locations(apps, schema_editor):
-    Location = apps.get_model('authentication', 'Location')
+    Location = apps.get_model("authentication", "Location")
     initial_locations = [
-        Location(name='Antwerp'),
-        Location(name='Bruges'),
-        Location(name='Leuven'),
-        Location(name='Ghent'),
-        Location(name='Mechelen'),
-        Location(name='Kortrijk'),
-        Location(name='Hasselt'),
-        Location(name='Ostend'),
-        Location(name='Spa'),
-        Location(name='Liège'),
-        Location(name='Brussel'),
-        Location(name='Namur'),
-        Location(name='Charleroi'),
-        Location(name='Mons'),
-        Location(name='Tournai'),
-        Location(name='Arlon'),
-        Location(name='Dinant'),
+        Location(name="Antwerp"),
+        Location(name="Bruges"),
+        Location(name="Leuven"),
+        Location(name="Ghent"),
+        Location(name="Mechelen"),
+        Location(name="Kortrijk"),
+        Location(name="Hasselt"),
+        Location(name="Ostend"),
+        Location(name="Spa"),
+        Location(name="Liège"),
+        Location(name="Brussel"),
+        Location(name="Namur"),
+        Location(name="Charleroi"),
+        Location(name="Mons"),
+        Location(name="Tournai"),
+        Location(name="Arlon"),
+        Location(name="Dinant"),
     ]
     Location.objects.bulk_create(initial_locations)
 
 
 def add_initial_job_type(apps, schema_editor):
-    JobType = apps.get_model('authentication', 'JobType')
+    JobType = apps.get_model("authentication", "JobType")
     initial_job_type = [
-        JobType(name='car_washing'),
-        JobType(name='waiter'),
-        JobType(name='cleaning'),
-        JobType(name='chauffeur'),
-        JobType(name='gardening'),
-        JobType(name='other'),
+        JobType(name="car_washing"),
+        JobType(name="waiter"),
+        JobType(name="cleaning"),
+        JobType(name="chauffeur"),
+        JobType(name="gardening"),
+        JobType(name="other"),
     ]
     JobType.objects.bulk_create(initial_job_type)
 
@@ -46,43 +46,185 @@ def add_initial_job_type(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('authentication', '0003_workerprofile_worker_type'),
+        ("authentication", "0003_workerprofile_worker_type"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='JobType',
+            name="JobType",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(choices=[('car_washing', 'Car Washing'), ('waiter', 'Waiter'), ('cleaning', 'Cleaning'), ('chauffeur', 'Chauffeur'), ('gardening', 'Gardening'), ('other', 'Other')], max_length=20, unique=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        choices=[
+                            ("car_washing", "Car Washing"),
+                            ("waiter", "Waiter"),
+                            ("cleaning", "Cleaning"),
+                            ("chauffeur", "Chauffeur"),
+                            ("gardening", "Gardening"),
+                            ("other", "Other"),
+                        ],
+                        max_length=20,
+                        unique=True,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Location',
+            name="Location",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=64, null=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=64, null=True)),
             ],
         ),
         migrations.AddField(
-            model_name='workerprofile',
-            name='onboard_flow',
+            model_name="workerprofile",
+            name="onboard_flow",
             field=models.BooleanField(default=False),
         ),
         migrations.CreateModel(
-            name='DashboardFlow',
+            name="DashboardFlow",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('car_washing_experience_type', models.CharField(choices=[('beginner', 'Beginner'), ('intermediate', 'Intermediate'), ('skilled', 'Skilled'), ('expert', 'Expert')], default='beginner', max_length=20)),
-                ('waiter_experience_type', models.CharField(choices=[('beginner', 'Beginner'), ('intermediate', 'Intermediate'), ('skilled', 'Skilled'), ('expert', 'Expert')], default='beginner', max_length=20)),
-                ('cleaning_experience_type', models.CharField(choices=[('beginner', 'Beginner'), ('intermediate', 'Intermediate'), ('skilled', 'Skilled'), ('expert', 'Expert')], default='beginner', max_length=20)),
-                ('chauffeur_experience_type', models.CharField(choices=[('beginner', 'Beginner'), ('intermediate', 'Intermediate'), ('skilled', 'Skilled'), ('expert', 'Expert')], default='beginner', max_length=20)),
-                ('gardening_experience_type', models.CharField(choices=[('beginner', 'Beginner'), ('intermediate', 'Intermediate'), ('skilled', 'Skilled'), ('expert', 'Expert')], default='beginner', max_length=20)),
-                ('situation_type', models.CharField(choices=[('flexi', 'Flexi'), ('student', 'Student'), ('part_time', 'Part Time'), ('neither', 'Neither')], default='flexi', max_length=20)),
-                ('work_type', models.CharField(choices=[('weekday_mornings', 'Weekday Mornings'), ('weekday_evenings', 'Weekday Evenings'), ('weekends', 'Weekends'), ('all_week', 'All Week'), ('holidays', 'Holidays')], default='weekday_mornings', max_length=20)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='dashboard_flow_user', to=settings.AUTH_USER_MODEL)),
-                ('job_type', models.ManyToManyField(related_name='dashboard_flow_job_type', to='authentication.jobtype')),
-                ('locations', models.ManyToManyField(related_name='dashboard_flow_location', to='authentication.location')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "car_washing_experience_type",
+                    models.CharField(
+                        choices=[
+                            ("beginner", "Beginner"),
+                            ("intermediate", "Intermediate"),
+                            ("skilled", "Skilled"),
+                            ("expert", "Expert"),
+                        ],
+                        default="beginner",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "waiter_experience_type",
+                    models.CharField(
+                        choices=[
+                            ("beginner", "Beginner"),
+                            ("intermediate", "Intermediate"),
+                            ("skilled", "Skilled"),
+                            ("expert", "Expert"),
+                        ],
+                        default="beginner",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "cleaning_experience_type",
+                    models.CharField(
+                        choices=[
+                            ("beginner", "Beginner"),
+                            ("intermediate", "Intermediate"),
+                            ("skilled", "Skilled"),
+                            ("expert", "Expert"),
+                        ],
+                        default="beginner",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "chauffeur_experience_type",
+                    models.CharField(
+                        choices=[
+                            ("beginner", "Beginner"),
+                            ("intermediate", "Intermediate"),
+                            ("skilled", "Skilled"),
+                            ("expert", "Expert"),
+                        ],
+                        default="beginner",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "gardening_experience_type",
+                    models.CharField(
+                        choices=[
+                            ("beginner", "Beginner"),
+                            ("intermediate", "Intermediate"),
+                            ("skilled", "Skilled"),
+                            ("expert", "Expert"),
+                        ],
+                        default="beginner",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "situation_type",
+                    models.CharField(
+                        choices=[
+                            ("flexi", "Flexi"),
+                            ("student", "Student"),
+                            ("part_time", "Part Time"),
+                            ("neither", "Neither"),
+                        ],
+                        default="flexi",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "work_type",
+                    models.CharField(
+                        choices=[
+                            ("weekday_mornings", "Weekday Mornings"),
+                            ("weekday_evenings", "Weekday Evenings"),
+                            ("weekends", "Weekends"),
+                            ("all_week", "All Week"),
+                            ("holidays", "Holidays"),
+                        ],
+                        default="weekday_mornings",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="dashboard_flow_user",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "job_type",
+                    models.ManyToManyField(
+                        related_name="dashboard_flow_job_type",
+                        to="authentication.jobtype",
+                    ),
+                ),
+                (
+                    "locations",
+                    models.ManyToManyField(
+                        related_name="dashboard_flow_location",
+                        to="authentication.location",
+                    ),
+                ),
             ],
         ),
         migrations.RunPython(add_initial_locations),
