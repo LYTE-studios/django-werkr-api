@@ -54,6 +54,23 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Allow credentials if your requests need to include them
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL = True
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+
+# Allow specific HTTP methods (optional)
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
 ROOT_URLCONF = 'api.urls'
 
 TEMPLATES = [
@@ -74,6 +91,7 @@ TEMPLATES = [
         },
     },
 ]
+
 WSGI_APPLICATION = 'api.wsgi.application'
 
 # Password validation
@@ -120,9 +138,6 @@ USE_TZ = True
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# CORS settings
-CORS_ALLOW_ALL_ORIGINS = True
 
 ALLOWED_HOSTS = ['*']
 

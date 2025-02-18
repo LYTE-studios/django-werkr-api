@@ -6,7 +6,6 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 # Add this line to include your trusted origin
 CSRF_TRUSTED_ORIGINS = ['https://staging.api.werkr.lytestudios.be']
 
-
 # Database
 DATABASES = {
     'default': {
