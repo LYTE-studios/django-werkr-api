@@ -55,20 +55,23 @@ MIDDLEWARE = [
 ]
 
 # Allow credentials if your requests need to include them
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL = True
 CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
 
-
-# Allow specific HTTP methods (optional)
-CORS_ALLOW_METHODS = [
-    "DELETE",
-    "GET",
-    "OPTIONS",
-    "PATCH",
-    "POST",
-    "PUT",
+# Customize the headers you want to allow
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'authorization',
+    'client',
+    'content-type',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'access-control-allow-origin',
+    'referer',
+    'sec-ch-ua',
+    'sec-ch-ua-mobile',
+    'sec-ch-ua-platform',
+    # Add any other headers you need to allow
 ]
 
 ROOT_URLCONF = 'api.urls'
