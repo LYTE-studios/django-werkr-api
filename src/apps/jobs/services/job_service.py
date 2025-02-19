@@ -8,7 +8,7 @@ from apps.jobs.models import Job, JobApplication, JobApplicationState, JobState,
 from apps.jobs.utils.job_util import JobUtil
 from apps.notifications.managers.notification_manager import NotificationManager
 from apps.notifications.models.mail_template import CancelledMailTemplate, TimeRegisteredTemplate
-from django.db.models import F
+from django.db.models import F, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
@@ -136,15 +136,31 @@ class JobService:
         now = timezone.now()
         
         if is_worker:
+            current_date = timezone.now().date()
+            current_time = timezone.now()
+
+            # Query for upcoming jobs based on specified criteria
             jobs = Job.objects.filter(
-                start_time__gte=now,
-                application_start_time__lte=now,
-                application_end_time__gte=now,
-                job_state=JobState.pending,
-                selected_workers__lt=F('max_workers'),
-                is_draft=False,
-                archived=False
-            ).order_by('start_time')[:50]
+                # The job must start in the future
+                start_time__gt=current_time,
+                
+                # Ensure the application window is open
+                application_start_time__lte=current_time,
+                application_end_time__gte=current_time,
+            ).exclude(
+                # Exclude jobs with Pending or Approved applications from the user
+                jobapplication__worker=user,
+                jobapplication__application_state__in=['pending', 'approved'],
+            ).exclude(
+                # Exclude jobs that overlap with an already approved job of the user
+                Q(
+                    jobapplication__job__start_time__lt=F('end_time'),
+                    jobapplication__job__end_time__gt=F('start_time'),
+                    jobapplication__application_state='approved',
+                    jobapplication__worker=user
+                )
+            ).distinct().order_by('start_time')
+
         else:
             if not start or not end:
                 jobs = Job.objects.filter(
@@ -152,16 +168,16 @@ class JobService:
                     job_state=JobState.pending,
                     is_draft=False,
                     archived=False
-                ).order_by('start_time')[:50]
+                ).order_by('start_time')
             else:
                 if start < now:
                     start = now
-                jobs = Job.objects.filter(
+                jobs = Job.objects.filter( 
                     start_time__range=[start, end],
                     job_state=JobState.pending,
                     is_draft=False,
                     archived=False
-                ).order_by('start_time')[:50]
+                ).order_by('start_time')
 
         return [JobUtil.to_model_view(job) for job in jobs]
 

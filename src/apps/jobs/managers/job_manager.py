@@ -135,7 +135,7 @@ class JobManager(models.Manager):
 
         description = 'in {} on {} at {}'.format(city, date, time, )
 
-        asyncio.create_task(create_global_notification(title, description, image_url=None, send_push=True))
+        create_global_notification(title, description, image_url=None, send_push=True)
 
     @staticmethod
     def get_overlap_applications(application: JobApplication, state: JobApplicationState = JobApplicationState.pending):

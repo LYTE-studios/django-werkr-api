@@ -1,8 +1,10 @@
 from apps.core.assumptions import WORKERS_GROUP_NAME, CMS_GROUP_NAME
 from django.contrib.auth import get_user_model
 from firebase_admin import messaging
-
+from apps.core.decorators import async_task
 User = get_user_model()
+from asgiref.sync import sync_to_async
+
 from apps.authentication.user_exceptions import UserNotFoundException
 from apps.core.utils.formatters import FormattingUtil
 from apps.notifications.models.mail_template import MailTemplate
@@ -219,7 +221,8 @@ def send_lonely_push(title: str, description: str, user_id: str = None, group_na
 
         NotificationManager.send_push_notification(user.fcm_token, Notification(title=title, description=description))
 
-def create_global_notification(title: str, description: str, image_url: str = None, user_id: str = None,
+@async_task
+async def create_global_notification(title: str, description: str, image_url: str = None, user_id: str = None,
                                send_push: bool = False, group_name: str = WORKERS_GROUP_NAME,
                                language: str = None) -> None:
     """
@@ -234,22 +237,26 @@ def create_global_notification(title: str, description: str, image_url: str = No
         group_name (str): The name of the group. Defaults to WORKERS_GROUP_NAME.
         language (str): The language filter. Defaults to None.
     """
-    notification = NotificationManager.create_notification(title, description, image_url)
 
-    if user_id is not None and user_id != '':
-        try:
-            user = User.objects.get(id=user_id)
+    def send():
+        notification = NotificationManager.create_notification(title, description, image_url)
+
+        if user_id is not None and user_id != '':
+            try:
+                user = User.objects.get(id=user_id)
+                NotificationManager.assign_notification(user, notification, send_push=send_push)
+                return
+            except User.DoesNotExist:
+                raise Exception('User does not exist')
+
+        users = get_user_set(group_name, language)
+
+        for user in users:
+            if not user.is_accepted():
+                continue
+            if user.archived:
+                continue
+
             NotificationManager.assign_notification(user, notification, send_push=send_push)
-            return
-        except User.DoesNotExist:
-            raise Exception('User does not exist')
 
-    users = get_user_set(group_name, language)
-
-    for user in users:
-        if not user.accepted:
-            continue
-        if user.archived:
-            continue
-
-        NotificationManager.assign_notification(user, notification, send_push=send_push)
+    sync_to_async(send)()

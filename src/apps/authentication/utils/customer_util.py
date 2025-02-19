@@ -28,6 +28,8 @@ class CustomerUtil:
             k_tax_number: customer_profile.tax_number,
             k_company: customer_profile.company_name,
             k_has_active_job: has_active_job,
+            k_phone_number: customer.phone_number,
+            k_special_committee: customer_profile.special_committee,
         }
 
         try:

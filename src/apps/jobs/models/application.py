@@ -6,6 +6,7 @@ from django.db import models
 from apps.core.models.geo import Address
 from apps.core.utils.formatters import FormattingUtil
 from apps.core.utils.wire_names import *
+from apps.authentication.utils.worker_util import WorkerUtil
 from .job import Job
 from .job_application_state import JobApplicationState
 from apps.jobs.utils.job_util import JobUtil
@@ -55,7 +56,7 @@ class JobApplication(models.Model):
             k_selected_workers: self.job.selected_workers,
             k_application_start_time: FormattingUtil.to_timestamp(self.job.application_start_time),
             k_application_end_time: FormattingUtil.to_timestamp(self.job.application_end_time),
-            k_worker: self.worker.to_worker_view(),
+            k_worker: WorkerUtil.to_worker_view(self.worker),
             k_address: self.address.to_model_view(),
             k_state: self.application_state,
             k_distance: self.distance,

@@ -18,3 +18,23 @@ class User(AbstractUser):
     profile_picture = models.ImageField(upload_to='users/{}/profile_picture'.format(id), null=True)
     settings = models.ForeignKey(Settings, null=True, on_delete=models.CASCADE, related_name='settings')
     archived = models.BooleanField(default=False)
+
+    def is_accepted(self):
+        if self.is_worker():
+            return self.worker_profile.accepted
+        return True
+
+    def is_worker(self):
+        if hasattr(self, 'worker_profile'):
+            return True
+        return False
+
+    def is_customer(self):
+        if hasattr(self, 'customer_profile'):
+            return True
+        return False
+
+    def is_admin(self):
+        if hasattr(self, 'admin_profile'):
+            return True
+        return False

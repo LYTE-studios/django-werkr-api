@@ -43,8 +43,10 @@ class Job(models.Model):
     selected_workers = models.IntegerField(null=True, blank=True)
 
     def is_visible(self):
-        time_window_check = self.application_start_time <= pytz.utc.localize(
-            datetime.datetime.utcnow()) <= self.application_end_time
+        start = timezone.make_aware(self.application_start_time)
+        end = timezone.make_aware(self.application_end_time)
+
+        time_window_check = start <= timezone.now() <= end
 
         draft_check = not self.is_draft
 

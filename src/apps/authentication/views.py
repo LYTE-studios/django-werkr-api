@@ -281,6 +281,7 @@ class ProfileMeView(JWTBaseAuthView):
             'email': self.user.email,
             'description': self.user.description,
             'profile_picture': profile_picture,
+            'phone_number': self.user.phone_number,
             'language': getattr(Settings.objects.filter(id=self.user.settings_id).first(), 'language',
                                 None)
         }
@@ -292,7 +293,7 @@ class ProfileMeView(JWTBaseAuthView):
                     'tax_number': customer.tax_number,
                     'company_name': customer.company_name,
                     'customer_billing_address': customer.customer_billing_address.to_model_view() if customer.customer_billing_address else None,
-                    'customer_address': customer.customer_address.to_model_view() if customer.customer_address else None,
+                    'address': customer.customer_address.to_model_view() if customer.customer_address else None,
                 })
         if hasattr(self.user, 'worker_profile'):
             worker = self.user.worker_profile
@@ -300,7 +301,7 @@ class ProfileMeView(JWTBaseAuthView):
                 data.update({
                     'iban': worker.iban,
                     'ssn': worker.ssn,
-                    'worker_address': worker.worker_address.to_model_view() if worker.worker_address else None,
+                    'address': worker.worker_address.to_model_view() if worker.worker_address else None,
                     'date_of_birth': FormattingUtil.to_timestamp(worker.date_of_birth),
                     'place_of_birth': worker.place_of_birth,
                     'accepted': worker.accepted,
@@ -940,8 +941,10 @@ class WorkerDetailView(JWTBaseAuthView):
             address = formatter.get_address(k_address)
             date_of_birth = formatter.get_date(k_date_of_birth)
             billing_address = formatter.get_address(k_billing_address)
-            tax_number = formatter.get_value(k_tax_number)
-            company = formatter.get_value(k_company)
+            phone_number = formatter.get_value(k_phone_number)
+            iban = formatter.get_value(k_iban)
+            ssn = formatter.get_value(k_ssn)
+            worker_type = formatter.get_value(k_worker_type)
         except DeserializationException as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
@@ -950,10 +953,13 @@ class WorkerDetailView(JWTBaseAuthView):
         worker.first_name = first_name or worker.first_name
         worker.last_name = last_name or worker.last_name
         worker.email = email or worker.email
+        worker.phone_number = phone_number or worker.phone_number
+
         worker.worker_profile.worker_address = address or worker.worker_profile.worker_address
-        worker.worker_profile.iban = tax_number or worker.worker_profile.iban
-        worker.worker_profile.ssn = company or worker.worker_profile.ssn
+        worker.worker_profile.iban = iban or worker.worker_profile.iban
+        worker.worker_profile.ssn = ssn or worker.worker_profile.ssn
         worker.worker_profile.date_of_birth = date_of_birth or worker.worker_profile.date_of_birth
+        worker.worker_profile.worker_type = worker_type or worker.worker_profile.worker_type
 
         if address:
             address.save()
@@ -1003,9 +1009,8 @@ class WorkersListView(JWTBaseAuthView):
 
         workers = User.objects.filter(
             groups__name__contains=WORKERS_GROUP_NAME,
-            archived=False,
-            accepted=block_unaccepted_workers
-        )
+            archived=False
+        ).filter(worker_profile__accepted=block_unaccepted_workers)
 
         if sort_term:
             if algorithm == 'descending':
@@ -1338,6 +1343,8 @@ class CustomerDetailView(JWTBaseAuthView):
             billing_address = formatter.get_address('billing_address')
             tax_number = formatter.get_value('tax_number')
             company = formatter.get_value('company')
+            phone_number = formatter.get_value('phone_number')
+            special_committee = formatter.get_value('special_committee')
         except DeserializationException as e:
             return Response({'message': e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
@@ -1346,12 +1353,14 @@ class CustomerDetailView(JWTBaseAuthView):
         customer.first_name = first_name or customer.first_name
         customer.last_name = last_name or customer.last_name
         customer.email = email or customer.email
+        customer.phone_number = phone_number or customer.phone_number
 
         customer_profile = customer.customer_profile
         customer_profile.customer_address = address or customer_profile.customer_address
         customer_profile.customer_billing_address = billing_address or customer_profile.customer_billing_address
         customer_profile.tax_number = tax_number or customer_profile.tax_number
         customer_profile.company_name = company or customer_profile.company_name
+        customer_profile.special_committee = special_committee or customer_profile.special_committee
 
         if address:
             address.save()
@@ -1396,13 +1405,14 @@ class CustomerSearchTermView(JWTBaseAuthView):
             return HttpResponseNotFound()
 
         customers = User.objects.filter(groups__name__contains=CUSTOMERS_GROUP_NAME)
+
         queries = [
             customers.filter(first_name__icontains=search_term)[:5],
             customers.filter(last_name__icontains=search_term)[:5],
             customers.filter(email__icontains=search_term)[:5]
         ]
 
-        data = {CustomerUtil.to_customer_view(customer) for query in queries for customer in query}
+        data = [CustomerUtil.to_customer_view(customer) for query in queries for customer in query.all()]
 
         return Response({k_customers: list(data)})
 

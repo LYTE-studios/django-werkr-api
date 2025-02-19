@@ -39,6 +39,8 @@ k_phone_number = 'phone_number'
 k_iban = 'iban'
 k_place_of_birth = 'place_of_birth'
 k_ssn = 'ssn'
+k_special_committee = 'special_committee'
+k_worker_type = 'worker_type'
 
 k_customer_id = 'customer_id'
 k_worker_id = 'worker_id'

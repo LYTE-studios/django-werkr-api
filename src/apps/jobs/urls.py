@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    DimonaListView,
     DirectionsView,
     JobView,
     CreateJobView,
@@ -18,6 +19,12 @@ from .views import (
     DenyApplicationView,
     MyApplicationsView,
     ApplicationsListView,
+    ReverseGeocodeView,
+    GeocodeView,
+    AutocompleteView,
+    WorkersForJobView,
+    AdminStatisticsView,
+    ExportsView,
 )
 
 urlpatterns = [
@@ -36,6 +43,9 @@ urlpatterns = [
     path('jobs/done', DoneJobList.as_view(), name="done-job-list"),
     path('jobs/done/<int:start>/<int:end>', DoneJobList.as_view()),
     path('jobs/drafts', DraftJobList.as_view(), name="draft-job-list"),
+    path("jobs/<str:id>/workers", WorkersForJobView.as_view()),
+
+    path("statistics/overview/<int:start>/<int:end>", AdminStatisticsView.as_view()), 
 
     path('applications/details/<str:id>', ApplicationView.as_view(), name="application-details"),
     path('applications/details/<str:id>/approve', ApproveApplicationView.as_view(), name="approve-application"),
@@ -43,6 +53,20 @@ urlpatterns = [
     path('applications/me', MyApplicationsView.as_view(), name="my-applications"),
     path('applications', ApplicationsListView.as_view()),
     path('applications/<str:job_id>', ApplicationsListView.as_view(), name="applications-list"),
+
     path('directions/<int:from_lat>/<int:from_lon>/<int:to_lat>/<int:to_lon>', DirectionsView.as_view(), name="directions-view"),
+    path('reverse_geocode/<str:query>', ReverseGeocodeView.as_view(), name="reverse_geocode"),
+    path('geocode/<str:query>', GeocodeView.as_view(), name="geocode"),
+    path('autocomplete/<str:query>', AutocompleteView.as_view(), name="autocomplete"),
+
+    path('dimonas/<int:count>/<int:page>', DimonaListView.as_view(), name="dimonas-list"),
+
+    path("exports", ExportsView.as_view()),
+    path(
+        "exports/<str:sort_term>/<str:algorithm>/<int:count>/<int:page>",
+        ExportsView.as_view(),
+    ),
+    path("exports/<int:count>/<int:page>", ExportsView.as_view()),
+    path("exports/<int:count>/<int:page>/<str:search_term>", ExportsView.as_view()),
 ]
 

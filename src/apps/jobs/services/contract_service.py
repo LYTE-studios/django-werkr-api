@@ -43,12 +43,15 @@ class JobApplicationService:
     @staticmethod
     def fetch_directions(lat, lon, to_lat, to_lon):
 
+        import json
+
         stored_directions = StoredDirections.objects.filter(
             Q(from_lat=lat) & Q(from_lon=lon) & Q(to_lat=to_lat) & Q(to_lon=to_lon)
         ).first()
 
         if stored_directions and not stored_directions.check_expired():
             return stored_directions.directions_response
+        
         else: 
             from django.conf import settings
             response = requests.post(
@@ -79,7 +82,7 @@ class JobApplicationService:
             )
 
             if response.ok:
-                directions_response = response.json()
+                directions_response = json.dumps(response.json())
 
                 StoredDirections(
                     from_lat=lat,
@@ -88,6 +91,7 @@ class JobApplicationService:
                     to_lon=to_lon,
                     directions_response=directions_response
                 ).save()
+
                 return directions_response
             else:
                 return None
@@ -119,7 +123,7 @@ class JobApplicationService:
         job_id = formatter.get_value(k_job_id, required=True)
         job = get_object_or_404(Job, id=job_id)
         start_address = formatter.get_address(k_address, required=True)
-        no_travel_cost = formatter.get_bool(k_no_travel_cost, default=False)
+        no_travel_cost = formatter.get_bool(k_no_travel_cost, required=True)
         address_title = formatter.get_value(k_address_title)
         note = formatter.get_value(k_note)
         distance = formatter.get_value(k_distance)
