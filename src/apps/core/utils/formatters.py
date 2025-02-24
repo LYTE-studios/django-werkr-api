@@ -188,11 +188,13 @@ class FormattingUtil:
     def to_timestamp(date_time):
         if date_time is None:
             return None
+        if isinstance(date_time, datetime):
+            return date_time.timestamp().__round__()
         if isinstance(date_time, time):
             return date_time.minute + (date_time.hour * 60)
         if isinstance(date_time, date):
-            date_time = datetime.combine(date_time, datetime.min.time())
-        return date_time.timestamp().__round__()
+            return datetime.combine(date_time, datetime.min.time()).timestamp().__round__() 
+        return 
 
     @staticmethod
     def to_group(group_name):

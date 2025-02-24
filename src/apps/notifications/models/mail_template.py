@@ -37,7 +37,7 @@ class ApprovedMailTemplate(MailTemplate):
 
 class CodeMailTemplate(MailTemplate):
     template_id = 5798048
-    subject = 'Password reset code'
+    subject = 'Werkr | Password reset code'
 
 
 class DeniedMailTemplate(MailTemplate):

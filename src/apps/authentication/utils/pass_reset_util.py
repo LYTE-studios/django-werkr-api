@@ -22,7 +22,7 @@ class CustomPasswordResetUtil:
 
         pass_code.save()
 
-        CodeMailTemplate().send([user.email], {"code": code})
+        CodeMailTemplate().send(recipients=[user.email], data={"code": code})
 
     def verify_code(self, user, code):
         pass_code = PassResetCode.objects.filter(user=user, code=code, used=False).first()

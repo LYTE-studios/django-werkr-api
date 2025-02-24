@@ -243,7 +243,6 @@ class JobService:
         query = TimeRegistration.objects.filter(job_id=job_id, worker_id=worker.id)
         if query.exists():
             registration = query.first()
-            job.customer.hours -= (registration.start_time - registration.end_time).seconds / 3600
             job.customer.save()
             registration.delete()
 
@@ -264,7 +263,6 @@ class JobService:
         time_registration_count = TimeRegistration.objects.filter(job_id=job.id).count()
         if time_registration_count >= job.selected_workers:
             job.job_state = JobState.done
-            job.customer.hours += (time_registration.start_time - time_registration.end_time).seconds / 3600
             job.customer.save()
             job.save()
 

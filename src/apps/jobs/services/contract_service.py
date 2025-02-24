@@ -98,24 +98,15 @@ class JobApplicationService:
 
     @staticmethod
     def get_my_applications(user):
-        now = datetime.datetime.now()
-        approved_applications = JobApplication.objects.filter(worker_id=user.id,
-                                                              job__start_time__gt=now,
-                                                              job__archived=False,
-                                                              application_state=JobApplicationState.approved)[:25]
+        
         applications = JobApplication.objects.filter(
-            ~Q(application_state=JobApplicationState.approved),
+            job__job_state=JobState.pending,
             worker_id=user.id,
-            job__start_time__gt=now,
-            job__archived=False)[:50]
+            job__archived=False).exclude(
+                job__worked_times__worker_id=user.id
+            ).distinct()
 
-        application_model_list = [application.to_model_view() for application in approved_applications]
-        for application in applications:
-            if application.application_state == JobApplicationState.pending and application.job.selected_workers >= application.job.max_workers:
-                continue
-            application_model_list.append(application.to_model_view())
-
-        return application_model_list
+        return [application.to_model_view() for application in applications]
 
     @staticmethod
     def create_application(data, user):

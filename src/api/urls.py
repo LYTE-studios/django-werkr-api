@@ -25,6 +25,7 @@ api_v1_patterns = [
     path('auth/', include('apps.authentication.urls')),
     path('jobs/', include('apps.jobs.urls')),
     path('legal/', include('apps.legal.urls')),
+    path('notifications/', include('apps.notifications.urls')),
 
     # Swagger documentation
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),

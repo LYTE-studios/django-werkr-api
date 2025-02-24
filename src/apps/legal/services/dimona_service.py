@@ -185,6 +185,10 @@ class DimonaService:
 
     @staticmethod
     def create_dimona(application: JobApplication):
+        user = application.worker
+
+        ssn = None
+    
         employee_type = DimonaService.get_type_for_user(user)
 
         if employee_type is None:
@@ -192,10 +196,6 @@ class DimonaService:
 
         if Dimona.objects.filter(application_id=application.id).exists():
             return
-
-        user = application.worker
-
-        ssn = None
 
         try:
             ssn = DimonaService.format_ssn(user.worker_profile.ssn)
