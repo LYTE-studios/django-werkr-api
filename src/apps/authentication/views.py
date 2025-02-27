@@ -19,7 +19,7 @@ from apps.jobs.models import Job, JobState
 from apps.jobs.services.statistics_service import StatisticsService
 from django.contrib.auth.models import Group
 from django.core.paginator import Paginator
-from django.http import HttpResponseForbidden, HttpRequest, HttpResponse
+from django.http import HttpResponseForbidden, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.shortcuts import get_object_or_404
 from rest_framework import status
@@ -471,13 +471,8 @@ class UploadUserProfilePictureView(JWTBaseAuthView):
         """
         profile_user = self.user
 
-        try:
-            user_id = kwargs['id']
-            profile_user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return HttpResponseNotFound()
-
         profile_picture_url = profile_user.profile_picture.url if profile_user.profile_picture else None
+        
         return Response({'profile_picture': profile_picture_url})
 
     def put(self, request, *args, **kwargs):
@@ -495,12 +490,6 @@ class UploadUserProfilePictureView(JWTBaseAuthView):
         """
         profile_user = self.user
 
-        try:
-            user_id = kwargs['id']
-            profile_user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return HttpResponseNotFound()
-
         if not request.data:
             return HttpResponseBadRequest()
 
@@ -511,12 +500,6 @@ class UploadUserProfilePictureView(JWTBaseAuthView):
 
     def delete(self, request, *args, **kwargs):
         profile_user = self.user
-
-        try:
-            user_id = kwargs['id']
-            profile_user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return HttpResponseNotFound()
 
         if not request.data:
             return HttpResponseBadRequest()
@@ -1418,34 +1401,6 @@ class CustomerSearchTermView(JWTBaseAuthView):
 
         return Response({k_customers: list(data)})
 
-
-# class OnboardingFlowView(BaseClientView):
-#     """
-#     API view to handle the onboarding flow for workers.
-#     """
-
-#     def post(self, request, *args, **kwargs):
-#         user = self.user
-#         worker_profile = get_object_or_404(WorkerProfile, user=user)
-
-#         # Save data to DashboardFlow
-#         dashboard_flow_data = request.data.copy()
-#         dashboard_flow_data["user"] = user.id  # Use user ID for the serializer
-#         dashboard_flow_serializer = DashboardFlowSerializer(data=dashboard_flow_data)
-#         if dashboard_flow_serializer.is_valid():
-#             dashboard_flow_serializer.save(user=user)
-#         else:
-#             return Response(dashboard_flow_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#         # Update WorkerProfile onboard_flow to True
-#         worker_profile_serializer = WorkerProfileSerializer(worker_profile, data={"has_passed_onboarding": True},
-#                                                             partial=True)
-#         if worker_profile_serializer.is_valid():
-#             worker_profile_serializer.save()
-#             return Response(worker_profile_serializer.data, status=status.HTTP_200_OK)
-#         return Response(worker_profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 class WorkerProfileDetailView(JWTBaseAuthView):
     """
     API view to fetch and view worker profile data for a specific user.
@@ -1464,3 +1419,17 @@ class WorkerProfileDetailView(JWTBaseAuthView):
         }
 
         return Response(response_data, status=status.HTTP_200_OK)
+    
+class MediaForwardView(APIView):
+
+    permission_classes = []
+
+    def get(self, request, *args, **kwargs):
+        from django.conf import settings
+
+        file_location = kwargs["media_url"]
+
+        if file_location is not None:
+            return HttpResponseRedirect(redirect_to=settings.STATIC_URL + file_location)
+
+        return HttpResponseNotFound()
