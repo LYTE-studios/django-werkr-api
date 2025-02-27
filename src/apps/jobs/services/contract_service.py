@@ -126,7 +126,7 @@ class JobApplicationService:
         if address_title:
             FavoriteAddress(address=start_address, title=address_title, user_id=user.id).save()
 
-        if distance is None:
+        if not distance:
             try:
                 distance = JobApplicationService.fetch_directions(
                     lat=start_address.latitude, lon=start_address.longitude,

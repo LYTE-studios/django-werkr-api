@@ -7,10 +7,11 @@ from .views import (
     WorkerRegisterView, StatisticsView, WorkerDetailView,
     WorkersListView, AcceptWorkerView,
     CreateCustomerView, CustomersListView, CustomerDetailView,
-    CustomerSearchTermView, DashboardFlowView, WorkerProfileDetailView
+    CustomerSearchTermView, DashboardFlowView, WorkerProfileDetailView, MediaForwardView
 )
 
 urlpatterns = [
+    path("media/<path:media_url>", MediaForwardView.as_view()),
     path('token', JWTAuthenticationView.as_view(), name='token_obtain_pair'),
     path('token/refresh', JWTRefreshView.as_view(), name='token_refresh'),
     path('hello/there', JWTTestConnectionView.as_view(), name='test_connection'),

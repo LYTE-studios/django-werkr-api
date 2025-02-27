@@ -29,7 +29,8 @@ class MailTemplate:
             },
         )
 
-        return response.status_code == 200
+        if response.status_code != 200:
+            raise Exception("Error sending mail: " + response.text)
 
 class ApprovedMailTemplate(MailTemplate):
     template_id = 5792978

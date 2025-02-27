@@ -147,6 +147,7 @@ class JobService:
                 # Ensure the application window is open
                 application_start_time__lte=current_time,
                 application_end_time__gte=current_time,
+                selected_workers__lt=F('max_workers'),
             ).exclude(
                 # Exclude jobs with Pending or Approved applications from the user
                 jobapplication__worker=user,
