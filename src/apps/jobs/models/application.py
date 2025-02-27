@@ -10,6 +10,7 @@ from apps.authentication.utils.worker_util import WorkerUtil
 from .job import Job
 from .job_application_state import JobApplicationState
 from apps.jobs.utils.job_util import JobUtil
+from apps.core.utils.geo_util import GeoUtil  # Import GeoUtil for distance calculation
 
 
 class JobApplication(models.Model):
@@ -38,6 +39,24 @@ class JobApplication(models.Model):
         return 'contracts/{}/{}'.format(instance.worker.id, file_name)
 
     contract = models.FileField(upload_to=get_contract_upload_path, null=True)
+
+    def save(self, *args, **kwargs):
+        # Calculate distance if it's not set
+        if self.distance is None:
+            job_address = self.job.address  # Assuming Job model has an address field
+            application_address = self.address
+
+            if job_address and application_address:
+                # Use GeoUtil to calculate the distance
+                self.distance = GeoUtil.get_distance(
+                    job_address.latitude, job_address.longitude,
+                    application_address.latitude, application_address.longitude
+                )
+            else:
+                # Handle cases where addresses might be missing (unlikely due to ForeignKey constraints)
+                pass
+
+        super().save(*args, **kwargs)
 
     def to_model_view(self):
         url = None
