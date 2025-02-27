@@ -58,7 +58,7 @@ class JWTAuthUtil:
 
         # Get the user
         try:
-            user = User.objects.get(email=email, groups__id__contains=group.id)
+            user = User.objects.get(email__iexact=email, groups__id__contains=group.id)
         except User.DoesNotExist:
             return None
         
