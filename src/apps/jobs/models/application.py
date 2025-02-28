@@ -1,8 +1,7 @@
 import uuid
-
 from django.conf import settings
 from django.db import models
-
+from django.core.exceptions import ValidationError
 from apps.core.models.geo import Address
 from apps.core.utils.formatters import FormattingUtil
 from apps.core.utils.wire_names import *
@@ -10,7 +9,7 @@ from apps.authentication.utils.worker_util import WorkerUtil
 from .job import Job
 from .job_application_state import JobApplicationState
 from apps.jobs.utils.job_util import JobUtil
-from apps.core.utils.geo_util import GeoUtil  # Import GeoUtil for distance calculation
+from apps.jobs.services.contract_service import JobApplicationService  # Import JobApplicationService
 
 
 class JobApplication(models.Model):
@@ -47,14 +46,23 @@ class JobApplication(models.Model):
             application_address = self.address
 
             if job_address and application_address:
-                # Use GeoUtil to calculate the distance
-                self.distance = GeoUtil.get_distance(
-                    job_address.latitude, job_address.longitude,
-                    application_address.latitude, application_address.longitude
-                )
+                try:
+                    # Use JobApplicationService to calculate the distance using Google Directions API
+                    directions_response = JobApplicationService.fetch_directions(
+                        lat=application_address.latitude,
+                        lon=application_address.longitude,
+                        to_lat=job_address.latitude,
+                        to_lon=job_address.longitude
+                    )
+                    if directions_response:
+                        self.distance = directions_response["routes"][0]["distanceMeters"] / 1000
+                    else:
+                        raise ValidationError("Failed to fetch directions from Google Directions API.")
+                except Exception as e:
+                    # Log the error and raise a ValidationError
+                    raise ValidationError(f"Failed to calculate distance: {str(e)}")
             else:
-                # Handle cases where addresses might be missing (unlikely due to ForeignKey constraints)
-                pass
+                raise ValidationError("Job address or application address is missing.")
 
         super().save(*args, **kwargs)
 
