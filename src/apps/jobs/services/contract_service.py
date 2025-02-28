@@ -126,15 +126,6 @@ class JobApplicationService:
         if address_title:
             FavoriteAddress(address=start_address, title=address_title, user_id=user.id).save()
 
-        if not distance:
-            try:
-                distance = JobApplicationService.fetch_directions(
-                    lat=start_address.latitude, lon=start_address.longitude,
-                    to_lat=job.address.latitude, to_lon=job.address.longitude
-                ).json()["routes"][0]["distanceMeters"] / 1000
-            except Exception:
-                pass
-
         try:
             Job.objects.get(id=job_id)
         except Job.DoesNotExist:
