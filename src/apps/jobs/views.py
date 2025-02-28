@@ -626,8 +626,6 @@ class MyApplicationsView(JWTBaseAuthView):
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except ValueError as e:
             return Response({k_message: str(e)}, status=HTTPStatus.BAD_REQUEST)
-        except Exception as e:
-            return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
         return Response({k_id: application_id})
 

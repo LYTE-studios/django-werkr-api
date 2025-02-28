@@ -123,6 +123,7 @@ class JobApplicationService:
             raise ValueError('You were too late!')
 
         start_address.save()
+
         if address_title:
             FavoriteAddress(address=start_address, title=address_title, user_id=user.id).save()
 
@@ -138,6 +139,7 @@ class JobApplicationService:
             distance=distance, note=note
         )
         JobManager.apply(application)
+        
         return application.id
 
     @staticmethod

@@ -136,28 +136,27 @@ class JobService:
         now = timezone.now()
         
         if is_worker:
-            current_date = timezone.now().date()
             current_time = timezone.now()
 
             # Query for upcoming jobs based on specified criteria
             jobs = Job.objects.filter(
                 # The job must start in the future
                 start_time__gt=current_time,
-                
                 # Ensure the application window is open
                 application_start_time__lte=current_time,
                 application_end_time__gte=current_time,
                 selected_workers__lt=F('max_workers'),
+                archived=False,
             ).exclude(
                 # Exclude jobs with Pending or Approved applications from the user
                 jobapplication__worker=user,
-                jobapplication__application_state__in=['pending', 'approved'],
+                jobapplication__application_state__in=[JobApplicationState.pending, JobApplicationState.approved],
             ).exclude(
                 # Exclude jobs that overlap with an already approved job of the user
                 Q(
                     jobapplication__job__start_time__lt=F('end_time'),
                     jobapplication__job__end_time__gt=F('start_time'),
-                    jobapplication__application_state='approved',
+                    jobapplication__application_state=JobApplicationState.approved,
                     jobapplication__worker=user
                 )
             ).distinct().order_by('start_time')

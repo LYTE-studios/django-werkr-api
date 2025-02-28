@@ -9,7 +9,6 @@ from apps.authentication.utils.worker_util import WorkerUtil
 from .job import Job
 from .job_application_state import JobApplicationState
 from apps.jobs.utils.job_util import JobUtil
-from apps.jobs.services.contract_service import JobApplicationService  # Import JobApplicationService
 
 
 class JobApplication(models.Model):
@@ -40,6 +39,9 @@ class JobApplication(models.Model):
     contract = models.FileField(upload_to=get_contract_upload_path, null=True)
 
     def save(self, *args, **kwargs):
+        import json
+        from apps.jobs.services.contract_service import JobApplicationService
+
         # Calculate distance if it's not set
         if self.distance is None:
             job_address = self.job.address  # Assuming Job model has an address field
@@ -54,15 +56,15 @@ class JobApplication(models.Model):
                         to_lat=job_address.latitude,
                         to_lon=job_address.longitude
                     )
+
                     if directions_response:
-                        self.distance = directions_response["routes"][0]["distanceMeters"] / 1000
-                    else:
-                        raise ValidationError("Failed to fetch directions from Google Directions API.")
+                        response = json.loads(directions_response)
+
+                        self.distance = response["routes"][0]["distanceMeters"] / 1000
+
                 except Exception as e:
                     # Log the error and raise a ValidationError
                     raise ValidationError(f"Failed to calculate distance: {str(e)}")
-            else:
-                raise ValidationError("Job address or application address is missing.")
 
         super().save(*args, **kwargs)
 

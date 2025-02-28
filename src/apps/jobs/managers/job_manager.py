@@ -1,17 +1,14 @@
 import datetime
 
 from django.db import models
-import asyncio
 
 from itertools import chain
-from django.core.files import File
 from apps.core.utils.formatters import FormattingUtil
 from apps.jobs.models import JobApplication, Job, JobApplicationState
 from apps.notifications.managers.notification_manager import NotificationManager, create_global_notification
 from apps.notifications.models import ApprovedMailTemplate, DeniedMailTemplate, SelectedWorkerTemplate
 from apps.legal.services.dimona_service import DimonaService
 from apps.legal.utils.contract_util import ContractUtil
-
 
 
 class JobManager(models.Manager):
