@@ -509,7 +509,6 @@ class UploadUserProfilePictureView(JWTBaseAuthView):
 
         return Response(status=status.HTTP_200_OK)
 
-
 class PasswordResetRequestView(BaseClientView):
     """
     View for initiating a password reset request.
@@ -535,15 +534,18 @@ class PasswordResetRequestView(BaseClientView):
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
 
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(email__iexact=email)
         except User.DoesNotExist:
-            return Response({k_message: 'Email not found.'}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return Response({k_message: 'Email not found.'}, status=HTTPStatus.NOT_FOUND)  # Changed to 404
 
-        pass_reset_util = CustomPasswordResetUtil()
-        pass_reset_util.send_reset_code(user)
+        try:
+            pass_reset_util = CustomPasswordResetUtil()
+            if not pass_reset_util.send_reset_code(user):
+                raise Exception("Failed to send password reset email.")
+        except Exception as e:
+            return Response({k_message: str(e)}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
         return Response({k_message: 'Password reset email has been sent.'}, status=HTTPStatus.OK)
-
 
 class VerifyCodeView(BaseClientView):
     """
