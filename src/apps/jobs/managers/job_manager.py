@@ -94,7 +94,7 @@ class JobManager(models.Manager):
     def approve_application(application: JobApplication):
 
         """
-          Processes job application approval by performing the following steps:
+        Processes job application approval by performing the following steps:
 
         - Creates a Dimona declaration using DimonaService.create_dimona.
         - Updates the application state to 'approved'.
@@ -125,6 +125,17 @@ class JobManager(models.Manager):
 
     @staticmethod
     def remove_unselected_workers(job: Job):
+        
+        """
+        Rejects pending application for a job.
+        Updates workers state from 'pending' to 'rejected' using JobManager.deny_application.
+
+        Args:
+        application (JobApplication): The job being denied.
+
+        Returns:
+        None
+        """
         applications = JobApplication.objects.filter(job_id=job.id, application_state=JobApplicationState.pending)
 
         for application in applications:
@@ -132,6 +143,18 @@ class JobManager(models.Manager):
 
     @staticmethod
     def calculate_selected_workers(application: JobApplication):
+        
+        """
+        Updates the count of selected workers for a job.
+        This function calculates the number of approved applications for a job and updates the selected_workers.
+        If the job reaches the maximum numbers of workers, it rejects the remaining pending.
+
+        Args:
+        application (JobApplication): The job application being processed.
+
+        Returns:
+        int : updated nnumber of selected workers for a job
+        """
         application.save()
 
         count = JobApplication.objects.filter(job_id=application.job.id,
@@ -149,6 +172,16 @@ class JobManager(models.Manager):
 
     @staticmethod
     def apply(application: JobApplication):
+        
+        """
+        Processes the job application by saving the worker's address and application.
+
+        Args:
+        application (JobApplication): The job application to be processed.
+
+        Returns:
+        JobApplication: the processed job application.
+        """
         application.address.save()
 
         application.save()
