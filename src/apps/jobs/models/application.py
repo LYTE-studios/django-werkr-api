@@ -56,6 +56,22 @@ class JobApplication(models.Model):
     contract = models.FileField(upload_to=get_contract_upload_path, null=True)
 
     def save(self, *args, **kwargs):
+
+        """
+        Ensure the location between the job address and application address is calculated before saving the job application.
+        If the distance is not set, it calculates the distance between both locations by making a request to Google Directions API.
+        When the location is set, the distance is extracted from the response in meters to kilometers.
+        If any error occurs, it raises a ValidationError with an error message.
+        When the distance is calculated and in kilometers, it saves the job application to the database.
+
+        Args:
+        *args: Variable-length list of positional arguments.
+        **kwargs: Dictionnary of keyword arguments.
+
+        Returns:
+        None
+        """
+
         import json
         from apps.jobs.services.contract_service import JobApplicationService
 
