@@ -11,6 +11,18 @@ import uuid
 
 class Migration(migrations.Migration):
 
+    """
+    Migration that creates new models to the dabatase.
+    The new models are as follow:
+      - Job: Represents jobs in the system.
+      - StoredDirections: Represents the directions.
+      - TimeRegistration: Represents the time of when a registration happens.
+      - JobApplication: Represents the job applications.
+      - Dimona: Stores status/result of a processed job application.
+
+    This migration will create the corresponding tables in the database with the related fields.
+    """
+
     initial = True
 
     dependencies = [
