@@ -14,6 +14,19 @@ from apps.jobs.utils.job_util import JobUtil
 class JobApplication(models.Model):
 
 
+    """
+    This class manages operations related to job applications, such as returning the path
+    of a contract file, setting up the distance between the two locations, as well as 
+    returning a dictionnary including data about jobs, workers and application details.
+
+    This model is associated with a specific job and worker, address while keeping track of
+    its state, distance and additional attributes such as notes and travel cost.
+
+    Each static method is documented with its purpose, paramaters and returns values.
+    """
+
+
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     job = models.ForeignKey(Job, on_delete=models.PROTECT)

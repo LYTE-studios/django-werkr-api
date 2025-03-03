@@ -4,7 +4,8 @@ from apps.core.utils.wire_names import *
 from .application import JobApplication
 
 
-class Dimona(models.Model):    
+class Dimona(models.Model):   
+    
     
     id = models.CharField(primary_key=True, null=False, max_length=32)
 
