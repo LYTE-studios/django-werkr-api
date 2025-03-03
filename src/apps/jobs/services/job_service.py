@@ -132,7 +132,7 @@ class JobService:
         return job.id
 
     @staticmethod
-    def get_upcoming_jobs(user, is_worker=True, start=None, end=None) -> list:
+    def get_upcoming_jobs(user, is_worker=True, start=None, end=None):
         now = timezone.now()
         
         if is_worker:
