@@ -180,7 +180,7 @@ class JobManager(models.Manager):
         application (JobApplication): The job application to be processed.
 
         Returns:
-        JobApplication: the processed job application.
+        JobApplication: The processed job application.
         """
         application.address.save()
 
@@ -190,6 +190,21 @@ class JobManager(models.Manager):
 
     @staticmethod
     def _send_job_notification(job: Job, title: str = 'New job available!', ):
+        
+        """
+        Handles notifications to workers about a new job.
+        This function formats the job's start time and location, then creates 
+        a global notification for workers, with the provided title and a description 
+        containing the job's location, date, and time.
+
+        Args:
+        job (Job): The job for which the notification is being sent.
+        title (str): The title of the notification
+
+        Returns:
+        None
+        """
+
         # Format the date time values
         date = FormattingUtil.to_date(job.start_time)
         time = FormattingUtil.to_readable_time(job.start_time)
@@ -202,6 +217,23 @@ class JobManager(models.Manager):
 
     @staticmethod
     def get_overlap_applications(application: JobApplication, state: JobApplicationState = JobApplicationState.pending):
+        
+        """
+        Retrieves job applications that overlap with the start time of the specified application for the same worker.
+
+        The function checks for applications that fall within a 3-hour buffer before and after the 
+        start and end time of the job associated with the provided application. This allows the system 
+        to account for potential scheduling conflicts.
+
+        Args:
+        application (JobApplication): The job application for which overlapping applications are checked.
+        state (JobApplicationState): The state of the application to filter by. Defaults to 'pending'.
+    
+        Returns:
+        QuerySet: A queryset of JobApplication objects for the same worker that overlap with the specified 
+                  application's job start time within the 3-hour buffer.
+        """
+
         date_range = [application.job.start_time - datetime.timedelta(hours=3),
                       application.job.end_time + datetime.timedelta(hours=3)]
 
@@ -213,6 +245,25 @@ class JobManager(models.Manager):
     @staticmethod
     def get_end_overlap_applications(application: JobApplication,
                                      state: JobApplicationState = JobApplicationState.pending):
+        
+
+        """
+        Retrieves job applications for the worker that overlap with the end time of the specified job application.
+    
+        This method looks for applications that are in the same state (default is 'pending') and whose job's 
+        end time falls within a 3-hour buffer before and after the job's end time. The function is used to 
+        prevent scheduling conflicts with jobs.
+
+        Args:
+        application (JobApplication): The job application for which overlapping applications are checked.
+        state (JobApplicationState): The state of the job applications to filter by (default is 'pending').
+
+        Returns:
+        QuerySet: A queryset of JobApplication objects for the same worker that overlap with the specified 
+                  application's job end time within the 3-hour buffer.
+        """
+        
+
         date_range = [application.job.start_time - datetime.timedelta(hours=3),
                       application.job.end_time + datetime.timedelta(hours=3)]
 
@@ -223,6 +274,22 @@ class JobManager(models.Manager):
 
     @staticmethod
     def remove_overlap_applications(application: JobApplication):
+        
+        """
+        Rejects overlapping job applications for the same worker to prevent scheduling conflicts.
+
+        This method checks for job applications that overlap with the specified application. It retrieves both 
+        the applications that overlap with the job's start time and the ones that overlap with the job's end time.
+        Any overlapping applications that are not already rejected will have their state updated to 'rejected', 
+        ensuring that the worker is not scheduled for conflicting jobs.
+
+        Args:
+        application (JobApplication): The job application whose overlaps are to be checked and removed.
+
+        Returns:
+        None.
+        """
+
         overlap_applications = JobManager.get_overlap_applications(application)
         end_overlap_applications = JobManager.get_end_overlap_applications(application)
 
@@ -235,6 +302,23 @@ class JobManager(models.Manager):
 
     @staticmethod
     def create(job: Job):
+        
+        """
+        Creates a new job, initializes its selected workers count, saves the job's address, and sends a 
+        notification if the job is visible.
+
+        This method performs the following tasks:
+        - Sets the selected_workers to 0 by default.
+        - Saves the job's address.
+        - Saves the job itself.
+        - If the job is visible, sends a notification to workers.
+
+        Args:
+        job (Job): The job object to be created.
+
+        Returns:
+        Job: The created job object.
+        """
         job.selected_workers = 0
 
         job.address.save()
