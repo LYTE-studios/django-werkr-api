@@ -16,6 +16,16 @@ class JobManager(models.Manager):
     @staticmethod
     def deny_application(application: JobApplication):
 
+        """
+        Handles the denial of a job application by updating its state, notifying the worker and managing related services.
+
+        Args:
+        Application (JobApplication): The job application being denied.
+
+        Returns:
+        None
+        """
+
         send_new_push = application.job.max_workers - application.job.selected_workers == 0
 
         application.application_state = JobApplicationState.rejected
@@ -43,7 +53,13 @@ class JobManager(models.Manager):
     @staticmethod
     def _notify_approved_worker(application: JobApplication):
         """
-        Send the worker and customer the correct notifications for the approval
+        Handles the approval of a job application by notifying the worker.
+
+        Args:
+        Application (JobApplication): The job application being approved.
+
+        Returns:
+        None
         """
 
         # The corresponding job
@@ -76,6 +92,23 @@ class JobManager(models.Manager):
 
     @staticmethod
     def approve_application(application: JobApplication):
+
+        """
+          Processes job application approval by performing the following steps:
+
+        - Creates a Dimona declaration using DimonaService.create_dimona.
+        - Updates the application state to 'approved'.
+        - Sends a notification to the worker about the approval.
+        - Rejects overlapping applications to prevent scheduling conflicts.
+        - Updates the count of selected workers for the job.
+        - Generates a contract PDF using ContractUtil.generate_contract.
+
+        Args:
+        application (JobApplication): The job application to approve.
+
+        Returns:
+        None
+        """
 
         DimonaService.create_dimona(application)
 
