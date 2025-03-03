@@ -102,6 +102,23 @@ class JobApplication(models.Model):
         super().save(*args, **kwargs)
 
     def to_model_view(self):
+
+        """
+        Handles retrieving the URL of the contract associated with the job application,
+        if nothing is retrieved, it defaults to 'None'.
+
+
+        Args:
+        self (JobApplication): Intance of JobApplication model.
+
+        Returns:
+        Dictionnary of key-value pairs where each key corresponds to an attribute.
+        The dictionnary includes data about the job, the workers, the address and the application details.
+        Data transformations like converting time to timestamp and using utility methods such as:
+        JobUtil, FormattingUtil and WorkerUtil. 
+        """
+
+
         url = None
 
         try:
