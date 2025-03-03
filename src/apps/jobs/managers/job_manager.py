@@ -13,6 +13,14 @@ from apps.legal.utils.contract_util import ContractUtil
 
 class JobManager(models.Manager):
 
+    """
+    This class manages operations related to job applications, such as sending notifications, 
+    updating job application state, handling scheduling conflicts and generating contracts.
+
+
+    Each static method is documented with its purpose, parameters and returns values.
+    """
+
     @staticmethod
     def deny_application(application: JobApplication):
 

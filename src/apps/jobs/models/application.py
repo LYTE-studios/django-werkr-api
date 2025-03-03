@@ -12,6 +12,8 @@ from apps.jobs.utils.job_util import JobUtil
 
 
 class JobApplication(models.Model):
+
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     job = models.ForeignKey(Job, on_delete=models.PROTECT)
@@ -34,6 +36,21 @@ class JobApplication(models.Model):
     note = models.CharField(max_length=256, null=True)
 
     def get_contract_upload_path(instance, file_name):
+
+        """
+        Determines the upload path of a worker's contract. 
+        The file is stored in the directory structure: 'contracts/{worker_id}/{file_name}'
+        where 'worker_id' is the ID of the worker and 'file_name' is the name of the uploaded file.
+
+        Args:
+        instance(models.Models): The model instance that the contract belongs to.
+        file_name(str): The name of the uploaded file.
+
+        Returns:
+        str: The path were the contract file will be stored.
+
+        """
+
         return 'contracts/{}/{}'.format(instance.worker.id, file_name)
 
     contract = models.FileField(upload_to=get_contract_upload_path, null=True)
