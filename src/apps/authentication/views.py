@@ -149,6 +149,12 @@ class JWTBaseAuthView(APIView):
         Returns:
             HttpResponse: The HTTP response object.
         """
+        if request.user.is_authenticated:
+            self.user = request.user
+            self.group = request.user.groups.first()
+
+            return super(JWTBaseAuthView, self).dispatch(request, *args, **kwargs)
+
         self.group = AuthenticationUtil.check_client_secret(request)
 
         auth_token = JWTAuthUtil.check_for_authentication(request)
