@@ -28,6 +28,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_exceptions import ValidationError
 
 from apps.authentication.models.dashboard_flow import JobType, Location, SituationType, WorkType, UserJobType
 
@@ -1433,3 +1434,52 @@ class MediaForwardView(APIView):
             return HttpResponseRedirect(redirect_to=settings.STATIC_URL + file_location)
 
         return HttpResponseNotFound()
+
+
+class ProfileCompletionView(APIView):
+    
+    """
+    API Endpoint to evaluate the worker's profile completion.
+    Returns completion percentage and missing fields, 
+    or raises a ValidationError with detailed missing fields if incomplete.
+    """
+    
+    def get(self, request, worker_id):
+        """
+        Evaluate the worker's profile completion.
+        
+        Args:
+            request: The HTTP request object.
+            worker_id (int): The unique identifier for the worker profile.
+
+        Returns:
+            Response: Contains completion percentage and missing fields if complete,
+                      or raises a ValidationError with detailed missing fields if incomplete.
+        """
+
+        try:
+            # Fetch the worker profile based on worker_id
+            worker_profile = WorkerProfile.objects.get(user__id=worker_id)
+        except WorkerProfile.DoesNotExist:
+            raise ValidationError("Worker profile not found.")
+        
+        # Calculate profile completion
+        completion_data = WorkerUtil.calculate_profile_completion(worker_profile.user)
+        completion_percentage = completion_data["completion_percentage"]
+        missing_fields = completion_data["missing_fields"]
+        
+        if completion_percentage < 100:
+            missing_fields_str = ', '.join([field.capitalize() for field in missing_fields]) or "No mandatory fields completed."
+            raise ValidationError(
+                f"Profile is incomplete. Completion percentage: {completion_percentage}%. "
+                f"Missing fields: {missing_fields_str}"
+            )
+        
+        # Return the completion percentage and empty list of missing fields if 100% complete
+        return Response(
+            {
+                "completion_percentage": completion_percentage,
+                "missing_fields": missing_fields or ["None"]
+            },
+            status=status.HTTP_200_OK
+        )
