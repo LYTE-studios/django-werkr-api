@@ -1450,7 +1450,7 @@ class MediaForwardView(APIView):
         return HttpResponseNotFound()
 
 
-class ProfileCompletionView(APIView):
+class ProfileCompletionView(JWTBaseAuthView):
 
     """
     API Endpoint to evaluate the worker's profile completion.
@@ -1458,7 +1458,7 @@ class ProfileCompletionView(APIView):
     or raises a ValidationError with detailed missing fields if incomplete.
     """
     
-    def get(self, request, worker_id):
+    def get(self, request):
         """
         Evaluate the worker's profile completion.
         
@@ -1471,29 +1471,14 @@ class ProfileCompletionView(APIView):
                       or raises a ValidationError with detailed missing fields if incomplete.
         """
 
-        try:
-            # Fetch the worker profile based on worker_id
-            worker_profile = WorkerProfile.objects.get(user__id=worker_id)
-        except WorkerProfile.DoesNotExist:
-            raise ValidationError("Worker profile not found.")
-        
         # Calculate profile completion
-        completion_data = WorkerUtil.calculate_profile_completion(worker_profile.user)
-        completion_percentage = completion_data["completion_percentage"]
-        missing_fields = completion_data["missing_fields"]
-        
-        if completion_percentage < 100:
-            missing_fields_str = ', '.join([field.capitalize() for field in missing_fields]) or "No mandatory fields completed."
-            raise ValidationError(
-                f"Profile is incomplete. Completion percentage: {completion_percentage}%. "
-                f"Missing fields: {missing_fields_str}"
-            )
-        
+        completion_percentage, missing_fields = WorkerUtil.calculate_worker_completion(self.user)
+
         # Return the completion percentage and empty list of missing fields if 100% complete
         return Response(
             {
                 "completion_percentage": completion_percentage,
-                "missing_fields": missing_fields or ["None"]
+                "missing_fields": missing_fields
             },
             status=status.HTTP_200_OK
         )

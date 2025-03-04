@@ -47,24 +47,26 @@ class WorkerUtil:
 
         """
 
-        # Get worker's data using the existing function
-        worker_data = WorkerProfile.to_worker_view(worker)
-
-        # Define mandatory fields for profile completion
-        mandatory_fields = ["first_name", "last_name", "email", "iban", "ssn", "phone_number"]
+        worker_data = {
+            "iban": worker.worker_profile.iban,
+            "ssn": worker.worker_profile.ssn,
+            "worker_address": worker.worker_profile.worker_address,
+            "date_of_birth": worker.worker_profile.date_of_birth,
+            "place_of_birth": worker.worker_profile.place_of_birth,
+        }
 
         # Find missing fields
-        missing_fields = [field for field in mandatory_fields if not worker_data.get(field)]
+        missing_fields = [field for field in worker_data.keys() if not worker_data[field]]
+
+        if not missing_fields:
+            return 100, []
 
         # Calculate completion percentage
-        total_fields = len(mandatory_fields)
+        total_fields = len(worker_data)
         completed_fields = total_fields - len(missing_fields)
         completion_percentage = int((completed_fields / total_fields) * 100)
 
-        return {
-            "completion_percentage": completion_percentage,
-            "missing_fields": missing_fields
-        }
+        return completion_percentage, missing_fields
 
 
     
