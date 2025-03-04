@@ -84,7 +84,7 @@ class ContractUtil:
             ('121h', 'student'): get_path('contract_hospitality_student'),
         }
 
-        template_name = template_mapping.get((application.job.customer.customer_profile.special_committee, application.worker.worker_profile.worker_type))
+        template_name = template_mapping.get((application.job.customer.customer_profile.special_committee or '121', application.worker.worker_profile.worker_type or 'student'))
 
         if not template_name:
             raise ValueError("No contract template found for the given combination.")

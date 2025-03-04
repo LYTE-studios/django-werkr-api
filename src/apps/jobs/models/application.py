@@ -103,7 +103,7 @@ class JobApplication(models.Model):
                     if directions_response:
                         response = json.loads(directions_response)
 
-                        self.distance = response["routes"][0]["distanceMeters"] / 1000
+                        self.distance = (response["routes"][0]["distanceMeters"] / 1000) * 2
 
                 except Exception as e:
                     # Log the error and raise a ValidationError
