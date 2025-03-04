@@ -12,7 +12,7 @@ from apps.jobs.managers.job_manager import JobManager
 from apps.jobs.models import JobApplication, JobApplicationState, Job, JobState
 from django.shortcuts import get_object_or_404
 
-from authentication.utils import WorkerUtil
+from apps.authentication.utils.worker_util import WorkerUtil
 from rest_framework.exceptions import ValidationError
 
 

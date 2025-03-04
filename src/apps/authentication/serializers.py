@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .utils import WorkerUtil
+from .utils.worker_util import WorkerUtil
 
 from .models import DashboardFlow
 from .models.profiles.worker_profile import WorkerProfile

@@ -28,7 +28,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from rest_framework_exceptions import ValidationError
+from rest_framework.exceptions import ValidationError
 
 from apps.authentication.models.dashboard_flow import JobType, Location, SituationType, WorkType, UserJobType
 
@@ -1437,7 +1437,7 @@ class MediaForwardView(APIView):
 
 
 class ProfileCompletionView(APIView):
-    
+
     """
     API Endpoint to evaluate the worker's profile completion.
     Returns completion percentage and missing fields, 

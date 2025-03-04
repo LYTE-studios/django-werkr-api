@@ -1,9 +1,4 @@
-from django.contrib.auth import get_user_model
-
-from src.apps.authentication.models.profiles.worker_profile import WorkerProfile
-
-User = get_user_model()
-
+from apps.authentication.models.profiles.worker_profile import WorkerProfile
 from apps.core.utils.formatters import FormattingUtil
 from apps.core.utils.wire_names import *
 from .profile_util import ProfileUtil
@@ -12,7 +7,7 @@ from .profile_util import ProfileUtil
 class WorkerUtil:
 
     @staticmethod
-    def to_worker_view(worker: User):
+    def to_worker_view(worker):
         # Required data
         data = {
             k_id: worker.id, k_first_name: worker.first_name,
