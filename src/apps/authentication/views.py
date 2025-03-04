@@ -150,6 +150,12 @@ class JWTBaseAuthView(APIView):
         Returns:
             HttpResponse: The HTTP response object.
         """
+        if request.user.is_authenticated:
+            self.user = request.user
+            self.group = request.user.groups.first()
+
+            return super(JWTBaseAuthView, self).dispatch(request, *args, **kwargs)
+
         self.group = AuthenticationUtil.check_client_secret(request)
 
         auth_token = JWTAuthUtil.check_for_authentication(request)
@@ -255,7 +261,15 @@ class JWTTestConnectionView(JWTBaseAuthView):
         Returns:
             Response: A JSON response indicating the connection is successful.
         """
-        return Response({"message": "Connection successful"})
+        if not self.user:
+            return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        return Response({
+            "id": self.user.id,
+            "email": self.user.email,
+            "first_name": self.user.first_name,
+            "last_name": self.user.last_name,
+        })
 
 
 class ProfileMeView(JWTBaseAuthView):

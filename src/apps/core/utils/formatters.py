@@ -165,15 +165,12 @@ class FormattingUtil:
 
     @staticmethod
     def to_time(timestamp):
-        try:
-            hour = timestamp // 60
-            minute = (timestamp - (hour * 60))
+        hour = timestamp // 60
+        minute = (timestamp - (hour * 60))
 
-            date_time = timezone.time(hour, minute)
+        date_time = time(hour, minute)
 
-            return date_time
-        except Exception:
-            return None
+        return date_time
 
     @staticmethod
     def to_date_time(timestamp):

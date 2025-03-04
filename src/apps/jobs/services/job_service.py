@@ -228,15 +228,13 @@ class JobService:
     @staticmethod
     def register_time(data, user):
         formatter = FormattingUtil(data=data)
-        try:
-            job_id = formatter.get_value(k_job_id, required=True)
-            start_time = FormattingUtil.to_date_time(int(formatter.get_value(k_start_time, required=True)))
-            end_time = FormattingUtil.to_date_time(int(formatter.get_value(k_end_time, required=True)))
-            break_time = formatter.get_time(k_break_time, required=False)
-            worker_signature = data.get(k_worker_signature)
-            customer_signature = data.get(k_customer_signature)
-        except Exception as e:
-            raise e
+        
+        job_id = formatter.get_value(k_job_id, required=True)
+        start_time = FormattingUtil.to_date_time(int(formatter.get_value(k_start_time, required=True)))
+        end_time = FormattingUtil.to_date_time(int(formatter.get_value(k_end_time, required=True)))
+        break_time = formatter.get_time(k_break_time, required=False)
+        worker_signature = data.get(k_worker_signature)
+        customer_signature = data.get(k_customer_signature)
 
         job = get_object_or_404(Job, id=job_id)
         worker = user

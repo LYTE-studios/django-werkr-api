@@ -25,6 +25,7 @@ urlpatterns = [
     path('password_reset/reset', ResetPasswordView.as_view(), name="password_reset_reset"),
     path('registration/verify', ValidateRegistrationView.as_view(), name="validate_registration"),
 
+
     # Workers
     path('workers/onboarding', DashboardFlowView.as_view(), name="onboarding_flow"),
     path('workers/register', WorkerRegisterView.as_view(), name="worker_register"),
