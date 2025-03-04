@@ -254,7 +254,15 @@ class JWTTestConnectionView(JWTBaseAuthView):
         Returns:
             Response: A JSON response indicating the connection is successful.
         """
-        return Response({"message": "Connection successful"})
+        if not self.user:
+            return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        return Response({
+            "id": self.user.id,
+            "email": self.user.email,
+            "first_name": self.user.first_name,
+            "last_name": self.user.last_name,
+        })
 
 
 class ProfileMeView(JWTBaseAuthView):
