@@ -6,6 +6,22 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
+    """
+    Migration that alters an existing field in a model to the dabatase.
+    The altered fields are as follow:
+
+    - Altering 'application_start_time' field in 'job' model:
+      - Allowing the field to be blank.
+      - Setting the default value of the field to the current timestamp.
+      - Allowing the field to store 'null' in the database.
+
+    - Altering 'start_time' field in 'job' model:
+      - Setting the default value of the field to the current timestamp.
+    
+
+    This migration will alter the fields of the corresponding models in the database.
+    """
+
     dependencies = [
         ('jobs', '0001_initial'),
     ]
