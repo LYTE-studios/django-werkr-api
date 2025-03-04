@@ -12,6 +12,21 @@ from apps.jobs.utils.job_util import JobUtil
 
 
 class JobApplication(models.Model):
+
+
+    """
+    This class manages operations related to job applications, such as returning the path
+    of a contract file, setting up the distance between the two locations, as well as 
+    returning a dictionnary including data about jobs, workers and application details.
+
+    This model is associated with a specific job and worker, address while keeping track of
+    its state, distance and additional attributes such as notes and travel cost.
+
+    Each static method is documented with its purpose, paramaters and returns values.
+    """
+
+
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     job = models.ForeignKey(Job, on_delete=models.PROTECT)
@@ -34,11 +49,39 @@ class JobApplication(models.Model):
     note = models.CharField(max_length=256, null=True)
 
     def get_contract_upload_path(instance, file_name):
+
+        """
+        Determines the upload path of a worker's contract. 
+        The file is stored in the directory structure: 'contracts/{worker_id}/{file_name}'
+        where 'worker_id' is the ID of the worker and 'file_name' is the name of the uploaded file.
+
+        Args:
+        instance(models.Models): The model instance that the contract belongs to.
+        file_name(str): The name of the uploaded file.
+
+        Returns:
+        str: The path were the contract file will be stored.
+
+        """
+
         return 'contracts/{}/{}'.format(instance.worker.id, file_name)
 
     contract = models.FileField(upload_to=get_contract_upload_path, null=True)
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
+
+        """
+        Ensure the location between the job address and application address is calculated before saving the job application.
+        If the distance is not set, it calculates the distance between both locations by making a request to Google Directions API.
+        When the location is set, the distance is extracted from the response in meters to kilometers.
+        If any error occurs, it raises a ValidationError with an error message.
+        When the distance is calculated and in kilometers, it saves the job application to the database.
+
+        Args:
+        *args: Variable-length list of positional arguments.
+        **kwargs: Dictionnary of keyword arguments.
+        """
+
         import json
         from apps.jobs.services.contract_service import JobApplicationService
 
@@ -69,6 +112,23 @@ class JobApplication(models.Model):
         super().save(*args, **kwargs)
 
     def to_model_view(self):
+
+        """
+        Handles retrieving the URL of the contract associated with the job application,
+        if nothing is retrieved, it defaults to 'None'.
+
+
+        Args:
+        self (JobApplication): Intance of JobApplication model.
+
+        Returns:
+        Dictionnary of key-value pairs where each key corresponds to an attribute.
+        The dictionnary includes data about the job, the workers, the address and the application details.
+        Data transformations like converting time to timestamp and using utility methods such as:
+        JobUtil, FormattingUtil and WorkerUtil. 
+        """
+
+
         url = None
 
         try:
