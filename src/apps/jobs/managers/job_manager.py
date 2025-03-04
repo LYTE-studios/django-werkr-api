@@ -22,7 +22,7 @@ class JobManager(models.Manager):
     """
 
     @staticmethod
-    def deny_application(application: JobApplication):
+    def deny_application(application: JobApplication) -> None:
 
         """
         Handles the denial of a job application by updating its state, notifying the worker and managing related services.
@@ -30,8 +30,6 @@ class JobManager(models.Manager):
         Args:
         Application (JobApplication): The job application being denied.
 
-        Returns:
-        None
         """
 
         send_new_push = application.job.max_workers - application.job.selected_workers == 0
@@ -59,15 +57,13 @@ class JobManager(models.Manager):
                                                          send_mail=False, )
 
     @staticmethod
-    def _notify_approved_worker(application: JobApplication):
+    def _notify_approved_worker(application: JobApplication) -> None:
         """
         Handles the approval of a job application by notifying the worker.
 
         Args:
         Application (JobApplication): The job application being approved.
 
-        Returns:
-        None
         """
 
         # The corresponding job
@@ -99,7 +95,7 @@ class JobManager(models.Manager):
 
 
     @staticmethod
-    def approve_application(application: JobApplication):
+    def approve_application(application: JobApplication) -> None:
 
         """
         Processes job application approval by performing the following steps:
@@ -113,9 +109,6 @@ class JobManager(models.Manager):
 
         Args:
         application (JobApplication): The job application to approve.
-
-        Returns:
-        None
         """
 
         DimonaService.create_dimona(application)
@@ -132,7 +125,7 @@ class JobManager(models.Manager):
         ContractUtil.generate_contract(application)
 
     @staticmethod
-    def remove_unselected_workers(job: Job):
+    def remove_unselected_workers(job: Job) -> None:
         
         """
         Rejects pending application for a job.
@@ -140,9 +133,6 @@ class JobManager(models.Manager):
 
         Args:
         application (JobApplication): The job being denied.
-
-        Returns:
-        None
         """
         applications = JobApplication.objects.filter(job_id=job.id, application_state=JobApplicationState.pending)
 
@@ -197,7 +187,7 @@ class JobManager(models.Manager):
         return application
 
     @staticmethod
-    def _send_job_notification(job: Job, title: str = 'New job available!', ):
+    def _send_job_notification(job: Job, title: str = 'New job available!', ) -> None:
         
         """
         Handles notifications to workers about a new job.
@@ -208,9 +198,6 @@ class JobManager(models.Manager):
         Args:
         job (Job): The job for which the notification is being sent.
         title (str): The title of the notification
-
-        Returns:
-        None
         """
 
         # Format the date time values
@@ -281,7 +268,7 @@ class JobManager(models.Manager):
         return overlap_applications
 
     @staticmethod
-    def remove_overlap_applications(application: JobApplication):
+    def remove_overlap_applications(application: JobApplication) -> None:
         
         """
         Rejects overlapping job applications for the same worker to prevent scheduling conflicts.
@@ -293,9 +280,6 @@ class JobManager(models.Manager):
 
         Args:
         application (JobApplication): The job application whose overlaps are to be checked and removed.
-
-        Returns:
-        None.
         """
 
         overlap_applications = JobManager.get_overlap_applications(application)

@@ -15,8 +15,6 @@ class JobState(models.TextChoices):
     Args:
     models (TextChoices): Inherits from Django's TextChoices to define the states as text choices.
 
-    Returns:
-    None
     """
 
     fulfilled = "fulfilled"

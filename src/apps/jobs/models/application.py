@@ -68,7 +68,7 @@ class JobApplication(models.Model):
 
     contract = models.FileField(upload_to=get_contract_upload_path, null=True)
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
 
         """
         Ensure the location between the job address and application address is calculated before saving the job application.
@@ -80,9 +80,6 @@ class JobApplication(models.Model):
         Args:
         *args: Variable-length list of positional arguments.
         **kwargs: Dictionnary of keyword arguments.
-
-        Returns:
-        None
         """
 
         import json
