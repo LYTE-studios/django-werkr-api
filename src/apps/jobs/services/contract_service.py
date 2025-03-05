@@ -12,6 +12,10 @@ from apps.jobs.managers.job_manager import JobManager
 from apps.jobs.models import JobApplication, JobApplicationState, Job, JobState
 from django.shortcuts import get_object_or_404
 
+from apps.authentication.utils.worker_util import WorkerUtil
+from rest_framework.exceptions import ValidationError
+
+
 
 class JobApplicationService:
 
@@ -28,7 +32,32 @@ class JobApplicationService:
 
     @staticmethod
     def approve_application(application_id):
+
+        """
+        Approves the job application if the worker's profile is 100% complete.
+
+        Args:
+            application_id (int): The ID of the job application to approve.
+
+        Raises:
+            ValidationError: If the worker's profile is incomplete (less than 100%).
+        """
+
         application = get_object_or_404(JobApplication, id=application_id)
+        worker = application.worker
+        
+        #validate worker's profile before approval
+        completion_data = WorkerUtil.calculate_worker_completion(worker)
+        completion_percentage = completion_data["completion_percentage"]
+        missing_fields = completion_data["missing_fields"]
+
+        if completion_percentage < 100:
+            raise ValidationError(
+                f"Cannot approve application. Profile is incomplete. "
+                f"Completion percentage: {completion_percentage}%. Missing fields: {', '.join(missing_fields)}"
+            )
+
+        #if the profile is completed, proceeed with approval
         JobManager.approve_application(application)
         application.job.save()
         application.save()

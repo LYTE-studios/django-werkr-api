@@ -1,4 +1,5 @@
 from django.urls import path
+from uuid import UUID
 
 from .views import (
     JWTAuthenticationView, JWTRefreshView, JWTTestConnectionView,
@@ -7,7 +8,7 @@ from .views import (
     WorkerRegisterView, StatisticsView, WorkerDetailView,
     WorkersListView, AcceptWorkerView,
     CreateCustomerView, CustomersListView, CustomerDetailView,
-    CustomerSearchTermView, DashboardFlowView, WorkerProfileDetailView, MediaForwardView
+    CustomerSearchTermView, DashboardFlowView, WorkerProfileDetailView, MediaForwardView, ProfileCompletionView
 )
 
 urlpatterns = [
@@ -16,8 +17,7 @@ urlpatterns = [
     path('token/refresh', JWTRefreshView.as_view(), name='token_refresh'),
     path('hello/there', JWTTestConnectionView.as_view(), name='test_connection'),
     path('users/me', ProfileMeView.as_view(), name='profile_me'),
-    path('users/me/profile-completion', ProfileMeView.as_view(), name='worker_profile_me'),
-
+    path('users/profile-completion/', ProfileCompletionView.as_view(), name='profile_completion'),
     path('users/settings/languages', LanguageSettingsView.as_view(), name='language_settings'),
     path('users/settings/profile-picture', UploadUserProfilePictureView.as_view(), name='upload_profile_picture'),
     path('password_reset', PasswordResetRequestView.as_view(), name="password_reset"),

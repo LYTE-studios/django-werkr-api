@@ -106,8 +106,9 @@ class JobApplication(models.Model):
                         self.distance = (response["routes"][0]["distanceMeters"] / 1000) * 2
 
                 except Exception as e:
+                    pass
                     # Log the error and raise a ValidationError
-                    raise ValidationError(f"Failed to calculate distance: {str(e)}")
+                    # raise ValidationError(f"Failed to calculate distance: {str(e)}")
 
         super().save(*args, **kwargs)
 

@@ -6,7 +6,7 @@ from unittest.mock import patch
 from apps.authentication.models import CustomerProfile, WorkerProfile, AdminProfile
 from apps.authentication.utils.authentication_util import AuthenticationUtil
 from apps.authentication.utils.jwt_auth_util import JWTAuthUtil
-from apps.authentication.views import BaseClientView
+from apps.authentication.views import BaseClientView, ProfileCompletionView
 from apps.authentication.views import JWTBaseAuthView
 from apps.core.assumptions import CMS_GROUP_NAME, CUSTOMERS_GROUP_NAME
 from apps.core.assumptions import WORKERS_GROUP_NAME
@@ -29,7 +29,8 @@ from rest_framework_simplejwt.tokens import AccessToken
 User = get_user_model()
 from apps.authentication.utils.worker_util import WorkerUtil
 from apps.authentication.utils.customer_util import CustomerUtil
-from apps.jobs.models import Job, JobState
+from apps.jobs.models import Job, JobState, JobApplication
+
 
 
 class BaseClientViewTest(TestCase):
@@ -941,3 +942,78 @@ class WorkerProfileDetailViewTest(APITestCase):
         self.assertIn('worker_profile', response.data)
         self.assertIn('dashboard_flow', response.data)
 
+
+class ProfileCompletionViewTest(APITestCase):
+    
+    def setUp(self):
+        """
+        Set up test data, create users, and associate them with worker profiles.
+        """
+        # Create a user (worker)
+        self.worker_user = User.objects.create_user(
+            username="worker1", email="worker1@example.com", password="password123"
+        )
+
+        # Create a complete worker profile
+        self.worker_profile_complete = WorkerProfile.objects.create(
+            user=self.worker_user,
+            iban="DE89370400440532013000",
+            ssn="123-45-6789",
+            phone_number="1234567890",
+            worker_type="full_time"
+        )
+
+        # Create an incomplete worker profile (missing some fields)
+        self.worker_profile_incomplete = WorkerProfile.objects.create(
+            user=self.worker_user,
+            iban="",
+            ssn="123-45-6789",  # Missing IBAN
+            phone_number="1234567890",
+            worker_type="full_time"
+        )
+
+        # Create a job application for the worker
+        self.job_application_complete = JobApplication.objects.create(
+            worker=self.worker_user,
+            job_id=1,  # Example job ID
+            application_status="pending"
+        )
+
+        @patch.object(WorkerUtil, 'calculate_profile_completion', return_value={"completion_percentage": 100, "missing_fields": []})
+        def test_worker_profile_completion_complete(self, mock_calculate_profile_completion):
+
+            """
+            Test case for checking a worker profile that is 100% complete.
+            """
+
+            # Send a GET request to the profile completion endpoint
+            response = self.client.get(f'/api/profiles/{self.worker_user.id}/completion/')
+        
+            # Assert that the response status code is HTTP 200 OK
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+            # Assert that the response contains the correct completion percentage and missing fields
+            self.assertEqual(response.data['completion_percentage'], 100)
+            self.assertEqual(response.data['missing_fields'], [])
+            
+
+        @patch.object(WorkerUtil, 'calculate_profile_completion', return_value={"completion_percentage": 80, "missing_fields": ["iban"]})
+        def test_worker_profile_completion_incomplete(self, mock_calculate_profile_completion):
+            """
+            Test case for checking a worker profile that is incomplete.
+            """
+            # Send a GET request to the profile completion endpoint
+            response = self.client.get(f'/api/profiles/{self.worker_user.id}/completion/')
+        
+            # Assert that the response status code is HTTP 400 Bad Request (due to incomplete profile)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+            # Assert that the response contains the correct error message
+            self.assertIn("Profile is incomplete", str(response.data['detail']))
+            self.assertIn("iban", str(response.data['detail']))  # Check the missing field is listed
+
+
+
+
+       
+        

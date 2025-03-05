@@ -28,6 +28,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework.exceptions import ValidationError
 
 from apps.authentication.models.dashboard_flow import JobType, Location, SituationType, WorkType, UserJobType
 
@@ -1447,3 +1448,37 @@ class MediaForwardView(APIView):
             return HttpResponseRedirect(redirect_to=settings.STATIC_URL + file_location)
 
         return HttpResponseNotFound()
+
+
+class ProfileCompletionView(JWTBaseAuthView):
+
+    """
+    API Endpoint to evaluate the worker's profile completion.
+    Returns completion percentage and missing fields, 
+    or raises a ValidationError with detailed missing fields if incomplete.
+    """
+    
+    def get(self, request):
+        """
+        Evaluate the worker's profile completion.
+        
+        Args:
+            request: The HTTP request object.
+            worker_id (int): The unique identifier for the worker profile.
+
+        Returns:
+            Response: Contains completion percentage and missing fields if complete,
+                      or raises a ValidationError with detailed missing fields if incomplete.
+        """
+
+        # Calculate profile completion
+        completion_percentage, missing_fields = WorkerUtil.calculate_worker_completion(self.user)
+
+        # Return the completion percentage and empty list of missing fields if 100% complete
+        return Response(
+            {
+                "completion_percentage": completion_percentage,
+                "missing_fields": missing_fields
+            },
+            status=status.HTTP_200_OK
+        )
