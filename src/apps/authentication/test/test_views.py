@@ -116,6 +116,7 @@ class JWTAuthenticationViewTest(TestCase):
         with self.settings(JWT_AUTH_UTIL=JWTAuthUtil):
             JWTAuthUtil.authenticate = lambda email, password, group: {'access': 'access_token', 'refresh': 'refresh_token'}
             response = self.client.post(self.url, self.valid_payload, format='json')
+            print(f"Response data: {response.data}") 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertIn('access', response.data)
             self.assertIn('refresh', response.data)
@@ -1114,8 +1115,7 @@ class JWTBaseAuthViewTest(APITestCase):
         auth_url = reverse("test_connection")
         headers = {'Authorization':f'Bearer {access_token}', 'Client': settings.WORKER_GROUP_SECRET}
         print(f"Worker Group Secret: {settings.WORKER_GROUP_SECRET}")
-        print(f"User groups: {[group.name for group in self.user.groups.all()]}")
-
+        
 
         response = self.client.get(auth_url, headers=headers)
 
