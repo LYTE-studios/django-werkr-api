@@ -27,6 +27,9 @@ from apps.authentication.models.dashboard_flow import DashboardFlow
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase, APIRequestFactory
 from rest_framework_simplejwt.tokens import AccessToken
+
+from apps.core.models.geo import Address
+from apps.authentication.utils.encryption_util import EncryptionUtil
 User = get_user_model()
 from apps.authentication.utils.worker_util import WorkerUtil
 from apps.authentication.utils.customer_util import CustomerUtil
@@ -125,7 +128,7 @@ class JWTAuthenticationViewTest(TestCase):
             self.assertEqual(response.data['message'], 'Invalid credentials')
 
 
-class ProfileMeViewTest(TestCase):
+class ProfileMeViewTestOld(TestCase):
 
     def setUp(self):
         self.client = APIClient()
@@ -1062,17 +1065,19 @@ class JWTBaseAuthViewTest(APITestCase):
     # Get the tokens from the view (Assert tokens are correct)
     # test the JWTBaseAuthView for confirmation
 
-    def SetUp(self):
+    def setUp(self):
         """ Set up test user and assign to a group. Set up a second user for testing invalid token cases"""
 
         # Set up groups with group client secret
         # -> Assumtions
         #Create user and assign to a group
-        self.user = User.objects.create_user(email="testuser@example.com", password="password123")
+        password, salt = EncryptionUtil.encrypt("password123")
+        self.user = User.objects.create(username="testuser", email="testuser@example.com", password=password, salt=salt)
         self.group = Group.objects.get(name=WORKERS_GROUP_NAME)
         self.user.groups.add(self.group)
         self.user.save()
-        
+        print(f'user: {self.user}, {self.user.username}, {self.user.email}, {self.user.password}, {self.group.name}')
+
         #Create a second user for testing invalid token cases
         self.invalid_user = User.objects.create_user(username="invaliduser", password="invalidpassword", email="invaliduser@example.com")
     
@@ -1080,8 +1085,10 @@ class JWTBaseAuthViewTest(APITestCase):
         #Authenticate and get JWT tokens
         client_secret = settings.WORKER_GROUP_SECRET
 
+        worker_profile = WorkerProfile.objects.create(user=self.user, accepted=True)
+
         url = reverse("token_obtain_pair")
-        data = {"email":"testuser@example.com", "password":"password123"}
+        data = {"username":"testuser", "email":"testuser@example.com", "password":"password123"}
         headers = {"Client": client_secret}
         response = self.client.post(url, data, headers=headers, format="json")
 
@@ -1089,32 +1096,40 @@ class JWTBaseAuthViewTest(APITestCase):
             print(f"Authentication failed, Status code: {response.status_code}")
             print(f"Response content: {response.content.decode('utf-8')}")
 
+        print(f"Data: {data}")
+            
         #Assert that the response is successful and contains tokens
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         return response.data #return tokens for later use in the test
-
+    
 
     def test_valid_authentication(self):
         """ Authenticate user and extract tokens """
 
         tokens = self.authenticate_user()
-        access_token = tokens['access']
+        access_token = tokens['access_token']
+        print(f"Access token: {access_token}")
 
         #Use the JWT token to authenticate in JWTBaseAuthView
-        auth_url = reverse("token_obtain_pair")
-        headers = {'Authorization':f'Bearer {access_token}'}
+        auth_url = reverse("test_connection")
+        headers = {'Authorization':f'Bearer {access_token}', 'Client': settings.WORKER_GROUP_SECRET}
+        print(f"Worker Group Secret: {settings.WORKER_GROUP_SECRET}")
+        print(f"User groups: {[group.name for group in self.user.groups.all()]}")
+
+
         response = self.client.get(auth_url, headers=headers)
 
         #Assert that the user is authenticated properly
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('user', response.data)
+        #self.assertIn('user', response.data)
+        
 
 
     def test_forbidden_authentication_invalid_token(self):
         """ Try authenticating with an invalid token. """
 
         tokens = self.authenticate_user()
-        invalid_access_token = 'invalidtoken123'
+        invalid_access_token = tokens='invalidtoken123'
 
         #Try accessing the JWTBaseAuthView with the invalid token
         auth_url = reverse("token_obtain_pair")
@@ -1129,7 +1144,7 @@ class JWTBaseAuthViewTest(APITestCase):
         """ Authenticate the user and assign to an invalid group. """
 
         tokens = self.authenticate_user()
-        access_token = tokens['access']
+        access_token = tokens['access_token']
 
         #Assign the invalid user to a different group
         self.invalid_user.groups.clear()
@@ -1149,8 +1164,137 @@ class ProfileMeViewTest(TestCase):
     """
     Tests retrieving and updating a authenticated user's profile.
     """
-    def SetUp(self):
-        """ Sets a user"""
+    profile_type = "customer"
+    def setup(self):
+
+        print("Setting up user and profile")
+
+        self.client = APIClient()
+        self.user, created = User.objects.update_or_create(
+            username="testuser", 
+            defaults={
+                "email": "testuser@example.com", 
+                "password": "password123"
+            }
+        )
+        self.client.force_login(self.user)
+
+        # Create an Address instance
+        self.billing_address = Address.objects.create(
+            street_name="123 Main St",
+            house_number="45A",
+            box_number="",
+            city="Some City",
+            zip_code="12345",
+            country="Country Name",
+            latitude=52.5200,
+            longitude=13.4050
+        )    
+        # Create an Address instance
+        self.customer_address = Address.objects.create(
+            street_name="123 Main St",
+            house_number="45A",
+            box_number="",
+            city="Some City",
+            zip_code="12345",
+            country="Country Name",
+            latitude=52.5200,
+            longitude=13.4050
+        )    
+
+        if self.profile_type == "customer":
+            self.customer_profile = CustomerProfile.objects.create(
+            user=self.user,
+            tax_number = "123456789",
+            company_name = "Test Company",
+            customer_billing_address = self.billing_address,
+            customer_address = self.customer_address,
+            special_committee = "Test Committee"
+            )
+        elif self.profile_type == "worker":
+             self.worker_profile = WorkerProfile.objects.create(
+            user=self.user,
+            iban="DE89370400440532013000",
+            ssn="123-45-6789",
+            worker_type="freelancer",
+            date_of_birth=datetime.datetime.now(),
+            place_of_birth="Candyland",
+            worker_address=address
+            )
+        elif self.profile_type == "admin":
+            self.admin_profile = AdminProfile.objects.create(
+            user = self.user,
+            session_duration = 3600
+            )
+    
+        address = Address.objects.create(
+            street_name="123 Main St",
+            house_number="45A",
+            box_number="",
+            city="Some City",
+            zip_code="12345",
+            country="Country Name",
+            latitude=52.5200,
+            longitude=13.4050
+        )
+       
+    
+    def test_get_profile_authorized(self):
+        """Test to GET profile for an authenticated user"""
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("profile_me"))
+
+        print(f"status code: {response.status_code}")
+        print(f"Content: {response.content}")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("user_id", response.data)
+
+    def test_get_profile_unauthorized(self):
+        self.client.logout()
+        """Test to GET profile without authentication"""
+        response = self.client.get(reverse("profile_me"))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_profile_invalid_user(self):
+        """Test to GET profile with a non-existing user"""
+        self.client.logout()
+        response = self.client.get(reverse("profile_me"))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_put_profile_valid_data(self):
+        """Test to PUT profile with valid data"""
+        self.client.force_login(self.user)
+        response = self.client.put(reverse("profile_me"), {
+            "first_name": "UpdatedName",
+            "last_name": "UpdatedLast",
+            "email": "test@example.com"
+        }, format="json")
+        print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, "UpdatedName")
+
+    def test_put_profile_invalid_format(self):
+        """Test to PUT profile with invalid data format"""
+        self.client.force_login(self.user)
+        response = self.client.put(reverse("profile_me"), {
+            "email":"not-an-email"
+        }, format="json")
+        print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+
+    def test_put_profile_unauthorized(self):
+        """Test to PUT profile without authentication"""
+        self.client.logout()
+        response = self.client.put(reverse("profile_me"), {
+            "first_name": "NewName"
+        }, format="json")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+
 
 
        

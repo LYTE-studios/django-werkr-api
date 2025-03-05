@@ -228,6 +228,6 @@ class FormattingUtil:
         try:
             validate_email(value)
         except ValidationError as e:
-            raise e
+            raise DeserializationException()
         else:
             return value
