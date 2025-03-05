@@ -220,3 +220,7 @@ if SENTRY_DSN:
         traces_sample_rate=1.0,
         send_default_pii=True
     )
+
+CUSTOMER_GROUP_SECRET = os.getenv('CUSTOMER_GROUP_SECRET', 'customer')
+WORKER_GROUP_SECRET = os.getenv('WORKER_GROUP_SECRET', 'worker')
+CMS_GROUP_SECRET = os.getenv('CMS_GROUP_SECRET', 'cms')
