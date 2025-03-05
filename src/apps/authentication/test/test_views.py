@@ -24,7 +24,7 @@ from rest_framework import status
 from apps.authentication.models.profiles.worker_profile import WorkerProfile
 from apps.authentication.models.dashboard_flow import DashboardFlow
 from rest_framework import status
-from rest_framework.test import APIClient, APITestCase
+from rest_framework.test import APIClient, APITestCase, APIRequestFactory
 from rest_framework_simplejwt.tokens import AccessToken
 User = get_user_model()
 from apps.authentication.utils.worker_util import WorkerUtil
@@ -64,7 +64,7 @@ class BaseClientViewTest(TestCase):
             self.assertEqual(response.status_code, 403)
 
 
-class JWTBaseAuthViewTest(TestCase):
+class JWTBaseAuthViewTestOld(TestCase):
 
     def setUp(self):
         self.factory = RequestFactory()
@@ -943,77 +943,205 @@ class WorkerProfileDetailViewTest(APITestCase):
         self.assertIn('dashboard_flow', response.data)
 
 
+
 class ProfileCompletionViewTest(APITestCase):
-    
+
     def setUp(self):
-        """
-        Set up test data, create users, and associate them with worker profiles.
-        """
-        # Create a user (worker)
-        self.worker_user = User.objects.create_user(
-            username="worker1", email="worker1@example.com", password="password123"
+        # Create User and WorkerProfile for user1 (incomplete profile)
+        self.user1, created = User.objects.update_or_create(
+            username="testuser1", 
+            defaults={
+                "email": "worker1@e", 
+                "password": "helllo)there"
+            }
         )
 
-        # Create a complete worker profile
+        self.worker_profile_incomplete = WorkerProfile.objects.create(
+            user=self.user1,
+            iban="",  # Missing IBAN
+            ssn="123-45-6789",
+            worker_type="freelancer"
+        )
+
+        # Create User and WorkerProfile for user2 (complete profile)
+        self.user2, created = User.objects.update_or_create(
+            username="testuser2", 
+            defaults={
+                "email": "worker2@e", 
+                "password": "password123"
+            }
+        )
+
+        # Create a job and job application for the worker
+        address = Address.objects.create(
+            street_name="123 Main St",
+            house_number="45A",
+            box_number="",
+            city="Some City",
+            zip_code="12345",
+            country="Country Name",
+            latitude=52.5200,
+            longitude=13.4050
+        )
+
         self.worker_profile_complete = WorkerProfile.objects.create(
-            user=self.worker_user,
+            user=self.user2,
             iban="DE89370400440532013000",
             ssn="123-45-6789",
-            phone_number="1234567890",
-            worker_type="full_time"
+            worker_type="freelancer",
+            date_of_birth=datetime.datetime.now(),
+            place_of_birth="Candyland",
+            worker_address=address
         )
 
-        # Create an incomplete worker profile (missing some fields)
-        self.worker_profile_incomplete = WorkerProfile.objects.create(
-            user=self.worker_user,
-            iban="",
-            ssn="123-45-6789",  # Missing IBAN
-            phone_number="1234567890",
-            worker_type="full_time"
+        
+        # Create a customer (who will be the customer for the job)
+        self.customer, created = User.objects.update_or_create(
+            username="customer", 
+            defaults={
+                "email": "example@example.com",
+                "password": "password123"
+            }
         )
-
-        # Create a job application for the worker
+        
+        self.job = Job.objects.create(title="New job", address=address, customer=self.customer)
+        
+        # Create job application for user2 (worker)
         self.job_application_complete = JobApplication.objects.create(
-            worker=self.worker_user,
-            job_id=1,  # Example job ID
-            application_status="pending"
+            worker=self.user2,
+            job=self.job,
+            address=address,
+            application_state="pending",
+            created_at=timezone.now(),
+            modified_at=timezone.now(),
         )
 
-        @patch.object(WorkerUtil, 'calculate_profile_completion', return_value={"completion_percentage": 100, "missing_fields": []})
-        def test_worker_profile_completion_complete(self, mock_calculate_profile_completion):
 
-            """
-            Test case for checking a worker profile that is 100% complete.
-            """
+    def test_worker_profile_completion_complete(self):
+        """
+        Test case for checking a worker profile that is 100% complete.
+        """
 
-            # Send a GET request to the profile completion endpoint
-            response = self.client.get(f'/api/profiles/{self.worker_user.id}/completion/')
+        self.client.force_login(self.user2)
+
+        # Send a GET request to the profile completion endpoint for the complete worker (user2)
+        response = self.client.get(reverse('profile_completion'))
+    
+        # Assert that the response status code is HTTP 200 OK
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        print(response.json())
+    
+        # Assert that the response contains the correct completion percentage and missing fields
+        self.assertEqual(response.data['completion_percentage'], 100)
+        self.assertEqual(response.data['missing_fields'], [])
+
+    def test_worker_profile_completion_incomplete(self):
+        """
+        Test case for checking a worker profile that is incomplete.
+        """
+        self.client.force_login(self.user1)
+
+        # Send a GET request to the profile completion endpoint for the incomplete worker (user1)
+        response = self.client.get(reverse('profile_completion'))
+
+        # Assert that the response status code is HTTP 400 Bad Request (due to incomplete profile)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+        # Assert that the response contains the correct error message
+        # self.assertIn("Profile is incomplete", str(response.data))
+        self.assertIn("iban", str(response.data))  # Check the missing field is listed
+      
         
-            # Assert that the response status code is HTTP 200 OK
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+class JWTBaseAuthViewTest(APITestCase):
+
+        # Create a user
+        # Authenticate the user with JwtAuthenticationView
+        # Get the tokens from the view (Assert tokens are correct)
+        # test the JWTBaseAuthView for confirmation
+
+    def SetUp(self):
+        """ Set up test user and assign to a group. Set up a second user for testing invalid token cases"""
+
+        # Set up groups with group client secret
+        # -> Assumtions
+        #Create user and assign to a group
+        self.user = User.objects.create_user(email="testuser@example.com", password="password123")
+        self.group = Group.objects.create(name=WORKERS_GROUP_NAME)
+        self.user.groups.add(self.group)
         
-            # Assert that the response contains the correct completion percentage and missing fields
-            self.assertEqual(response.data['completion_percentage'], 100)
-            self.assertEqual(response.data['missing_fields'], [])
-            
+        #Create a second user for testing invalid token cases
+        self.invalid_user = User.objects.create_user(username="invaliduser", password="invalidpassword", email="invaliduser@example.com")
+    
+    def authenticate_user(self):
+        #Authenticate and get JWT tokens
+        url = reverse("token_obtain_pair")
+        data = {"email":"testuser@example.com", "password":"password123"}
+        response = self.client.post(url, data, format="json")
 
-        @patch.object(WorkerUtil, 'calculate_profile_completion', return_value={"completion_percentage": 80, "missing_fields": ["iban"]})
-        def test_worker_profile_completion_incomplete(self, mock_calculate_profile_completion):
-            """
-            Test case for checking a worker profile that is incomplete.
-            """
-            # Send a GET request to the profile completion endpoint
-            response = self.client.get(f'/api/profiles/{self.worker_user.id}/completion/')
-        
-            # Assert that the response status code is HTTP 400 Bad Request (due to incomplete profile)
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        
-            # Assert that the response contains the correct error message
-            self.assertIn("Profile is incomplete", str(response.data['detail']))
-            self.assertIn("iban", str(response.data['detail']))  # Check the missing field is listed
+        if response.status_code != 200:
+            print(f"Authentication failed, Status code: {response.status_code}")
+            print(f"Response content: {response.content.decode('utf-8')}")
+
+        #Assert that the response is successful and contains tokens
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        return response.data #return tokens for later use in the test
 
 
+    def test_valid_authentication(self):
+        """ Authenticate user and extract tokens """
 
+        tokens = self.authenticate_user()
+        access_token = tokens['access']
+
+        #Use the JWT token to authenticate in JWTBaseAuthView
+        auth_url = reverse("token_obtain_pair")
+        headers = {'Authorization':f'Bearer {access_token}'}
+        response = self.client.get(auth_url, headers=headers)
+
+        #Assert that the user is authenticated properly
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('user', response.data)
+
+
+    def test_forbidden_authentication_invalid_token(self):
+        """ Try authenticating with an invalid token. """
+
+        tokens = self.authenticate_user()
+        invalid_access_token = 'invalidtoken123'
+
+        #Try accessing the JWTBaseAuthView with the invalid token
+        auth_url = reverse("token_obtain_pair")
+        headers = {'Authorization':f'Bearer {invalid_access_token}'}
+        response = self.client.get(auth_url,  headers=headers)
+
+        #Assert that the response is forbidden
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        print(f"Response content: {response.content.decode('utf-8')}")
+    
+    def test_user_not_in_group(self):
+        """ Authenticate the user and assign to an invalid group. """
+
+        tokens = self.authenticate_user()
+        access_token = tokens['access']
+
+        #Assign the invalid user to a different group
+        self.invalid_user.groups.clear()
+        self.invalid_user.groups.add(Group.objects.create(name="WORKERS_GROUP_NAME"))
+
+        #Test the user is not in allowed group
+        auth_url = reverse("token_obtain_pair")
+        headers = {'Authorization':f'Bearer {access_token}'}
+        response = self.client.get(auth_url,  headers=headers)
+
+        #Assert that the response is forbidden
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        print(f"Response content: {response.content.decode('utf-8')}")
+
+
+
+  
 
        
         

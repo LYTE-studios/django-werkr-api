@@ -59,7 +59,7 @@ class WorkerUtil:
         missing_fields = [field for field in worker_data.keys() if not worker_data[field]]
 
         if not missing_fields:
-            return 100, []
+            return 100, []  
 
         # Calculate completion percentage
         total_fields = len(worker_data)
