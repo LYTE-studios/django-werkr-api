@@ -9,6 +9,31 @@ import django.utils.timezone
 import uuid
 
 
+def create_initial_groups(apps, schema_editor):
+    from apps.core.assumptions import CUSTOMERS_GROUP_NAME, WORKERS_GROUP_NAME, CMS_GROUP_NAME
+    from apps.authentication.models.custom_group import CustomGroup
+    from django.contrib.auth.models import Group
+    from django.conf import settings
+    
+    customers_group, _ = Group.objects.get_or_create(name=CUSTOMERS_GROUP_NAME)
+    CustomGroup.objects.get_or_create(
+        group=customers_group, 
+        defaults={'group_secret': settings.CUSTOMER_GROUP_SECRET}
+    )
+
+    workers_group, _ = Group.objects.get_or_create(name=WORKERS_GROUP_NAME)
+    CustomGroup.objects.get_or_create(
+        group=workers_group, 
+        defaults={'group_secret': settings.WORKER_GROUP_SECRET}
+    )
+
+    cms_group, _ = Group.objects.get_or_create(name=CMS_GROUP_NAME)
+    CustomGroup.objects.get_or_create(
+        group=cms_group, 
+        defaults={'group_secret': settings.CMS_GROUP_SECRET}
+    )
+
+
 class Migration(migrations.Migration):
 
     initial = True
@@ -113,4 +138,5 @@ class Migration(migrations.Migration):
                 ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='admin_profile', to=settings.AUTH_USER_MODEL)),
             ],
         ),
+        migrations.RunPython(create_initial_groups),
     ]
