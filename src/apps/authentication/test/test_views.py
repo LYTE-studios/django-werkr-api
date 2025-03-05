@@ -2,6 +2,7 @@ from django.test import RequestFactory
 import datetime
 import tempfile
 from unittest.mock import patch
+from django.conf import settings
 
 from apps.authentication.models import CustomerProfile, WorkerProfile, AdminProfile
 from apps.authentication.utils.authentication_util import AuthenticationUtil
@@ -1056,10 +1057,10 @@ class ProfileCompletionViewTest(APITestCase):
 
 class JWTBaseAuthViewTest(APITestCase):
 
-        # Create a user
-        # Authenticate the user with JwtAuthenticationView
-        # Get the tokens from the view (Assert tokens are correct)
-        # test the JWTBaseAuthView for confirmation
+    # Create a user
+    # Authenticate the user with JwtAuthenticationView
+    # Get the tokens from the view (Assert tokens are correct)
+    # test the JWTBaseAuthView for confirmation
 
     def SetUp(self):
         """ Set up test user and assign to a group. Set up a second user for testing invalid token cases"""
@@ -1068,17 +1069,21 @@ class JWTBaseAuthViewTest(APITestCase):
         # -> Assumtions
         #Create user and assign to a group
         self.user = User.objects.create_user(email="testuser@example.com", password="password123")
-        self.group = Group.objects.create(name=WORKERS_GROUP_NAME)
+        self.group = Group.objects.get(name=WORKERS_GROUP_NAME)
         self.user.groups.add(self.group)
+        self.user.save()
         
         #Create a second user for testing invalid token cases
         self.invalid_user = User.objects.create_user(username="invaliduser", password="invalidpassword", email="invaliduser@example.com")
     
     def authenticate_user(self):
         #Authenticate and get JWT tokens
+        client_secret = settings.WORKER_GROUP_SECRET
+
         url = reverse("token_obtain_pair")
         data = {"email":"testuser@example.com", "password":"password123"}
-        response = self.client.post(url, data, format="json")
+        headers = {"Client": client_secret}
+        response = self.client.post(url, data, headers=headers, format="json")
 
         if response.status_code != 200:
             print(f"Authentication failed, Status code: {response.status_code}")
@@ -1140,8 +1145,13 @@ class JWTBaseAuthViewTest(APITestCase):
         print(f"Response content: {response.content.decode('utf-8')}")
 
 
+class ProfileMeViewTest(TestCase):
+    """
+    Tests retrieving and updating a authenticated user's profile.
+    """
+    def SetUp(self):
+        """ Sets a user"""
 
-  
 
        
         
