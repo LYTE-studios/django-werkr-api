@@ -1113,7 +1113,7 @@ class JWTBaseAuthViewTest(APITestCase):
 
         #Use the JWT token to authenticate in JWTBaseAuthView
         auth_url = reverse("test_connection")
-        headers = {'Authorization':f'Bearer {access_token}', 'Client': settings.WORKER_GROUP_SECRET}
+        headers = {'Authorization': access_token, 'Client': settings.WORKER_GROUP_SECRET}
         print(f"Worker Group Secret: {settings.WORKER_GROUP_SECRET}")
         
 

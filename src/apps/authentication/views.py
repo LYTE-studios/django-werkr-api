@@ -161,11 +161,13 @@ class JWTBaseAuthView(APIView):
         auth_token = JWTAuthUtil.check_for_authentication(request)
 
         if auth_token is None:
+            print("No auth token")
             return HttpResponseForbidden()
 
         try:
             self.user = User.objects.get(id=auth_token.get('user_id'))
         except User.DoesNotExist:
+            print("User doesn't exist")
             return HttpResponseForbidden()
 
         in_group = False
@@ -175,6 +177,7 @@ class JWTBaseAuthView(APIView):
                 in_group = True
 
         if not in_group:
+            print("No group for the user")
             return HttpResponseForbidden()
 
         self.token = auth_token
