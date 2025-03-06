@@ -380,15 +380,15 @@ class ResetPasswordViewTest(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(username='testuser', password='12345', email='test@example.com')
+        
 
-    @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=lambda key,
-                                                                                     required=False: 'valid_token' if key == 'token' else '123456' if key == 'code' else 'new_password')
-    @patch('apps.authentication.utils.pass_reset_util.CustomPasswordResetUtil.get_user_by_token_and_code',
-           return_value=User)
-    @patch('apps.authentication.utils.encryption_util.EncryptionUtil.encrypt', return_value='encrypted_password')
+    @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=lambda key, required=False: 'valid_token' if key == 'token' else '123456' if key == 'code' else 'new_password')
+    @patch('apps.authentication.utils.pass_reset_util.CustomPasswordResetUtil.get_user_by_token_and_code', return_value=None)
+    @patch('apps.authentication.utils.encryption_util.EncryptionUtil.encrypt', return_value=('encrypted_password', 'salt_value'))
     def test_post_valid_data(self, mock_encrypt, mock_get_user, mock_get_value):
+        mock_get_user.return_value = self.user
         data = {'token': 'valid_token', 'code': '123456', 'password': 'new_password'}
-        response = self.client.post(reverse('password_reset_reset'), data, content_type='application/json')
+        response = self.client.post(reverse('password_reset_reset'), data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json(), {'message': 'Password has been reset.'})
         mock_get_user.assert_called_once_with('valid_token', '123456')
@@ -402,7 +402,7 @@ class ResetPasswordViewTest(TestCase):
            return_value=None)
     def test_post_invalid_token(self, mock_get_user, mock_get_value):
         data = {'token': 'invalid_token', 'code': '123456', 'password': 'new_password'}
-        response = self.client.post(reverse('password_reset_reset'), data, content_type='application/json')
+        response = self.client.post(reverse('password_reset_reset'), data, content_type='application/json',headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.json(), {'message': 'Invalid or expired token'})
         mock_get_user.assert_called_once_with('invalid_token', '123456')
@@ -410,9 +410,10 @@ class ResetPasswordViewTest(TestCase):
     @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=Exception('Invalid data'))
     def test_post_invalid_data(self, mock_get_value):
         data = {'token': 'invalid'}
-        response = self.client.post(reverse('password_reset_reset'), data, content_type='application/json')
+        response = self.client.post(reverse('password_reset_reset'), data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.json(), {'message': ('Invalid data',)})
+        self.assertEqual(response.json(), {'message': ['Invalid data']})
+
 
 
 

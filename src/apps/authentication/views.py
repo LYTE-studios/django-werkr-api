@@ -648,6 +648,7 @@ class ResetPasswordView(BaseClientView):
             password, salt = EncryptionUtil.encrypt(password)
             user.password = password
             user.salt = salt
+            print("User type:", type(user), "User value:", user)
             user.save()
 
             # Return a success response
