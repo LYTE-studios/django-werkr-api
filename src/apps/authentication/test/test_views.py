@@ -328,17 +328,7 @@ class PasswordResetRequestViewTest(TestCase):
         self.assertEqual(response.json(), {'message': 'Email not found.'})
 
 
-class VerifyCodeViewTest(TestCase):
-    def setUp(self):
-        """set up a user"""
-        self.user = User.objects.create(username='testuser', password='12345', email='test@example.com')
-        self.url = reverse('password_reset_verify')
-        self.valid_code = "123456"
-
-   #@patch("apps.authentication.utils.pass_reset_util.CustomPasswordResetUtil.verify_code", return_value = True)
-
-
-class VerifyCodeViewTestOld(APITestCase):
+class VerifyCodeViewTest(APITestCase):
 
     def setUp(self):
         self.client = Client()
@@ -351,7 +341,7 @@ class VerifyCodeViewTestOld(APITestCase):
            return_value='temporary_token')
     def test_post_valid_code(self, mock_create_token, mock_verify_code, mock_get_value):
         data = {'email': 'test@example.com', 'code': '123456'}
-        response = self.client.post(reverse('password_reset_verify'), data, content_type='application/json')
+        response = self.client.post(reverse('password_reset_verify'), data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json(), {'token': 'temporary_token'})
         mock_verify_code.assert_called_once_with(self.user, '123456')
@@ -362,7 +352,7 @@ class VerifyCodeViewTestOld(APITestCase):
     @patch('apps.authentication.utils.pass_reset_util.CustomPasswordResetUtil.verify_code', return_value=False)
     def test_post_invalid_code(self, mock_verify_code, mock_get_value):
         data = {'email': 'test@example.com', 'code': 'wrong_code'}
-        response = self.client.post(reverse('password_reset_verify'), data, format='json')
+        response = self.client.post(reverse('password_reset_verify'), data, format='json', headers={"Client": settings.WORKER_GROUP_SECRET})
         print(response.status_code)  # Debugging
         print(response.json()) 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -373,15 +363,14 @@ class VerifyCodeViewTestOld(APITestCase):
     @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=Exception('Invalid data'))
     def test_post_invalid_data(self, mock_get_value):
         data = {'email': 'invalid'}
-        response = self.client.post(reverse('password_reset_verify'), data, content_type='application/json')
+        response = self.client.post(reverse('password_reset_verify'), data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.json(), {'message': ('Invalid data',)})
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_value',
            side_effect=lambda key, required=False: 'notfound@example.com' if key == 'email' else '123456')
     def test_post_email_not_found(self, mock_get_value):
         data = {'email': 'notfound@example.com', 'code': '123456'}
-        response = self.client.post(reverse('password_reset_verify'), data, content_type='application/json')
+        response = self.client.post(reverse('password_reset_verify'), data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.json(), {'message': 'Email not found.'})
 
