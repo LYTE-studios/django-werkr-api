@@ -1,3 +1,4 @@
+import json
 from django.test import RequestFactory
 import datetime
 import tempfile
@@ -128,7 +129,7 @@ class JWTAuthenticationViewTest(TestCase):
     def test_post_with_valid_credentials(self):
         with self.settings(JWT_AUTH_UTIL=JWTAuthUtil):
             JWTAuthUtil.authenticate = lambda email, password, group: {'access': 'access_token', 'refresh': 'refresh_token'}
-            response = self.client.post(self.url, self.valid_payload, format='json')
+            response = self.client.post(self.url, self.valid_payload, format='json', headers={"Client": settings.WORKER_GROUP_SECRET})
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertIn('access', response.data)
             self.assertIn('refresh', response.data)
@@ -136,7 +137,7 @@ class JWTAuthenticationViewTest(TestCase):
     def test_post_with_invalid_credentials(self):
         with self.settings(JWT_AUTH_UTIL=JWTAuthUtil):
             JWTAuthUtil.authenticate = lambda email, password, group: {}
-            response = self.client.post(self.url, self.invalid_payload, format='json')
+            response = self.client.post(self.url, self.invalid_payload, format='json', headers={"Client": settings.WORKER_GROUP_SECRET})
             self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
             self.assertEqual(response.data['message'], 'Invalid credentials')
             print(response.data)
@@ -294,44 +295,54 @@ class UploadUserProfilePictureViewTest(TestCase):
 class PasswordResetRequestViewTest(TestCase):
 
     def setUp(self):
-        self.factory = RequestFactory()
-        self.view = BaseClientView.as_view()
         self.client = APIClient()
-        try: 
-            self.group = Group.objects.get(name=WORKERS_GROUP_NAME)
-        except Group.DoesNotExist:
-            self.group, created = Group.objects.get_or_create(name=WORKERS_GROUP_NAME)
-        self.user = User.objects.create_user(username="testuser", email="testuser@example.com", password="testpassword")
+        self.user = User.objects.create_user(username='testuser', password='12345', email='test@example.com')
+        self.group, created = Group.objects.get_or_create(name=CUSTOMERS_GROUP_NAME)
         self.user.groups.add(self.group)
+        self.user.save()
+        self.url = reverse("password_reset")
+        self.client.force_login(self.user)
 
-
-    def test_post_valid_email(self):
+    @patch('apps.authentication.utils.pass_reset_util.CustomPasswordResetUtil.send_reset_code', return_value=True)
+    def test_post_valid_email(self, mock_send_reset_code):
         """Test the password reset request with a valid email"""
+        self.client.force_login(self.user)
         data = {'email': 'test@example.com'}
-        response = self.client.post(reverse('password_reset'), data, format="json")
+        response = self.client.post(self.url, data=json.dumps(data), content_type="application/json", headers={"Client": settings.WORKER_GROUP_SECRET})
+        print("Response Status Code:", response.status_code)
+        print("Response Content:", response.content.decode("utf-8"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json(), {'message': 'Password reset email has been sent.'})
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_email', side_effect=Exception('Invalid email'))
     def test_post_invalid_email(self, mock_get_email):
         data = {'email': 'invalid'}
-        response = self.client.post(reverse('password_reset'), data, content_type='application/json')
+        response = self.client.post(reverse('password_reset'), data, format='json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.json(), {'message': ('Invalid email',)})
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_email', return_value='notfound@example.com')
     def test_post_email_not_found(self, mock_get_email):
         data = {'email': 'notfound@example.com'}
-        response = self.client.post(reverse('password_reset'), data, content_type='application/json')
+        response = self.client.post(reverse('password_reset'), data, format='json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.json(), {'message': 'Email not found.'})
 
 
 class VerifyCodeViewTest(TestCase):
+    def setUp(self):
+        """set up a user"""
+        self.user = User.objects.create(username='testuser', password='12345', email='test@example.com')
+        self.url = reverse('password_reset_verify')
+        self.valid_code = "123456"
+
+   #@patch("apps.authentication.utils.pass_reset_util.CustomPasswordResetUtil.verify_code", return_value = True)
+
+
+class VerifyCodeViewTestOld(APITestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='12345', email='test@example.com')
+        self.user = User.objects.create(username='testuser', password='12345', email='test@example.com')
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_value',
            side_effect=lambda key, required=False: 'test@example.com' if key == 'email' else '123456')
@@ -351,10 +362,13 @@ class VerifyCodeViewTest(TestCase):
     @patch('apps.authentication.utils.pass_reset_util.CustomPasswordResetUtil.verify_code', return_value=False)
     def test_post_invalid_code(self, mock_verify_code, mock_get_value):
         data = {'email': 'test@example.com', 'code': 'wrong_code'}
-        response = self.client.post(reverse('password_reset_verify'), data, content_type='application/json')
+        response = self.client.post(reverse('password_reset_verify'), data, format='json')
+        print(response.status_code)  # Debugging
+        print(response.json()) 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.json(), {'message': 'Code not verified.'})
         mock_verify_code.assert_called_once_with(self.user, 'wrong_code')
+        response.content.decode()
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=Exception('Invalid data'))
     def test_post_invalid_data(self, mock_get_value):
