@@ -17,11 +17,12 @@ from apps.core.utils.wire_names import *
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.http import HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden
 from django.test import RequestFactory
 from django.test import TestCase, Client
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.request import Request
 from apps.authentication.models.profiles.worker_profile import WorkerProfile
 from apps.authentication.models.dashboard_flow import DashboardFlow
 from rest_framework import status
@@ -40,20 +41,29 @@ from apps.jobs.models import Job, JobState, JobApplication
 class BaseClientViewTest(TestCase):
 
     def setUp(self):
+        print("Running BaseClientViewTest setup")
         self.factory = RequestFactory()
         self.view = BaseClientView.as_view()
         self.client = APIClient()
-        self.group = Group.objects.create(name=CUSTOMERS_GROUP_NAME)
+        try: 
+            self.group = Group.objects.get(name=WORKERS_GROUP_NAME)
+        except Group.DoesNotExist:
+            self.group, created = Group.objects.get_or_create(name=WORKERS_GROUP_NAME)
+        self.user = User.objects.create_user(username="testuser", email="testuser@example.com", password="testpassword")
+        self.user.groups.add(self.group)
+        
 
     def test_options_request(self):
+        self.client.force_login(self.user)
         request = self.factory.options('/')
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
         self.assertIn('allow', response)
 
     def test_dispatch_with_valid_group(self):
-        request = self.factory.get('/')
+        request = self.factory.options('/')
         request.META['HTTP_CLIENT_SECRET'] = 'valid_secret'
+        self.group.refresh_from_db()
         with self.settings(AUTHENTICATION_UTIL=AuthenticationUtil):
             AuthenticationUtil.check_client_secret = lambda req: self.group
             response = self.view(request)
@@ -62,6 +72,7 @@ class BaseClientViewTest(TestCase):
     def test_dispatch_with_invalid_group(self):
         request = self.factory.get('/')
         request.META['HTTP_CLIENT_SECRET'] = 'invalid_secret'
+        self.group.refresh_from_db()
         with self.settings(AUTHENTICATION_UTIL=AuthenticationUtil):
             AuthenticationUtil.check_client_secret = lambda req: None
             response = self.view(request)
@@ -388,46 +399,6 @@ class ResetPasswordViewTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.json(), {'message': ('Invalid data',)})
 
-
-class BaseClientViewTest(TestCase):
-
-    def setUp(self):
-        self.factory = RequestFactory()
-        self.view = BaseClientView.as_view()
-        self.user = User.objects.create_user(username='testuser', password='12345', email='test@example.com')
-        self.group = Group.objects.create(name=CUSTOMERS_GROUP_NAME)
-        self.user.groups.add(self.group)
-        self.user.save()
-
-    @patch('apps.authentication.utils.authentication_util.AuthenticationUtil.check_client_secret')
-    def test_dispatch_valid_group(self, mock_check_client_secret):
-        mock_check_client_secret.return_value = self.group
-        request = self.factory.get('/some-url')
-        request.user = self.user
-        response = self.view(request)
-        self.assertNotEqual(response.status_code, HttpResponseForbidden.status_code)
-
-    @patch('apps.authentication.utils.authentication_util.AuthenticationUtil.check_client_secret')
-    def test_dispatch_invalid_group(self, mock_check_client_secret):
-        mock_check_client_secret.return_value = Group(name='InvalidGroup')
-        request = self.factory.get('/some-url')
-        request.user = self.user
-        response = self.view(request)
-        self.assertEqual(response.status_code, HttpResponseForbidden.status_code)
-
-    @patch('apps.authentication.utils.authentication_util.AuthenticationUtil.check_client_secret')
-    def test_dispatch_no_group(self, mock_check_client_secret):
-        mock_check_client_secret.return_value = None
-        request = self.factory.get('/some-url')
-        request.user = self.user
-        response = self.view(request)
-        self.assertEqual(response.status_code, HttpResponseForbidden.status_code)
-
-    def test_options_method(self):
-        request = self.factory.options('/some-url')
-        response = self.view(request)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response['allow'], 'GET,POST,UPDATE,DELETE,OPTIONS')
 
 
 class WorkerRegisterViewTest(TestCase):

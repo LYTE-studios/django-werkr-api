@@ -108,6 +108,7 @@ class BaseClientView(APIView):
         return super(BaseClientView, self).dispatch(request, *args, **kwargs)
 
 
+
 class JWTBaseAuthView(APIView):
     """
     Base view for authentication using JWT token auth.
