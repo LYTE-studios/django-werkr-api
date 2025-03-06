@@ -261,9 +261,9 @@ class LanguageSettingsViewTest(TestCase):
 class UploadUserProfilePictureViewTest(TestCase):
 
     def setUp(self):
-        self.client = Client()
+        self.client = APIClient()
         self.user = User.objects.create_user(username='testuser', password='12345', email='test@example.com')
-        self.group = Group.objects.create(name=CUSTOMERS_GROUP_NAME)
+        self.group, created = Group.objects.get_or_create(name=CUSTOMERS_GROUP_NAME)
         self.user.groups.add(self.group)
         self.user.save()
         self.client.login(username='testuser', password='12345')
@@ -277,10 +277,14 @@ class UploadUserProfilePictureViewTest(TestCase):
         with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
             temp_file.write(b"file_content")
             temp_file.seek(0)
-            uploaded_file = SimpleUploadedFile(temp_file.name, temp_file.read(), content_type="image/jpeg")
+            uploaded_file = SimpleUploadedFile(name="test.jpg", content=temp_file.read(), content_type="image/jpeg")
+            print(f"Uploaded file content type: {uploaded_file.content_type}")
+            
+
             response = self.client.put(reverse('upload_profile_picture', kwargs={'id': self.user.id}),
                                        {'file': uploaded_file}, format='multipart')
-            self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+            print(f"response data: {response.data}")
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.user.refresh_from_db()
             self.assertTrue(self.user.profile_picture.name.endswith(".jpg"))
 

@@ -29,6 +29,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.exceptions import ValidationError
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from apps.authentication.models.dashboard_flow import JobType, Location, SituationType, WorkType, UserJobType
 
@@ -124,6 +125,7 @@ class JWTBaseAuthView(APIView):
     """
 
     permission_classes = []
+    
 
     # Override this to allow different groups.
     groups = [
@@ -478,6 +480,7 @@ class UploadUserProfilePictureView(JWTBaseAuthView):
     """
     View for managing user profile pictures.
     """
+    parser_classes = (MultiPartParser, FormParser)
 
     def get(self, request, *args, **kwargs):
         """
@@ -510,6 +513,8 @@ class UploadUserProfilePictureView(JWTBaseAuthView):
             Response: An empty response indicating successful update.
             HttpResponseBadRequest: If the request data is empty.
         """
+        print(f"request headers: {request.headers}")
+        print(f"request data: {request.data}")
         profile_user = self.user
 
         if not request.data:
