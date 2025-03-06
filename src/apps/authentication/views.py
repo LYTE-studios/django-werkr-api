@@ -192,12 +192,15 @@ class JWTAuthenticationView(BaseClientView):
     """
 
     def post(self, request):
+        print("Request reached the view")
         formatter = FormattingUtil(data=request.data)
 
         try:
+            print(f"Request body: {request.body}")
             password = formatter.get_value('password', required=True)
             email = formatter.get_value('email', required=True)
         except DeserializationException as e:
+            print(f"DeserializationException: {e}")
             return Response({'message': e.args}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

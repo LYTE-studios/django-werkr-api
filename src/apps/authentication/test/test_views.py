@@ -113,7 +113,7 @@ class JWTAuthenticationViewTest(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.url = reverse('jwt-authentication')
+        self.url = reverse('token_obtain_pair')
         self.valid_payload = {
             'email': 'test@example.com',
             'password': 'password123'
@@ -127,7 +127,6 @@ class JWTAuthenticationViewTest(TestCase):
         with self.settings(JWT_AUTH_UTIL=JWTAuthUtil):
             JWTAuthUtil.authenticate = lambda email, password, group: {'access': 'access_token', 'refresh': 'refresh_token'}
             response = self.client.post(self.url, self.valid_payload, format='json')
-            print(f"Response data: {response.data}") 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertIn('access', response.data)
             self.assertIn('refresh', response.data)
@@ -138,6 +137,7 @@ class JWTAuthenticationViewTest(TestCase):
             response = self.client.post(self.url, self.invalid_payload, format='json')
             self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
             self.assertEqual(response.data['message'], 'Invalid credentials')
+            print(response.data)
 
 
 class ProfileMeViewTestOld(TestCase):
@@ -211,7 +211,7 @@ class LanguageSettingsViewTest(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(username='testuser', password='12345', email='test@example.com')
-        self.group = Group.objects.create(name=CUSTOMERS_GROUP_NAME)
+        self.group, created = Group.objects.get_or_create(name=CUSTOMERS_GROUP_NAME)
         self.user.groups.add(self.group)
         self.user.save()
         self.client.login(username='testuser', password='12345')
@@ -248,14 +248,14 @@ class LanguageSettingsViewTest(TestCase):
         data = {'language': 'invalid'}
         response = self.client.put(reverse('language_settings'), data, content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.json(), {'message': ('Invalid data',)})
+        self.assertEqual(response.json(), {'message': ['Invalid data']})
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=Exception('Server error'))
     def test_put_language_server_error(self, mock_get_value):
         data = {'language': 'es'}
         response = self.client.put(reverse('language_settings'), data, content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
-        self.assertEqual(response.json(), {'message': ('Server error',)})
+        self.assertEqual(response.json(), {'message': ['Server error']})
 
 
 class UploadUserProfilePictureViewTest(TestCase):
