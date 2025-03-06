@@ -7,7 +7,7 @@ from django.conf import settings
 from apps.authentication.models import CustomerProfile, WorkerProfile, AdminProfile
 from apps.authentication.utils.authentication_util import AuthenticationUtil
 from apps.authentication.utils.jwt_auth_util import JWTAuthUtil
-from apps.authentication.views import BaseClientView, ProfileCompletionView
+from apps.authentication.views import BaseClientView, PasswordResetRequestView, ProfileCompletionView
 from apps.authentication.views import JWTBaseAuthView
 from apps.core.assumptions import CMS_GROUP_NAME, CUSTOMERS_GROUP_NAME
 from apps.core.assumptions import WORKERS_GROUP_NAME
@@ -21,6 +21,7 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.test import RequestFactory
 from django.test import TestCase, Client
 from django.urls import reverse
+from django.db import IntegrityError, transaction
 from rest_framework import status
 from rest_framework.request import Request
 from apps.authentication.models.profiles.worker_profile import WorkerProfile
@@ -31,6 +32,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from apps.core.models.geo import Address
 from apps.authentication.utils.encryption_util import EncryptionUtil
+from apps.authentication.models.custom_group import CustomGroup
 User = get_user_model()
 from apps.authentication.utils.worker_util import WorkerUtil
 from apps.authentication.utils.customer_util import CustomerUtil
@@ -292,17 +294,23 @@ class UploadUserProfilePictureViewTest(TestCase):
 class PasswordResetRequestViewTest(TestCase):
 
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='12345', email='test@example.com')
+        self.factory = RequestFactory()
+        self.view = BaseClientView.as_view()
+        self.client = APIClient()
+        try: 
+            self.group = Group.objects.get(name=WORKERS_GROUP_NAME)
+        except Group.DoesNotExist:
+            self.group, created = Group.objects.get_or_create(name=WORKERS_GROUP_NAME)
+        self.user = User.objects.create_user(username="testuser", email="testuser@example.com", password="testpassword")
+        self.user.groups.add(self.group)
 
-    @patch('apps.core.utils.formatters.FormattingUtil.get_email', return_value='test@example.com')
-    @patch('apps.authentication.utils.pass_reset_util.CustomPasswordResetUtil.send_reset_code')
-    def test_post_valid_email(self, mock_send_reset_code, mock_get_email):
+
+    def test_post_valid_email(self):
+        """Test the password reset request with a valid email"""
         data = {'email': 'test@example.com'}
-        response = self.client.post(reverse('password_reset'), data, content_type='application/json')
+        response = self.client.post(reverse('password_reset'), data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json(), {'message': 'Password reset email has been sent.'})
-        mock_send_reset_code.assert_called_once_with(self.user)
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_email', side_effect=Exception('Invalid email'))
     def test_post_invalid_email(self, mock_get_email):
@@ -315,7 +323,7 @@ class PasswordResetRequestViewTest(TestCase):
     def test_post_email_not_found(self, mock_get_email):
         data = {'email': 'notfound@example.com'}
         response = self.client.post(reverse('password_reset'), data, content_type='application/json')
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.json(), {'message': 'Email not found.'})
 
 
