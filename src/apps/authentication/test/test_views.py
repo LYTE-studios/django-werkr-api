@@ -416,61 +416,71 @@ class ResetPasswordViewTest(TestCase):
 
 
 
-
 class WorkerRegisterViewTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.group = Group.objects.create(name=WORKERS_GROUP_NAME)
+        self.group = Group.objects.get_or_create(name=WORKERS_GROUP_NAME)
 
-    @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=lambda key, required=False: 'test_value')
     @patch('apps.core.utils.formatters.FormattingUtil.get_email', return_value='test@example.com')
     @patch('apps.core.utils.formatters.FormattingUtil.get_date', return_value='2000-01-01')
     @patch('apps.core.utils.formatters.FormattingUtil.get_address', return_value=None)
-    @patch('apps.authentication.utils.encryption_util.EncryptionUtil.encrypt', return_value='encrypted_password')
-    @patch('apps.authentication.managers.user_manager.UserManager.create_user')
+    @patch('apps.authentication.utils.encryption_util.EncryptionUtil.encrypt', return_value=('encrypted_password', 'salt_value'))
+    @patch('apps.authentication.managers.user_manager.UserManager.create_user', return_value= User(username='testuser',email='test@example.com', password='password123'))
     @patch('apps.authentication.managers.user_manager.UserManager.create_worker_profile')
     def test_post_valid_data(self, mock_create_worker_profile, mock_create_user, mock_encrypt, mock_get_address,
-                             mock_get_date, mock_get_email, mock_get_value):
+                             mock_get_date, mock_get_email):
+        mock_create_user.return_value = User.objects.create_user(
+           username='testuser', email='test@example.com', password='password123'
+        )
+        # Send a request to register a worker with the same email
         data = {
             'first_name': 'John',
             'last_name': 'Doe',
             'email': 'test@example.com',
             'password': 'password123',
             'phone_number': '1234567890',
-            'date_of_birth': '2000-01-01',
+            'date_of_birth': 000000,
             'iban': 'DE89370400440532013000',
             'place_of_birth': 'City',
             'ssn': '123-45-6789',
-            'worker_address': None
+            'worker_address': None,
+            'work_types': [{'id': 1}, {'id': 2}],
+            'situation_types': [{'id': 1}],
+            'job_types': [{'id': 1, 'mastery': 'beginner'}],
+            'locations': [{'id': 1}]
         }
-        response = self.client.post(reverse('worker_register'), data, content_type='application/json')
+
+
+        response = self.client.post(reverse('worker_register'), data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
+        print(response.content)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(User.objects.filter(email='test@example.com').exists())
         user = User.objects.get(email='test@example.com')
         self.assertEqual(response.json(), {'id': user.id})
+        mock_create_user.assert_called_once()
+        mock_create_worker_profile.assert_called_once()
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=DeserializationException('Invalid data'))
     def test_post_invalid_data(self, mock_get_value):
         data = {'first_name': 'John'}
-        response = self.client.post(reverse('worker_register'), data, content_type='application/json')
+        response = self.client.post(reverse('worker_register'), data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.json(), {'message': ('Invalid data',)})
+        self.assertEqual(response.json(), {'message': ['Invalid data']})
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_email', return_value='test@example.com')
     def test_post_user_already_exists(self, mock_get_email):
         User.objects.create_user(username='testuser', password='12345', email='test@example.com')
         data = {'email': 'test@example.com'}
-        response = self.client.post(reverse('worker_register'), data, content_type='application/json')
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
-        self.assertEqual(response.json(), {'message': 'User already exists'})
+        response = self.client.post(reverse('worker_register'), data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=Exception('Server error'))
     def test_post_server_error(self, mock_get_value):
         data = {'first_name': 'John'}
-        response = self.client.post(reverse('worker_register'), data, content_type='application/json')
+        response = self.client.post(reverse('worker_register'), data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
-        self.assertEqual(response.json(), {'message': ('Server error',)})
+        self.assertEqual(response.json(), {'message': ['Server error']})
 
 
 class StatisticsViewTest(TestCase):

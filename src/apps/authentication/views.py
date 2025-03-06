@@ -702,15 +702,23 @@ class WorkerRegisterView(BaseClientView):
         """
         formatter = FormattingUtil(data=request.data)
 
+        print(formatter.data)
+
         # Required fields
         try:
             email = formatter.get_email(k_email, required=True)
             password = formatter.get_value(k_password, required=True)
 
+            print("test")
+
             work_type_ids = formatter.get_value('work_types', required=False)
             situation_type_ids = formatter.get_value('situation_types', required=False)
             job_type_ids = formatter.get_value('job_types', required=False)
             location_ids = formatter.get_value('locations', required=False)
+
+            print("test2")
+
+            print(work_type_ids)
 
             if work_type_ids:
                 work_types = WorkType.objects.filter(id__in=[work_type.get('id', None) for work_type in work_type_ids])
@@ -731,6 +739,8 @@ class WorkerRegisterView(BaseClientView):
             else:    
                 locations = []
 
+            print("test3")
+
             first_name = formatter.get_value(k_first_name, required=False)
             last_name = formatter.get_value(k_last_name, required=False)
             date_of_birth = formatter.get_date(k_date_of_birth, required=False)
@@ -738,11 +748,14 @@ class WorkerRegisterView(BaseClientView):
             place_of_birth = formatter.get_value(k_place_of_birth, required=False)
             ssn = formatter.get_value(k_company, required=False)
             worker_address = formatter.get_address(k_address, required=False)
+
+            print("test4")
         except DeserializationException as e:
             # If the inner validation fails, this throws an error
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
             # Unhandled exception
+            print(f"error creating worker: {str(e)}")
             return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
         if User.objects.filter(email=email).exists():
