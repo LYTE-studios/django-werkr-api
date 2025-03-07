@@ -995,23 +995,27 @@ class CustomerSearchTermViewTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.group = Group.objects.create(name=CUSTOMERS_GROUP_NAME)
+        self.group, created = Group.objects.get_or_create(name=CUSTOMERS_GROUP_NAME)
         self.user = User.objects.create_user(username='testuser', password='12345', email='test@example.com')
         self.user.groups.add(self.group)
         self.user.save()
         self.url = reverse('customer_search_term', kwargs={'search_term': 'test'})
+        self.client.force_login(self.user)
 
     @patch('apps.authentication.utils.customer_util.CustomerUtil.to_customer_view',
            side_effect=lambda customer: {'id': customer.id, 'email': customer.email})
     def test_get_customers_with_valid_search_term(self, mock_to_customer_view):
-        response = self.client.get(self.url)
+        response = self.client.get(self.url, headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn(k_customers, response.json())
 
     def test_get_customers_with_invalid_search_term(self):
         url = reverse('customer_search_term', kwargs={'search_term': 'invalid'})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        response = self.client.get(url, headers={"Client": settings.WORKER_GROUP_SECRET})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()[k_customers], [])
+
+   
 
 
 class OnboardingFlowViewTest(APITestCase):
