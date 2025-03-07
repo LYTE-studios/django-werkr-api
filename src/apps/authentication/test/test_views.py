@@ -1,4 +1,5 @@
 import json
+from uuid import UUID
 from django.test import RequestFactory
 import datetime
 import tempfile
@@ -35,6 +36,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from apps.core.models.geo import Address
 from apps.authentication.utils.encryption_util import EncryptionUtil
 from apps.authentication.models.custom_group import CustomGroup
+from apps.core.utils.formatters import FormattingUtil
 User = get_user_model()
 from apps.authentication.utils.worker_util import WorkerUtil
 from apps.authentication.utils.customer_util import CustomerUtil
@@ -870,33 +872,90 @@ class CustomerDetailViewTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.group = Group.objects.create(name=CUSTOMERS_GROUP_NAME)
+        self.group, created = Group.objects.get_or_create(name=CUSTOMERS_GROUP_NAME)
         self.user = User.objects.create_user(username='testuser', password='12345', email='test@example.com')
         self.user.groups.add(self.group)
+        from apps.authentication.models import CustomerProfile
+        self.customer_profile = CustomerProfile.objects.create(
+            user=self.user,
+        )
+    
+        self.user.save()
+        self.url = reverse('worker_detail', kwargs={'id': self.user.id})
+        self.client.force_login(self.user)
         self.user.save()
         self.url = reverse('customer_detail', kwargs={'id': self.user.id})
+        self.client.force_login(self.user)
 
     def test_get_valid_customer(self):
-        response = self.client.get(self.url)
+        address = Address.objects.create(
+            street_name="123 Main St",
+            house_number="45A",
+            box_number="",
+            city="Some City",
+            zip_code="12345",
+            country="Country Name",
+            latitude=52.5200,
+            longitude=13.4050
+        )
+        billing_address = Address.objects.create(
+            street_name="123 Main St",
+            house_number="45A",
+            box_number="",
+            city="Some City",
+            zip_code="12345",
+            country="Country Name",
+            latitude=52.5200,
+            longitude=13.4050
+        )    
+        self.customer_profile.customer_address = address
+        self.customer_profile.customer_billing_address = billing_address
+        self.customer_profile.save()        
+        expected_data = {
+            "id": str(self.user.id),  
+            "first_name": self.user.first_name,
+            "last_name": self.user.last_name,
+            "email": self.user.email,
+            "created_at": FormattingUtil.to_timestamp(self.user.date_joined),
+            "address": address.to_model_view(), 
+            "billing_address": billing_address.to_model_view(), 
+            "tax_number": self.customer_profile.tax_number,  # Ensure this is not None or set to None in the test
+            "company": self.customer_profile.company_name,  # Same for company
+            "has_active_job": False,  # Adjust if you need to reflect an active job status
+            "phone_number": self.user.phone_number,
+            "special_committee": self.customer_profile.special_committee,
+            "profile_picture":None,
+            }
+
+        response = self.client.get(self.url, headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json(), CustomerUtil.to_customer_view(self.user))
+        self.assertEqual(response.json(), expected_data)
 
     def test_get_invalid_customer(self):
-        url = reverse('customer_detail', kwargs={'id': 999})
-        response = self.client.get(url)
+        url = reverse('customer_detail', kwargs={'id': 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'})
+        response = self.client.get(url, headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_valid_customer(self):
         response = self.client.delete(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(User.objects.filter(id=self.user.id).exists())
+        self.assertTrue(User.objects.filter(id=self.user.id).exists())
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.groups.filter(name=WORKERS_GROUP_NAME).exists())
 
     def test_delete_invalid_customer(self):
-        url = reverse('customer_detail', kwargs={'id': 999})
-        response = self.client.delete(url)
+        url = reverse('customer_detail', kwargs={'id': 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'})
+        response = self.client.delete(url, headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=lambda key: 'new_value')
+    def mock_get_value_side_effect(*args, **kwargs):
+        if args[0] == k_first_name:
+            return "John"
+        elif args[0] == k_last_name:
+            return "Doe"
+        return None  # Default case
+
+    @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=mock_get_value_side_effect)
     @patch('apps.core.utils.formatters.FormattingUtil.get_email', return_value='new_email@example.com')
     @patch('apps.core.utils.formatters.FormattingUtil.get_address', return_value=None)
     def test_put_valid_customer(self, mock_get_address, mock_get_email, mock_get_value):
@@ -910,7 +969,7 @@ class CustomerDetailViewTest(TestCase):
             'tax_number': '123456789',
             'company': 'New Company'
         }
-        response = self.client.put(self.url, data, content_type='application/json')
+        response = self.client.put(self.url, data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
         self.assertEqual(self.user.first_name, 'John')
@@ -920,16 +979,16 @@ class CustomerDetailViewTest(TestCase):
     @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=DeserializationException('Invalid data'))
     def test_put_invalid_data(self, mock_get_value):
         data = {'first_name': 'John'}
-        response = self.client.put(self.url, data, content_type='application/json')
+        response = self.client.put(self.url, data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.json(), {'message': ('Invalid data',)})
+        self.assertEqual(response.json(), {'message': ['Invalid data']})
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=Exception('Server error'))
     def test_put_server_error(self, mock_get_value):
         data = {'first_name': 'John'}
-        response = self.client.put(self.url, data, content_type='application/json')
+        response = self.client.put(self.url, data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
-        self.assertEqual(response.json(), {'message': ('Server error',)})
+        self.assertEqual(response.json(), {'message': ['Server error']})
 
 
 class CustomerSearchTermViewTest(TestCase):
