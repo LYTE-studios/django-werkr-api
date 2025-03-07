@@ -689,21 +689,26 @@ class AcceptWorkerViewTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.group = Group.objects.create(name=WORKERS_GROUP_NAME)
+        self.group, created = Group.objects.get_or_create(name=WORKERS_GROUP_NAME)
         self.user = User.objects.create_user(username='testuser', password='12345', email='test@example.com')
         self.user.groups.add(self.group)
+        from apps.authentication.models import WorkerProfile
+        self.worker_profile = WorkerProfile.objects.create(
+            user=self.user,
+        )
         self.user.save()
         self.url = reverse('accept_worker', kwargs={'id': self.user.id})
+        self.client.force_login(self.user)
 
     def test_post_valid_worker(self):
-        response = self.client.post(self.url)
+        response = self.client.post(self.url, headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
         self.assertTrue(self.user.worker_profile.accepted)
 
     def test_post_invalid_worker(self):
-        url = reverse('accept_worker', kwargs={'id': 999})
-        response = self.client.post(url)
+        url = reverse('accept_worker', kwargs={'id': 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'})
+        response = self.client.post(url, headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
