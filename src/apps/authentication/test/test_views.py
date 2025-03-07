@@ -542,33 +542,54 @@ class WorkerDetailViewTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.group = Group.objects.create(name=WORKERS_GROUP_NAME)
+        self.group, created = Group.objects.get_or_create(name=WORKERS_GROUP_NAME)
         self.user = User.objects.create_user(username='testuser', password='12345', email='test@example.com')
         self.user.groups.add(self.group)
+        from apps.authentication.models import WorkerProfile
+        self.worker_profile = WorkerProfile.objects.create(
+            user=self.user,
+        )
         self.user.save()
         self.url = reverse('worker_detail', kwargs={'id': self.user.id})
+        self.client.force_login(self.user)
 
     def test_get_valid_worker(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json(), WorkerUtil.to_worker_view(self.user))
+        expected_response = WorkerUtil.to_worker_view(self.user)
+    
+        # Convert UUID to string and Enum to its value
+        expected_response["id"] = str(expected_response["id"])  
+        expected_response["worker_type"] = expected_response["worker_type"].value  
+
+        self.assertEqual(response.json(), expected_response)
+
 
     def test_get_invalid_worker(self):
-        url = reverse('worker_detail', kwargs={'id': 999})
+        url = reverse('worker_detail', kwargs={'id': 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_valid_worker(self):
         response = self.client.delete(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(User.objects.filter(id=self.user.id).exists())
+        self.assertTrue(User.objects.filter(id=self.user.id).exists())
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.groups.filter(name=WORKERS_GROUP_NAME).exists())
 
     def test_delete_invalid_worker(self):
-        url = reverse('worker_detail', kwargs={'id': 999})
+        url = reverse('worker_detail', kwargs={'id': 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'})
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=lambda key: 'new_value')
+    def mock_get_value_side_effect(*args, **kwargs):
+        if args[0] == k_first_name:
+            return "John"
+        elif args[0] == k_last_name:
+            return "Doe"
+        return None  # Default case
+
+    @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=mock_get_value_side_effect)
     @patch('apps.core.utils.formatters.FormattingUtil.get_email', return_value='new_email@example.com')
     @patch('apps.core.utils.formatters.FormattingUtil.get_address', return_value=None)
     @patch('apps.core.utils.formatters.FormattingUtil.get_date', return_value='2000-01-01')
@@ -584,26 +605,27 @@ class WorkerDetailViewTest(TestCase):
             k_tax_number: '123456789',
             k_company: 'New Company'
         }
-        response = self.client.put(self.url, data, content_type='application/json')
+        response = self.client.put(self.url, data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
         self.assertEqual(self.user.first_name, 'John')
         self.assertEqual(self.user.last_name, 'Doe')
         self.assertEqual(self.user.email, 'new_email@example.com')
+        
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=DeserializationException('Invalid data'))
     def test_put_invalid_data(self, mock_get_value):
         data = {k_first_name: 'John'}
-        response = self.client.put(self.url, data, content_type='application/json')
+        response = self.client.put(self.url, data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.json(), {k_message: ('Invalid data',)})
+        self.assertEqual(response.json(), {k_message: ['Invalid data']})
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=Exception('Server error'))
     def test_put_server_error(self, mock_get_value):
         data = {k_first_name: 'John'}
-        response = self.client.put(self.url, data, content_type='application/json')
+        response = self.client.put(self.url, data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
-        self.assertEqual(response.json(), {k_message: ('Server error',)})
+        self.assertEqual(response.json(), {k_message: ['Server error']})
 
 
 class WorkersListViewTest(TestCase):
