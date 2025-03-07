@@ -23,6 +23,7 @@ from django.test import RequestFactory
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.request import Request
 from apps.authentication.models.profiles.worker_profile import WorkerProfile
@@ -796,16 +797,17 @@ class CustomersListViewTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.group = Group.objects.create(name=CUSTOMERS_GROUP_NAME)
+        self.group, created = Group.objects.get_or_create(name=CUSTOMERS_GROUP_NAME)
         self.user = User.objects.create_user(username='testuser', password='12345', email='test@example.com')
         self.user.groups.add(self.group)
         self.user.save()
         self.url = reverse('customers_list')
+        self.client.force_login(self.user)
 
     @patch('apps.authentication.utils.customer_util.CustomerUtil.to_customer_view',
            side_effect=lambda customer, has_active_job: {'id': customer.id, 'email': customer.email})
     def test_get_customers_list(self, mock_to_customer_view):
-        response = self.client.get(self.url)
+        response = self.client.get(self.url, headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn(k_customers, response.json())
         self.assertIn(k_items_per_page, response.json())
@@ -814,7 +816,7 @@ class CustomersListViewTest(TestCase):
     @patch('apps.authentication.utils.customer_util.CustomerUtil.to_customer_view',
            side_effect=lambda customer, has_active_job: {'id': customer.id, 'email': customer.email})
     def test_get_customers_list_with_search_term(self, mock_to_customer_view):
-        response = self.client.get(self.url, {'search_term': 'test'})
+        response = self.client.get(self.url, {'search_term': 'test'}, headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn(k_customers, response.json())
         self.assertIn(k_items_per_page, response.json())
@@ -823,7 +825,7 @@ class CustomersListViewTest(TestCase):
     @patch('apps.authentication.utils.customer_util.CustomerUtil.to_customer_view',
            side_effect=lambda customer, has_active_job: {'id': customer.id, 'email': customer.email})
     def test_get_customers_list_with_sort_term(self, mock_to_customer_view):
-        response = self.client.get(self.url, {'sort_term': 'email', 'algorithm': 'descending'})
+        response = self.client.get(self.url, {'sort_term': 'email', 'algorithm': 'descending'}, headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn(k_customers, response.json())
         self.assertIn(k_items_per_page, response.json())
@@ -832,7 +834,7 @@ class CustomersListViewTest(TestCase):
     @patch('apps.authentication.utils.customer_util.CustomerUtil.to_customer_view',
            side_effect=lambda customer, has_active_job: {'id': customer.id, 'email': customer.email})
     def test_get_customers_list_with_pagination(self, mock_to_customer_view):
-        response = self.client.get(self.url, {'count': 10, 'page': 2})
+        response = self.client.get(self.url, {'count': 10, 'page': 2}, headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn(k_customers, response.json())
         self.assertIn(k_items_per_page, response.json())
@@ -841,9 +843,22 @@ class CustomersListViewTest(TestCase):
     @patch('apps.authentication.utils.customer_util.CustomerUtil.to_customer_view',
            side_effect=lambda customer, has_active_job: {'id': customer.id, 'email': customer.email})
     def test_get_customers_list_with_active_job(self, mock_to_customer_view):
-        job = Job.objects.create(customer=self.user, start_time=datetime.datetime.utcnow(),
-                                 end_time=datetime.datetime.utcnow(), job_state=JobState.pending)
-        response = self.client.get(self.url)
+        address = Address.objects.create(
+            street_name="123 Main St",
+            house_number="45A",
+            box_number="",
+            city="Some City",
+            zip_code="12345",
+            country="Country Name",
+            latitude=52.5200,
+            longitude=13.4050
+        )
+        start_time = timezone.make_aware(datetime.datetime.utcnow())
+        end_time = timezone.make_aware(datetime.datetime.utcnow())
+       
+        job = Job.objects.create(customer=self.user, start_time=start_time,
+                                 end_time=end_time, job_state=JobState.pending, address=address)
+        response = self.client.get(self.url, headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn(k_customers, response.json())
         self.assertIn(k_items_per_page, response.json())
