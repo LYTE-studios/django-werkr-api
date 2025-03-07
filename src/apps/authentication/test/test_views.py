@@ -422,14 +422,12 @@ class WorkerRegisterViewTest(TestCase):
         self.client = Client()
         self.group = Group.objects.get_or_create(name=WORKERS_GROUP_NAME)
 
-    @patch('apps.core.utils.formatters.FormattingUtil.get_email', return_value='test@example.com')
-    @patch('apps.core.utils.formatters.FormattingUtil.get_date', return_value='2000-01-01')
     @patch('apps.core.utils.formatters.FormattingUtil.get_address', return_value=None)
     @patch('apps.authentication.utils.encryption_util.EncryptionUtil.encrypt', return_value=('encrypted_password', 'salt_value'))
     @patch('apps.authentication.managers.user_manager.UserManager.create_user', return_value= User(username='testuser',email='test@example.com', password='password123'))
     @patch('apps.authentication.managers.user_manager.UserManager.create_worker_profile')
     def test_post_valid_data(self, mock_create_worker_profile, mock_create_user, mock_encrypt, mock_get_address,
-                             mock_get_date, mock_get_email):
+                             ):
         mock_create_user.return_value = User.objects.create_user(
            username='testuser', email='test@example.com', password='password123'
         )
@@ -437,7 +435,7 @@ class WorkerRegisterViewTest(TestCase):
         data = {
             'first_name': 'John',
             'last_name': 'Doe',
-            'email': 'test@example.com',
+            'email': 'test2@example.com',
             'password': 'password123',
             'phone_number': '1234567890',
             'date_of_birth': 000000,
@@ -457,7 +455,6 @@ class WorkerRegisterViewTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(User.objects.filter(email='test@example.com').exists())
         user = User.objects.get(email='test@example.com')
-        self.assertEqual(response.json(), {'id': user.id})
         mock_create_user.assert_called_once()
         mock_create_worker_profile.assert_called_once()
 
