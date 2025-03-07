@@ -483,19 +483,25 @@ class WorkerRegisterViewTest(TestCase):
 class StatisticsViewTest(TestCase):
 
     def setUp(self):
+        self.user = User.objects.create(username="testuser", email="testuser@example.com")
+        self.group = Group.objects.get(name=WORKERS_GROUP_NAME)
+        self.user.groups.add(self.group)
+        self.user.save()
         self.client = Client()
         self.url = reverse('statistics_view')
         self.valid_data = {
             k_worker_id: 'worker_id',
             k_time_frame: k_week
         }
+        self.client.force_login(self.user)
+    
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_value',
            side_effect=lambda key, required=False: 'worker_id' if key == k_worker_id else k_week)
     @patch('apps.jobs.services.statistics_service.StatisticsService.get_weekly_stats',
            return_value={'week_stats': 'data'})
     def test_post_valid_weekly_data(self, mock_get_weekly_stats, mock_get_value):
-        response = self.client.post(self.url, self.valid_data, content_type='application/json')
+        response = self.client.post(self.url, self.valid_data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json(),
                          {k_statistics: [{'week_stats': 'data'}, {'week_stats': 'data'}, {'week_stats': 'data'}]})
@@ -506,30 +512,30 @@ class StatisticsViewTest(TestCase):
            return_value={'year_stats': 'data'})
     def test_post_valid_monthly_data(self, mock_get_monthly_stats, mock_get_value):
         response = self.client.post(self.url, {k_worker_id: 'worker_id', k_time_frame: k_month},
-                                    content_type='application/json')
+                                    content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json(),
                          {k_statistics: [{'year_stats': 'data'}, {'year_stats': 'data'}, {'year_stats': 'data'}]})
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=DeserializationException('Invalid data'))
     def test_post_invalid_data(self, mock_get_value):
-        response = self.client.post(self.url, {}, content_type='application/json')
+        response = self.client.post(self.url, {}, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.json(), {k_message: ('Invalid data',)})
+        self.assertEqual(response.json(), {k_message: ['Invalid data']})
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_value',
            side_effect=lambda key, required=False: 'worker_id' if key == k_worker_id else 'invalid_time_frame')
     def test_post_invalid_time_frame(self, mock_get_value):
         response = self.client.post(self.url, {k_worker_id: 'worker_id', k_time_frame: 'invalid_time_frame'},
-                                    content_type='application/json')
+                                    content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.json(), {k_message: 'Invalid time frame'})
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=Exception('Server error'))
     def test_post_server_error(self, mock_get_value):
-        response = self.client.post(self.url, self.valid_data, content_type='application/json')
+        response = self.client.post(self.url, self.valid_data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
-        self.assertEqual(response.json(), {k_message: ('Server error',)})
+        self.assertEqual(response.json(), {k_message: ['Server error']})
 
 
 class WorkerDetailViewTest(TestCase):
