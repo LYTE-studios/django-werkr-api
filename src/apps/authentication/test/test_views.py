@@ -632,16 +632,17 @@ class WorkersListViewTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.group = Group.objects.create(name=WORKERS_GROUP_NAME)
+        self.group, created = Group.objects.get_or_create(name=WORKERS_GROUP_NAME)
         self.user = User.objects.create_user(username='testuser', password='12345', email='test@example.com')
         self.user.groups.add(self.group)
         self.user.save()
         self.url = reverse('workers_list')
+        self.client.force_login(self.user)
 
     @patch('apps.authentication.utils.worker_util.WorkerUtil.to_worker_view',
            side_effect=lambda worker: {'id': worker.id, 'email': worker.email})
     def test_get_workers_list(self, mock_to_worker_view):
-        response = self.client.get(self.url)
+        response = self.client.get(self.url, headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn(k_workers, response.json())
         self.assertIn(k_items_per_page, response.json())
@@ -650,7 +651,7 @@ class WorkersListViewTest(TestCase):
     @patch('apps.authentication.utils.worker_util.WorkerUtil.to_worker_view',
            side_effect=lambda worker: {'id': worker.id, 'email': worker.email})
     def test_get_workers_list_with_search_term(self, mock_to_worker_view):
-        response = self.client.get(self.url, {'search_term': 'test'})
+        response = self.client.get(self.url, {'search_term': 'test'}, headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn(k_workers, response.json())
         self.assertIn(k_items_per_page, response.json())
@@ -659,7 +660,7 @@ class WorkersListViewTest(TestCase):
     @patch('apps.authentication.utils.worker_util.WorkerUtil.to_worker_view',
            side_effect=lambda worker: {'id': worker.id, 'email': worker.email})
     def test_get_workers_list_with_sort_term(self, mock_to_worker_view):
-        response = self.client.get(self.url, {'sort_term': 'email', 'algorithm': 'descending'})
+        response = self.client.get(self.url, {'sort_term': 'email', 'algorithm': 'descending'}, headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn(k_workers, response.json())
         self.assertIn(k_items_per_page, response.json())
@@ -668,7 +669,7 @@ class WorkersListViewTest(TestCase):
     @patch('apps.authentication.utils.worker_util.WorkerUtil.to_worker_view',
            side_effect=lambda worker: {'id': worker.id, 'email': worker.email})
     def test_get_workers_list_with_pagination(self, mock_to_worker_view):
-        response = self.client.get(self.url, {'count': 10, 'page': 2})
+        response = self.client.get(self.url, {'count': 10, 'page': 2}, headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn(k_workers, response.json())
         self.assertIn(k_items_per_page, response.json())
@@ -677,7 +678,7 @@ class WorkersListViewTest(TestCase):
     @patch('apps.authentication.utils.worker_util.WorkerUtil.to_worker_view',
            side_effect=lambda worker: {'id': worker.id, 'email': worker.email})
     def test_get_workers_list_with_state(self, mock_to_worker_view):
-        response = self.client.get(self.url, {'state': 'registered'})
+        response = self.client.get(self.url, {'state': 'registered'}, headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn(k_workers, response.json())
         self.assertIn(k_items_per_page, response.json())
