@@ -1151,6 +1151,7 @@ class CreateCustomerView(JWTBaseAuthView):
             tax_number = formatter.get_value(k_tax_number)
             company = formatter.get_value(k_company)
         except DeserializationException as e:
+            print("test")
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
             return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)

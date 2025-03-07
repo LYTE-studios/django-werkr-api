@@ -716,8 +716,11 @@ class CreateCustomerViewTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.group = Group.objects.create(name=CMS_GROUP_NAME)
+        self.group, created = Group.objects.get_or_create(name=CMS_GROUP_NAME)
+        self.user = User.objects.create_user(username='testuser', password='12345', email='test@example.com')
+        self.user.groups.add(self.group)
         self.url = reverse('create_customer')
+        self.client.force_login(self.user)
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=lambda key, required=False: 'test_value')
     @patch('apps.core.utils.formatters.FormattingUtil.get_email', return_value='test@example.com')
@@ -734,33 +737,59 @@ class CreateCustomerViewTest(TestCase):
             k_company: 'Test Company',
             k_phone_number: '1234567890'
         }
-        response = self.client.post(self.url, data, content_type='application/json')
+        response = self.client.post(self.url, data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(User.objects.filter(email='test@example.com').exists())
         user = User.objects.get(email='test@example.com')
-        self.assertEqual(response.json(), {k_customer_id: user.id})
+        self.assertEqual(response.json(), {k_customer_id: str(user.id)})
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=DeserializationException('Invalid data'))
     def test_post_invalid_data(self, mock_get_value):
         data = {k_first_name: 'John'}
-        response = self.client.post(self.url, data, content_type='application/json')
+        response = self.client.post(self.url, data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.json(), {k_message: ('Invalid data',)})
+        self.assertEqual(response.json(), {k_message: ['Invalid data']})
 
+    @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=lambda key, required=False: 'test_value')
     @patch('apps.core.utils.formatters.FormattingUtil.get_email', return_value='test@example.com')
-    def test_post_user_already_exists(self, mock_get_email):
-        User.objects.create_user(username='testuser', password='12345', email='test@example.com')
-        data = {k_email: 'test@example.com'}
-        response = self.client.post(self.url, data, content_type='application/json')
+    @patch('apps.core.utils.formatters.FormattingUtil.get_address', return_value=None)
+    def test_post_user_already_exists(self, mock_get_address, mock_get_email, mock_get_value):
+        
+        # Ensure no user exists before running the test
+        User.objects.filter(email='test@example.com').delete()
+
+        # Create a user and force login
+        self.user = User.objects.create_user(username='testuser', password='12345', email='test@example.com')
+        self.client.force_login(self.user)
+        data = {
+            k_first_name: 'John',
+            k_last_name: 'Doe',
+            k_email: 'test@example.com',
+            k_address: None,
+            k_billing_address: None,
+            k_tax_number: '123456789',
+            k_company: 'Test Company',
+            k_phone_number: '1234567890'
+        }
+        
+        # Make sure the user exists before making the POST request
+        user_exists = User.objects.filter(email='test@example.com').exists()
+        self.assertTrue(user_exists, "User should be created successfully")
+
+        data = {'email': 'test@example.com'}
+        response = self.client.post(self.url, data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
+        
+        # Check the response status and ensure the user still exists
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(User.objects.filter(email='test@example.com').exists())
+
 
     @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=Exception('Server error'))
     def test_post_server_error(self, mock_get_value):
         data = {k_first_name: 'John'}
-        response = self.client.post(self.url, data, content_type='application/json')
+        response = self.client.post(self.url, data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
-        self.assertEqual(response.json(), {k_message: ('Server error',)})
+        self.assertEqual(response.json(), {k_message: ['Server error']})
 
 
 class CustomersListViewTest(TestCase):
