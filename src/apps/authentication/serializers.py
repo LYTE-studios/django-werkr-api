@@ -40,8 +40,9 @@ class WorkerProfileSerializer(serializers.ModelSerializer):
         int: percentage of worker's profile completion
         """
 
-        completion_data = WorkerUtil.calculate_profile_completion(obj.user)  # Get user from profile
-        return completion_data["completion_percentage"]
+        completion_percentage, _ = WorkerUtil.calculate_worker_completion(obj.user)  # Use correct method
+        return completion_percentage
+
 
     def get_missing_fields(self, obj):
 
@@ -56,8 +57,8 @@ class WorkerProfileSerializer(serializers.ModelSerializer):
         Dictionnary of missing fields.
         
         """
-        completion_data = WorkerUtil.calculate_profile_completion(obj.user)
-        return completion_data["missing_fields"]
+        _, missing_fields = WorkerUtil.calculate_worker_completion(obj.user)  # Correct method call
+        return missing_fields
 
 
 

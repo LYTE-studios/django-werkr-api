@@ -1066,18 +1066,13 @@ class WorkerProfileDetailViewTest(APITestCase):
         self.worker_profile = WorkerProfile.objects.create(user=self.user)
         self.dashboard_flow = DashboardFlow.objects.create(
             user=self.user,
-            car_washing_experience_type='beginner',
-            waiter_experience_type='beginner',
-            cleaning_experience_type='beginner',
-            chauffeur_experience_type='beginner',
-            gardening_experience_type='beginner',
-            situation_type='flexi',
-            work_type='weekday_mornings'
+            
         )
-        self.url = reverse('worker-profile-detail', kwargs={'user_id': self.user.id})
+        self.url = reverse('worker_profile_detail', kwargs={'user_id': self.user.id})
+        self.client.force_login(self.user)
 
     def test_get_worker_profile_detail(self):
-        response = self.client.get(self.url)
+        response = self.client.get(self.url, headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('worker_profile', response.data)
         self.assertIn('dashboard_flow', response.data)
