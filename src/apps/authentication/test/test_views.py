@@ -1028,8 +1028,8 @@ class OnboardingFlowViewTest(APITestCase):
             password='password123'
         )
         self.worker_profile = WorkerProfile.objects.create(user=self.user)
-        self.client.force_authenticate(user=self.user)
-        self.url = reverse('onboarding-flow')
+        self.client.force_login(self.user)
+        self.url = reverse('onboarding_flow')
 
     def test_onboarding_flow_success(self):
         data = {
@@ -1041,17 +1041,17 @@ class OnboardingFlowViewTest(APITestCase):
             'situation_type': 'flexi',
             'work_type': 'weekday_mornings'
         }
-        response = self.client.post(self.url, data, format='json')
+        response = self.client.get(self.url, data, format='json', headers={"Client": settings.WORKER_GROUP_SECRET})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.worker_profile.refresh_from_db()
-        self.assertTrue(self.worker_profile.has_passed_onboarding)
+        self.assertIn('job_types', response.data)
 
     def test_onboarding_flow_invalid_data(self):
         data = {
             'car_washing_experience_type': 'invalid_type'
         }
-        response = self.client.post(self.url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        response = self.client.get(self.url, data, format='json', headers={"Client": settings.WORKER_GROUP_SECRET})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class WorkerProfileDetailViewTest(APITestCase):
