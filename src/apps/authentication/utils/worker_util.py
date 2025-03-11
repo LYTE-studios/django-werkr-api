@@ -10,27 +10,34 @@ class WorkerUtil:
     def to_worker_view(worker):
         # Required data
         data = {
-            k_id: worker.id, k_first_name: worker.first_name,
+            k_id: worker.id,
+            k_first_name: worker.first_name,
             k_last_name: worker.last_name,
-            k_email: worker.email, k_created_at: FormattingUtil.to_timestamp(worker.date_joined),
-            k_iban: worker.worker_profile.iban,
-            k_ssn: worker.worker_profile.ssn,
+            k_email: worker.email,
+            k_created_at: FormattingUtil.to_timestamp(worker.date_joined),
             k_phone_number: worker.phone_number,
-            k_worker_type: worker.worker_profile.worker_type,
         }
 
-        try:
-            data[k_address] = worker.worker_profile.worker_address.to_model_view()
-        except Exception:
-            pass
-        try:
-            data[k_date_of_birth] = FormattingUtil.to_timestamp(worker.worker_profile.date_of_birth)
-        except Exception:
-            pass
-        try:
-            data[k_profile_picture] = ProfileUtil.get_user_profile_picture_url(worker)
-        except Exception:
-            pass
+        if hasattr(worker, 'worker_profile'):
+            worker_profile = worker.worker_profile
+            data.update({
+                k_iban: worker_profile.iban,
+                k_ssn: worker_profile.ssn,
+                k_worker_type: worker_profile.worker_type,
+            })
+
+            try:
+                data[k_address] = worker_profile.worker_address.to_model_view()
+            except Exception:
+                pass
+            try:
+                data[k_date_of_birth] = FormattingUtil.to_timestamp(worker_profile.date_of_birth)
+            except Exception:
+                pass
+            try:
+                data[k_profile_picture] = ProfileUtil.get_user_profile_picture_url(worker)
+            except Exception:
+                pass
 
         return data
     
