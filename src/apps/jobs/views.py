@@ -864,6 +864,98 @@ class AdminStatisticsView(JWTBaseAuthView):
         return Response(StatisticsService.get_admin_statistics(start, end))
     
 
+class CustomerJobHistoryView(JWTBaseAuthView):
+    """
+    [CMS, Customers]
+
+    GET
+
+    A view to get a paginated list of all jobs for a customer.
+    """
+
+    groups = [
+        CMS_GROUP_NAME,
+        CUSTOMERS_GROUP_NAME,
+    ]
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle GET request to retrieve paginated job history for a customer.
+
+        Args:
+            request (HttpRequest): The HTTP request object
+            *args: Additional positional arguments
+            **kwargs: Additional keyword arguments containing customer_id, page, count
+
+        Returns:
+            Response: A response object containing the paginated list of jobs
+        """
+        try:
+            customer_id = kwargs['customer_id']
+            page = int(kwargs.get('page', 1))
+            per_page = int(kwargs.get('count', 25))
+        except (KeyError, ValueError):
+            return HttpResponseBadRequest()
+
+        result = JobService.get_customer_job_history(
+            customer_id=customer_id,
+            page=page,
+            per_page=per_page
+        )
+
+        return Response({
+            k_jobs: result['jobs'],
+            k_total: result['total'],
+            k_items_per_page: result['items_per_page']
+        })
+
+
+class WasherJobHistoryView(JWTBaseAuthView):
+    """
+    [CMS, Workers]
+
+    GET
+
+    A view to get a paginated list of all approved jobs for a washer.
+    """
+
+    groups = [
+        CMS_GROUP_NAME,
+        WORKERS_GROUP_NAME,
+    ]
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle GET request to retrieve paginated job history for a washer.
+
+        Args:
+            request (HttpRequest): The HTTP request object
+            *args: Additional positional arguments
+            **kwargs: Additional keyword arguments containing worker_id, page, count
+
+        Returns:
+            Response: A response object containing the paginated list of jobs
+        """
+        try:
+            worker_id = kwargs['worker_id']
+            page = int(kwargs.get('page', 1))
+            per_page = int(kwargs.get('count', 25))
+        except (KeyError, ValueError):
+            return HttpResponseBadRequest()
+
+        result = JobService.get_washer_job_history(
+            worker_id=worker_id,
+            page=page,
+            per_page=per_page
+        )
+
+        return Response({
+            k_jobs: result['jobs'],
+            k_total: result['total'],
+            k_items_per_page: result['items_per_page']
+        })
+
+
 class ExportsView(JWTBaseAuthView):
     """
     [CMS]

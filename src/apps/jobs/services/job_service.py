@@ -8,6 +8,7 @@ from apps.jobs.models import Job, JobApplication, JobApplicationState, JobState,
 from apps.jobs.utils.job_util import JobUtil
 from apps.notifications.managers.notification_manager import NotificationManager
 from apps.notifications.models.mail_template import CancelledMailTemplate, TimeRegisteredTemplate
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import F, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -181,6 +182,15 @@ class JobService:
                 ).order_by('start_time')
 
         return [JobUtil.to_model_view(job) for job in jobs]
+    
+    @staticmethod
+    def get_approved_jobs(user):
+        return Job.objects.filter(
+            job_state=JobState.pending,
+            is_draft=False,
+            archived=False,
+            worker_id=user.id,
+        ).order_by('start_time')
 
     @staticmethod
     def get_history_jobs(user, start, end):
@@ -323,3 +333,72 @@ class JobService:
     def get_draft_jobs():
         jobs = Job.objects.filter(is_draft=True, archived=False)[:50]
         return [JobUtil.to_model_view(job) for job in jobs]
+    
+    @staticmethod
+    def get_washer_job_history(worker_id, page=1, per_page=25):
+        """
+        Get paginated list of all approved jobs for a washer that haven't been deleted.
+        
+        Args:
+            worker_id: ID of the worker
+            page: Page number (default: 1)
+            per_page: Number of items per page (default: 25)
+            
+        Returns:
+            dict containing:
+            - jobs: List of job model views
+            - total: Total number of jobs
+            - items_per_page: Number of items per page
+        """
+        jobs = Job.objects.filter(
+            jobapplication__worker__id=worker_id,
+            jobapplication__application_state=JobApplicationState.approved,
+            archived=False
+        ).order_by('-start_time').distinct()
+        
+        paginator = Paginator(jobs, per_page=per_page)
+        
+        try:
+            paginated_jobs = paginator.page(page)
+        except (EmptyPage, PageNotAnInteger):
+            paginated_jobs = paginator.page(1)
+            
+        return {
+            'jobs': [JobUtil.to_model_view(job) for job in paginated_jobs],
+            'total': jobs.count(),
+            'items_per_page': per_page
+        }
+
+    @staticmethod
+    def get_customer_job_history(customer_id, page=1, per_page=25):
+        """
+        Get paginated list of all jobs (including future jobs) for a customer.
+        
+        Args:
+            customer_id: ID of the customer
+            page: Page number (default: 1)
+            per_page: Number of items per page (default: 25)
+            
+        Returns:
+            dict containing:
+            - jobs: List of job model views
+            - total: Total number of jobs
+            - items_per_page: Number of items per page
+        """
+        jobs = Job.objects.filter(
+            customer_id=customer_id,
+            archived=False
+        ).order_by('-start_time')
+        
+        paginator = Paginator(jobs, per_page=per_page)
+        
+        try:
+            paginated_jobs = paginator.page(page)
+        except (EmptyPage, PageNotAnInteger):
+            paginated_jobs = paginator.page(1)
+            
+        return {
+            'jobs': [JobUtil.to_model_view(job) for job in paginated_jobs],
+            'total': jobs.count(),
+            'items_per_page': per_page
+        }
