@@ -949,11 +949,7 @@ class WasherJobHistoryView(JWTBaseAuthView):
             per_page=per_page
         )
 
-        return Response({
-            k_jobs: result['jobs'],
-            k_total: result['total'],
-            k_items_per_page: result['items_per_page']
-        })
+        return Response(result)
 
 
 class ExportsView(JWTBaseAuthView):

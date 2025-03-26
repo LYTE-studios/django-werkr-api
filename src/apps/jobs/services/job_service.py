@@ -350,11 +350,11 @@ class JobService:
             - total: Total number of jobs
             - items_per_page: Number of items per page
         """
-        jobs = Job.objects.filter(
-            jobapplication__worker__id=worker_id,
-            jobapplication__application_state=JobApplicationState.approved,
-            archived=False
-        ).order_by('-start_time').distinct()
+        jobs = JobApplication.objects.filter(
+            worker__id=worker_id,
+            application_state=JobApplicationState.approved,
+            job__archived=False,
+        ).order_by('-job__start_time').distinct()
         
         paginator = Paginator(jobs, per_page=per_page)
         
@@ -364,7 +364,7 @@ class JobService:
             paginated_jobs = paginator.page(1)
             
         return {
-            'jobs': [JobUtil.to_model_view(job) for job in paginated_jobs],
+            'applications': [job.to_model_view() for job in paginated_jobs],
             'total': jobs.count(),
             'items_per_page': per_page
         }

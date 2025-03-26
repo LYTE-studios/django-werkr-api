@@ -96,7 +96,7 @@ class NotificationView(JWTBaseAuthView):
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
 
         if send_mail == True:
-            create_global_mail.delay(
+            create_global_mail(
                 title=title,
                 description=description,
                 language=language,
@@ -104,7 +104,7 @@ class NotificationView(JWTBaseAuthView):
             )
 
         if send_notification == True:
-            create_global_notification.delay(
+            create_global_notification(
                 title=title,
                 description=description,
                 send_push=send_push,
