@@ -32,9 +32,9 @@ class JobApplicationService:
 
     @staticmethod
     def approve_application(application_id):
-
         """
         Approves the job application if the worker's profile is 100% complete.
+        Also creates a Dimona declaration in Link2Prisma.
 
         Args:
             application_id (int): The ID of the job application to approve.
@@ -42,11 +42,12 @@ class JobApplicationService:
         Raises:
             ValidationError: If the worker's profile is incomplete (less than 100%).
         """
+        from apps.legal.services.link2prisma_service import Link2PrismaService
 
         application = get_object_or_404(JobApplication, id=application_id)
         worker = application.worker
         
-        #validate worker's profile before approval
+        # Validate worker's profile before approval
         completion_data = WorkerUtil.calculate_worker_completion(worker)
         completion_percentage = completion_data[0]
         missing_fields = completion_data[1]
@@ -57,17 +58,47 @@ class JobApplicationService:
                 f"Completion percentage: {completion_percentage}%. Missing fields: {', '.join(missing_fields)}"
             )
 
-        #if the profile is completed, proceeed with approval
+        # If the profile is completed, proceed with approval
         JobManager.approve_application(application)
         application.job.save()
         application.save()
 
+        # Create Dimona declaration in Link2Prisma
+        try:
+            Link2PrismaService.handle_job_approval(application)
+        except Exception as e:
+            # Log error but don't prevent approval
+            from apps.notifications.managers.notification_manager import NotificationManager
+            NotificationManager.notify_admin(
+                'Link2Prisma Job Approval Error',
+                f"Error creating Dimona declaration: {str(e)}"
+            )
+
     @staticmethod
     def deny_application(application_id):
+        """
+        Denies the job application and cancels any existing Dimona declaration.
+        """
+        from apps.legal.services.link2prisma_service import Link2PrismaService
+
         application = get_object_or_404(JobApplication, id=application_id)
+        old_state = application.application_state
+        
         JobManager.deny_application(application)
         application.job.save()
         application.save()
+
+        # If application was previously approved, cancel Dimona declaration
+        if old_state == JobApplicationState.approved:
+            try:
+                Link2PrismaService.handle_job_cancellation(application)
+            except Exception as e:
+                # Log error but don't prevent denial
+                from apps.notifications.managers.notification_manager import NotificationManager
+                NotificationManager.notify_admin(
+                    'Link2Prisma Job Cancellation Error',
+                    f"Error cancelling Dimona declaration: {str(e)}"
+                )
 
     @staticmethod
     def fetch_directions(lat, lon, to_lat, to_lon):

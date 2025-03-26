@@ -30,12 +30,11 @@ class DownloadContractView(JWTBaseAuthView):
             # Return a 400 response if the application is not approved
             return HttpResponse("Worker not approved", status=400)
 
-        # Check if a contract already exists for the job application
-        if job_application.contract:
-            # Use the existing contract path
-            job_application.contract.path
-        else:
-            # Generate a new contract and save the path to the job application
-             ContractUtil.generate_contract(job_application)
+        # Generate or get the contract path
+        contract_path = ContractUtil.generate_contract(job_application)
 
-        return Response()
+        # Open and read the contract file
+        with open(contract_path, 'rb') as f:
+            response = HttpResponse(f.read(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename=contract_{job_application.id}.pdf'
+            return response

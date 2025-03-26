@@ -21,3 +21,9 @@ DATABASES = {
         'PORT': config('DB_PORT', cast=int, default=5432),
     }
 }
+
+# Link2Prisma settings
+LINK2PRISMA_EMPLOYER_REF = 'test_employer_ref'  # Test reference for staging environment
+
+# Link2Prisma Settings
+LINK2PRISMA_EMPLOYER_REF = '999014'  # Test reference for staging environment
