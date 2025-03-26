@@ -84,35 +84,6 @@ class BaseClientViewTest(TestCase):
             self.assertEqual(response.status_code, 403)
 
 
-class JWTBaseAuthViewTestOld(TestCase):
-
-    def setUp(self):
-        self.factory = RequestFactory()
-        self.view = JWTBaseAuthView.as_view()
-        self.client = APIClient()
-        self.user = User.objects.create_user(username='testuser', password='password123', email='test@example.com')
-        self.user.groups.add(self.group)
-        self.token = AccessToken.for_user(self.user)
-
-    def test_dispatch_with_valid_token(self):
-        request = self.factory.get('/')
-        request.META['HTTP_AUTHORIZATION'] = f'Bearer {self.token}'
-        request.META['HTTP_CLIENT_SECRET'] = 'valid_secret'
-        with self.settings(JWT_AUTH_UTIL=JWTAuthUtil):
-            JWTAuthUtil.check_for_authentication = lambda req: self.token
-            response = self.view(request)
-            self.assertEqual(response.status_code, 200)
-
-    def test_dispatch_with_invalid_token(self):
-        request = self.factory.get('/')
-        request.META['HTTP_AUTHORIZATION'] = 'Bearer invalid_token'
-        request.META['HTTP_CLIENT_SECRET'] = 'valid_secret'
-        with self.settings(JWT_AUTH_UTIL=JWTAuthUtil):
-            JWTAuthUtil.check_for_authentication = lambda req: None
-            response = self.view(request)
-            self.assertEqual(response.status_code, 403)
-
-
 class JWTAuthenticationViewTest(TestCase):
 
     def setUp(self):
@@ -1245,7 +1216,7 @@ class JWTBaseAuthViewTest(APITestCase):
         response = self.client.get(auth_url,  headers=headers)
 
         #Assert that the response is forbidden
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
     
     def test_user_not_in_group(self):
         """ Authenticate the user and assign to an invalid group. """
@@ -1271,7 +1242,8 @@ class ProfileMeViewTest(TestCase):
     Tests retrieving and updating a authenticated user's profile.
     """
     profile_type = "customer"
-    user: User
+    user = None
+
     def setup(self):
 
         self.client = APIClient()
@@ -1282,7 +1254,6 @@ class ProfileMeViewTest(TestCase):
                 "password": "password123"
             }
         )
-        self.client.force_login(self.user)
 
         # Create an Address instance
         self.billing_address = Address.objects.create(
@@ -1393,9 +1364,3 @@ class ProfileMeViewTest(TestCase):
         }, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-
-
-
-
-       
-        

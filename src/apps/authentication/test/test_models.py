@@ -67,7 +67,7 @@ class CustomerProfileModelTest(TestCase):
             email='customeruser@example.com',
             password='password123'
         )
-        self.address = Address.objects.create(name='Sample Address')
+        self.address = Address.objects.create()
         self.customer_profile = CustomerProfile.objects.create(
             user=self.user,
             tax_number='123456789',
