@@ -59,9 +59,7 @@ class JWTAuthUtil:
         # Get the user
         try:
             user = User.objects.get(email__iexact=email, groups__id__contains=group.id)
-            print("User exists")
         except User.DoesNotExist:
-            print("User does not exist")
             return None
         
         session_expiry = 0

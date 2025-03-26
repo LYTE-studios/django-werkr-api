@@ -164,13 +164,11 @@ class JWTBaseAuthView(APIView):
         auth_token = JWTAuthUtil.check_for_authentication(request)
 
         if auth_token is None:
-            print("No auth token")
             return HttpResponseForbidden()
 
         try:
             self.user = User.objects.get(id=auth_token.get('user_id'))
         except User.DoesNotExist:
-            print("User doesn't exist")
             return HttpResponseForbidden()
 
         in_group = False
@@ -180,7 +178,6 @@ class JWTBaseAuthView(APIView):
                 in_group = True
 
         if not in_group:
-            print("No group for the user")
             return HttpResponseForbidden()
 
         self.token = auth_token
@@ -194,17 +191,14 @@ class JWTAuthenticationView(BaseClientView):
     """
 
     def post(self, request):
-        print("Request reached the view")
         formatter = FormattingUtil(data=request.data)
 
         try:
             password = formatter.get_value('password', required=True)
             email = formatter.get_value('email', required=True)
         except DeserializationException as e:
-            print(f"DeserializationException: {e}")
             return Response({'message': e.args}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print(f"General Exception: {e}") 
             return Response({'message': e.args}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         tokens = JWTAuthUtil.authenticate(email=email, password=password, group=self.group)
@@ -513,8 +507,6 @@ class UploadUserProfilePictureView(JWTBaseAuthView):
             Response: An empty response indicating successful update.
             HttpResponseBadRequest: If the request data is empty.
         """
-        print(f"request headers: {request.headers}")
-        print(f"request data: {request.data}")
         profile_user = self.user
 
         if not request.data:
@@ -648,7 +640,6 @@ class ResetPasswordView(BaseClientView):
             password, salt = EncryptionUtil.encrypt(password)
             user.password = password
             user.salt = salt
-            print("User type:", type(user), "User value:", user)
             user.save()
 
             # Return a success response
@@ -702,23 +693,15 @@ class WorkerRegisterView(BaseClientView):
         """
         formatter = FormattingUtil(data=request.data)
 
-        print(formatter.data)
-
         # Required fields
         try:
             email = formatter.get_email(k_email, required=True)
             password = formatter.get_value(k_password, required=True)
 
-            print("test")
-
             work_type_ids = formatter.get_value('work_types', required=False)
             situation_type_ids = formatter.get_value('situation_types', required=False)
             job_type_ids = formatter.get_value('job_types', required=False)
             location_ids = formatter.get_value('locations', required=False)
-
-            print("test2")
-
-            print(work_type_ids)
 
             if work_type_ids:
                 work_types = WorkType.objects.filter(id__in=[work_type.get('id', None) for work_type in work_type_ids])
@@ -739,8 +722,6 @@ class WorkerRegisterView(BaseClientView):
             else:    
                 locations = []
 
-            print("test3")
-
             first_name = formatter.get_value(k_first_name, required=False)
             last_name = formatter.get_value(k_last_name, required=False)
             date_of_birth = formatter.get_date(k_date_of_birth, required=False)
@@ -749,13 +730,11 @@ class WorkerRegisterView(BaseClientView):
             ssn = formatter.get_value(k_company, required=False)
             worker_address = formatter.get_address(k_address, required=False)
 
-            print("test4")
         except DeserializationException as e:
             # If the inner validation fails, this throws an error
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
             # Unhandled exception
-            print(f"error creating worker: {str(e)}")
             return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
         if User.objects.filter(email=email).exists():
@@ -1152,7 +1131,6 @@ class CreateCustomerView(JWTBaseAuthView):
             tax_number = formatter.get_value(k_tax_number)
             company = formatter.get_value(k_company)
         except DeserializationException as e:
-            print("test")
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
             return Response({k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR)

@@ -95,7 +95,7 @@ class WorkerProfileModelTest(TestCase):
             email='workeruser@example.com',
             password='password123'
         )
-        self.address = Address.objects.create(name='Sample Address')
+        self.address = Address.objects.create()
         self.worker_profile = WorkerProfile.objects.create(
             user=self.user,
             iban='DE89370400440532013000',

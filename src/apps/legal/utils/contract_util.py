@@ -94,14 +94,13 @@ class ContractUtil:
         try:
             html_string = render_to_string(template_name, context)
         except Exception as e:
-            print(e, type(e))
             raise e
         contract_path = os.path.join('media', f'{application.id}_contract.pdf')
 
         with open(contract_path, 'w+b') as result_file:
             pisa_status = pisa.CreatePDF(html_string, dest=result_file)
             if pisa_status.err:
-                raise print(str(pisa_status.err))
+                raise pisa_status.err
             
         with open(contract_path, 'rb') as result_file:
             django_file = File(result_file)

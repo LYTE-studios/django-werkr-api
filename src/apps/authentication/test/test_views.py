@@ -47,7 +47,6 @@ from apps.jobs.models import Job, JobState, JobApplication
 class BaseClientViewTest(TestCase):
 
     def setUp(self):
-        print("Running BaseClientViewTest setup")
         self.factory = RequestFactory()
         self.view = BaseClientView.as_view()
         self.client = APIClient()
@@ -91,7 +90,6 @@ class JWTBaseAuthViewTestOld(TestCase):
         self.factory = RequestFactory()
         self.view = JWTBaseAuthView.as_view()
         self.client = APIClient()
-        self.group = Group.objects.create(name=CUSTOMERS_GROUP_NAME)
         self.user = User.objects.create_user(username='testuser', password='password123', email='test@example.com')
         self.user.groups.add(self.group)
         self.token = AccessToken.for_user(self.user)
@@ -143,7 +141,6 @@ class JWTAuthenticationViewTest(TestCase):
             response = self.client.post(self.url, self.invalid_payload, format='json', headers={"Client": settings.WORKER_GROUP_SECRET})
             self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
             self.assertEqual(response.data['message'], 'Invalid credentials')
-            print(response.data)
 
 
 class ProfileMeViewTestOld(TestCase):
@@ -284,12 +281,10 @@ class UploadUserProfilePictureViewTest(TestCase):
             temp_file.write(b"file_content")
             temp_file.seek(0)
             uploaded_file = SimpleUploadedFile(name="test.jpg", content=temp_file.read(), content_type="image/jpeg")
-            print(f"Uploaded file content type: {uploaded_file.content_type}")
             
 
             response = self.client.put(reverse('upload_profile_picture', kwargs={'id': self.user.id}),
                                        {'file': uploaded_file}, format='multipart')
-            print(f"response data: {response.data}")
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.user.refresh_from_db()
             self.assertTrue(self.user.profile_picture.name.endswith(".jpg"))
@@ -312,8 +307,6 @@ class PasswordResetRequestViewTest(TestCase):
         self.client.force_login(self.user)
         data = {'email': 'test@example.com'}
         response = self.client.post(self.url, data=json.dumps(data), content_type="application/json", headers={"Client": settings.WORKER_GROUP_SECRET})
-        print("Response Status Code:", response.status_code)
-        print("Response Content:", response.content.decode("utf-8"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json(), {'message': 'Password reset email has been sent.'})
 
@@ -356,8 +349,6 @@ class VerifyCodeViewTest(APITestCase):
     def test_post_invalid_code(self, mock_verify_code, mock_get_value):
         data = {'email': 'test@example.com', 'code': 'wrong_code'}
         response = self.client.post(reverse('password_reset_verify'), data, format='json', headers={"Client": settings.WORKER_GROUP_SECRET})
-        print(response.status_code)  # Debugging
-        print(response.json()) 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.json(), {'message': 'Code not verified.'})
         mock_verify_code.assert_called_once_with(self.user, 'wrong_code')
@@ -454,7 +445,6 @@ class WorkerRegisterViewTest(TestCase):
 
 
         response = self.client.post(reverse('worker_register'), data, content_type='application/json', headers={"Client": settings.WORKER_GROUP_SECRET})
-        print(response.content)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(User.objects.filter(email='test@example.com').exists())
         user = User.objects.get(email='test@example.com')
@@ -1164,8 +1154,6 @@ class ProfileCompletionViewTest(APITestCase):
     
         # Assert that the response status code is HTTP 200 OK
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        print(response.json())
     
         # Assert that the response contains the correct completion percentage and missing fields
         self.assertEqual(response.data['completion_percentage'], 100)
@@ -1207,7 +1195,6 @@ class JWTBaseAuthViewTest(APITestCase):
         self.group = Group.objects.get(name=WORKERS_GROUP_NAME)
         self.user.groups.add(self.group)
         self.user.save()
-        print(f'user: {self.user}, {self.user.username}, {self.user.email}, {self.user.password}, {self.group.name}')
 
         #Create a second user for testing invalid token cases
         self.invalid_user = User.objects.create_user(username="invaliduser", password="invalidpassword", email="invaliduser@example.com")
@@ -1223,12 +1210,6 @@ class JWTBaseAuthViewTest(APITestCase):
         headers = {"Client": client_secret}
         response = self.client.post(url, data, headers=headers, format="json")
 
-        if response.status_code != 200:
-            print(f"Authentication failed, Status code: {response.status_code}")
-            print(f"Response content: {response.content.decode('utf-8')}")
-
-        print(f"Data: {data}")
-            
         #Assert that the response is successful and contains tokens
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         return response.data #return tokens for later use in the test
@@ -1239,13 +1220,10 @@ class JWTBaseAuthViewTest(APITestCase):
 
         tokens = self.authenticate_user()
         access_token = tokens['access_token']
-        print(f"Access token: {access_token}")
 
         #Use the JWT token to authenticate in JWTBaseAuthView
         auth_url = reverse("test_connection")
         headers = {'Authorization': access_token, 'Client': settings.WORKER_GROUP_SECRET}
-        print(f"Worker Group Secret: {settings.WORKER_GROUP_SECRET}")
-        
 
         response = self.client.get(auth_url, headers=headers)
 
@@ -1268,7 +1246,6 @@ class JWTBaseAuthViewTest(APITestCase):
 
         #Assert that the response is forbidden
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        print(f"Response content: {response.content.decode('utf-8')}")
     
     def test_user_not_in_group(self):
         """ Authenticate the user and assign to an invalid group. """
@@ -1287,7 +1264,6 @@ class JWTBaseAuthViewTest(APITestCase):
 
         #Assert that the response is forbidden
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        print(f"Response content: {response.content.decode('utf-8')}")
 
 
 class ProfileMeViewTest(TestCase):
@@ -1295,9 +1271,8 @@ class ProfileMeViewTest(TestCase):
     Tests retrieving and updating a authenticated user's profile.
     """
     profile_type = "customer"
+    user: User
     def setup(self):
-
-        print("Setting up user and profile")
 
         self.client = APIClient()
         self.user, created = User.objects.update_or_create(
@@ -1374,9 +1349,6 @@ class ProfileMeViewTest(TestCase):
         self.client.force_login(self.user)
         response = self.client.get(reverse("profile_me"))
 
-        print(f"status code: {response.status_code}")
-        print(f"Content: {response.content}")
-
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("user_id", response.data)
 
@@ -1400,7 +1372,6 @@ class ProfileMeViewTest(TestCase):
             "last_name": "UpdatedLast",
             "email": "test@example.com"
         }, format="json")
-        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
         self.assertEqual(self.user.first_name, "UpdatedName")
@@ -1411,7 +1382,6 @@ class ProfileMeViewTest(TestCase):
         response = self.client.put(reverse("profile_me"), {
             "email":"not-an-email"
         }, format="json")
-        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
 

@@ -46,10 +46,10 @@ urlpatterns = [
     path('jobs/done/<int:start>/<int:end>', DoneJobList.as_view()),
     path('jobs/drafts', DraftJobList.as_view(), name="draft-job-list"),
     path("jobs/<str:id>/workers", WorkersForJobView.as_view()),
-    path('jobs/customer/<str:customer_id>', CustomerJobHistoryView.as_view(), name="customer-job-history"),
-    path('jobs/customer/<str:customer_id>/<int:page>/<int:count>', CustomerJobHistoryView.as_view()),
-    path('jobs/washer/<str:worker_id>', WasherJobHistoryView.as_view(), name="washer-job-history"),
-    path('jobs/washer/<str:worker_id>/<int:page>/<int:count>', WasherJobHistoryView.as_view()),
+    path('history/customer/<str:customer_id>', CustomerJobHistoryView.as_view(), name="customer-job-history"),
+    path('history/customer/<str:customer_id>/<int:page>/<int:count>', CustomerJobHistoryView.as_view()),
+    path('history/washer/<str:worker_id>', WasherJobHistoryView.as_view(), name="washer-job-history"),
+    path('history/washer/<str:worker_id>/<int:page>/<int:count>', WasherJobHistoryView.as_view()),
 
     path("statistics/overview/<int:start>/<int:end>", AdminStatisticsView.as_view()),
 
