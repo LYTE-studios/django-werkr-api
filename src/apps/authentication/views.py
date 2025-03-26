@@ -39,7 +39,7 @@ from .utils.jwt_auth_util import JWTAuthUtil
 from .serializers import WorkerProfileSerializer, DashboardFlowSerializer
 from .models.profiles.worker_profile import WorkerProfile
 from django.contrib.auth import get_user_model, login
-
+import uuid
 User = get_user_model()
 
 
@@ -954,7 +954,8 @@ class WorkerDetailView(JWTBaseAuthView):
             Response: A response with an error message and status code if there is an error in the request data.
         """
         try:
-            worker = User.objects.get(id=kwargs['id'], groups__name__contains=WORKERS_GROUP_NAME)
+            user_id = uuid.UUID(kwargs['id'])
+            worker = User.objects.get(id=user_id, groups__name__contains=WORKERS_GROUP_NAME)
         except User.DoesNotExist:
             return HttpResponseNotFound()
 
