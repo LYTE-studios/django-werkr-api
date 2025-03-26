@@ -7,8 +7,8 @@ from apps.core.utils.formatters import FormattingUtil
 from apps.jobs.models import JobApplication, Job, JobApplicationState
 from apps.notifications.managers.notification_manager import NotificationManager, create_global_notification
 from apps.notifications.models import ApprovedMailTemplate, DeniedMailTemplate, SelectedWorkerTemplate
-from apps.legal.services.dimona_service import DimonaService
 from apps.legal.utils.contract_util import ContractUtil
+from apps.legal.services.link2prisma_service import Link2PrismaService
 
 
 class JobManager(models.Manager):
@@ -45,7 +45,7 @@ class JobManager(models.Manager):
         if (job.max_workers - selected_workers) > 0 and send_new_push:
             JobManager._send_job_notification(job=job, title='New spot available!', )
 
-        DimonaService.cancel_dimona(application)
+        Link2PrismaService.handle_job_cancellation(application)
         
         DeniedMailTemplate().send(recipients=[{'Email': application.worker.email}], 
                                   data={"job_title": job.title, "city": job.address.city or 'Belgium',})
@@ -99,8 +99,6 @@ class JobManager(models.Manager):
 
         """
         Processes job application approval by performing the following steps:
-
-        - Creates a Dimona declaration using DimonaService.create_dimona.
         - Updates the application state to 'approved'.
         - Sends a notification to the worker about the approval.
         - Rejects overlapping applications to prevent scheduling conflicts.
@@ -111,7 +109,7 @@ class JobManager(models.Manager):
         application (JobApplication): The job application to approve.
         """
 
-        DimonaService.create_dimona(application)
+        Link2PrismaService.handle_job_approval(application)
 
         application.application_state = JobApplicationState.approved
 

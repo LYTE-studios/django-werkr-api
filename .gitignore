@@ -174,3 +174,8 @@ my_secrets.py
 /trade_journal/my_secrets.py
 signature.png
 media/
+
+# Certificates and sensitive files
+src/certificates/
+*.pfx
+*.p12

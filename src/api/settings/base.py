@@ -24,6 +24,7 @@ THIRD_PARTY_APPS = [
     'rest_framework',
     'corsheaders',
     'drf_yasg',
+    'django_celery_beat',
 ]
 
 LOCAL_APPS = [
@@ -204,6 +205,20 @@ EMPLOYER_DATA = {
 
 DIMONA_CLIENT_ID = config('DIMONA_CLIENT_ID')
 JWT_SECRET = config('JWT_SECRET')
+
+# Link2Prisma configuration
+LINK2PRISMA_BASE_URL = config('LINK2PRISMA_BASE_URL', default='https://prisma.paycover.be/link2prisma/link2prisma.svc')
+LINK2PRISMA_PFX_PATH = config('LINK2PRISMA_PFX_PATH', default=os.path.join(BASE_DIR, 'certificates', 'link2prisma.pfx'))
+LINK2PRISMA_PFX_PASSWORD = config('LINK2PRISMA_PFX_PASSWORD', default=None)  # Password for the PFX certificate
+LINK2PRISMA_EMPLOYER_REF = config('LINK2PRISMA_EMPLOYER_REF', default='test_employer_ref')  # Use test ref in development
+
+# Celery Configuration
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
+CELERY_TIMEZONE = 'Europe/Brussels'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # Sentry configuration
 SENTRY_DSN = config('SENTRY_DSN', default=None)

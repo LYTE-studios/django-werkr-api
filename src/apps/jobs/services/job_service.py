@@ -23,21 +23,36 @@ class JobService:
 
     @staticmethod
     def delete_job(job_id):
+        from apps.legal.services.link2prisma_service import Link2PrismaService
+
         job = get_object_or_404(Job, id=job_id)
         job.archived = True
         job.selected_workers = 0
         job.save(update_fields=['archived', 'selected_workers'])
 
+        # Get approved applications before changing their state
         applications = JobApplication.objects.filter(job_id=job.id, application_state=JobApplicationState.approved)
-        applications.update(application_state=JobApplicationState.rejected)
-
+        
+        # Cancel Dimona declarations for all approved applications
         for application in applications:
+            try:
+                Link2PrismaService.handle_job_cancellation(application)
+            except Exception as e:
+                # Log error but don't prevent job deletion
+                NotificationManager.notify_admin(
+                    'Link2Prisma Job Cancellation Error',
+                    f"Error cancelling Dimona declaration for job {job.id}, worker {application.worker.id}: {str(e)}"
+                )
+
             NotificationManager.create_notification_for_user(
                 application.worker, 'Your job got cancelled!', application.job.title, send_mail=False, image_url=None
             )
 
-            CancelledMailTemplate().send(recipients=[{'Email': application.worker.email}],   
-                                         data={"job_title": application.job.title,})
+            CancelledMailTemplate().send(recipients=[{'Email': application.worker.email}],
+                                       data={"job_title": application.job.title,})
+
+        # Update application states after handling Dimona cancellations
+        applications.update(application_state=JobApplicationState.rejected)
 
     @staticmethod
     def update_job(job_id, data):

@@ -15,7 +15,7 @@ class ExperienceType(models.TextChoices):
 class Location(models.Model):
     name = models.CharField(max_length=64, null=True)
 
-    weight = models.IntegerField(max_length=16,default=0)
+    weight = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name + ' at ' + str(self.weight)
@@ -32,7 +32,7 @@ class JobType(models.Model):
 
     name = models.CharField(max_length=32, unique=True, null=False)
 
-    weight = models.IntegerField(max_length=16,default=0)
+    weight = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name + ' at ' + str(self.weight)
@@ -53,7 +53,7 @@ class UserJobType(models.Model):
 class SituationType(models.Model):
     name = models.CharField(max_length=32, unique=True, null=False)
 
-    weight = models.IntegerField(max_length=16,default=0)
+    weight = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name + ' at ' + str(self.weight)
@@ -69,7 +69,7 @@ class WorkType(models.Model):
 
     name = models.CharField(max_length=32, unique=True, null=False)
 
-    weight = models.IntegerField(max_length=16,default=0)
+    weight = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name + ' at ' + str(self.weight)

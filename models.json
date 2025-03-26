@@ -1,0 +1,5636 @@
+
+[
+    {
+    "title": "AbsenceNote",
+    "type": "object",
+    "properties": {
+      "Notedate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Startdate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Enddate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Reason": {
+        "type": "string",
+        "enum": [
+          "Sickness",
+          "Accident",
+          "Extension"
+        ]
+      },
+      "MayLeaveHouse": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "Resumedate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Resume": {
+        "type": "string",
+        "enum": [
+          "None",
+          "Full",
+          "Partial"
+        ]
+      },
+      "SalaryCode": {
+        "type": "integer",
+        "minimum": 800,
+        "maximum": 899
+      }
+    },
+    "required": [
+      "Notedate",
+      "Startdate",
+      "Enddate"
+    ]
+  },
+  {
+    "title": "Absences",
+    "description": "List of absences of multiple workers",
+    "definitions": {
+      "Absence": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Day": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "Code": {
+            "type": "integer",
+            "minimum": 1.0,
+            "maximum": 6999.0
+          },
+          "Shift": {
+            "type": "integer",
+            "minimum": 1.0,
+            "maximum": 99.0
+          },
+          "Hours": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 23.99
+          }
+        },
+        "required": [
+          "Day",
+          "Code"
+        ]
+      },
+      "clsAbsences": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "WorkerNumber": {
+            "type": "integer",
+            "minimum": 1.0,
+            "maximum": 9999999.0
+          },
+          "Absences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Absence"
+            }
+          }
+        },
+        "required": [
+          "WorkerNumber",
+          "Absences"
+        ]
+      }
+    },
+    "type": "array",
+    "items": {
+      "$ref": "#/definitions/clsAbsences"
+    }
+  },
+  {
+    "title": "New Dimona",
+    "definitions": {
+      "UsingData": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "UsingJointCommissionNbr": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[0-9,.]*$"
+          },
+          "UsingEmployerName": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 40
+          },
+          "UsingEmployerCompanyID": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 9999999999.0
+          },
+          "UsingStreet": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 100
+          },
+          "UsingHouseNumber": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 10
+          },
+          "UsingPostBox": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 5
+          },
+          "UsingZIPCode": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 12
+          },
+          "UsingCity": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 30
+          },
+          "UsingCountry": {
+            "type": "string",
+            "default": "00150",
+            "minLength": 5,
+            "maxLength": 5,
+            "pattern": "^[0-9]*$"
+          }
+        }
+      }
+    },
+    "type": "object",
+    "properties": {
+      "NatureDeclaration": {
+        "type": "string",
+        "enum": [
+          "DimonaIn",
+          "DimonaOut",
+          "DimonaModification",
+          "DimonaCancel"
+        ]
+      },
+      "ContractType": {
+        "type": "string",
+        "enum": [
+          "Normal",
+          "Extra",
+          "Apprentice",
+          "IBO",
+          "TRI",
+          "DWD",
+          "A17",
+          "Flex",
+          "STG",
+          "S17",
+          "O17"  
+        ]
+      },
+      "Email": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 100
+      },
+      "Name": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 40
+      },
+      "Firstname": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 25
+      },
+      "Initial": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1
+      },
+      "INSS": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 99999999999.0
+      },
+      "Sex": {
+        "type": "string",
+        "enum": [
+          "M",
+          "F"
+        ]
+      },
+      "Birthdate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Birthplace": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 30
+      },
+      "BirthplaceCountry": {
+        "type": "string",
+        "default": "00150",
+        "minLength": 5,
+        "maxLength": 5,
+        "pattern": "^[0-9]*$"
+      },
+      "Nationality": {
+        "type": "string",
+        "default": "00150",
+        "minLength": 5,
+        "maxLength": 5,
+        "pattern": "^[0-9]*$"
+      },
+      "Street": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 100
+      },
+      "HouseNumber": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 10
+      },
+      "PostBox": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 5
+      },
+      "ZIPCode": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 12
+      },
+      "City": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 30
+      },
+      "Country": {
+        "type": "string",
+        "default": "00150",
+        "minLength": 5,
+        "maxLength": 5,
+        "pattern": "^[0-9]*$"
+      },
+      "CatRSZ": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 3,
+        "pattern": "^[0-9]*$"
+      },
+      "Student": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "ActivityWithRisk": {
+        "type": "integer"
+      },
+      "WorkerStatus": {
+        "type": "string",
+        "enum": [
+          "F1",
+          "F2"
+        ]
+      },
+      "EmploymentNature": {
+        "type": "string",
+        "enum": [
+          "Employee",
+          "Worker"
+        ]
+      },
+      "DimonaPeriodId": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 999999999999.0
+      },
+      "StartingDate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "EndingDate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "StartingHour": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 12,
+        "pattern": "^[0-9]*$"
+      },
+      "EndingHour": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 12,
+        "pattern": "^[0-9]*$"
+      },
+      "StartingHour2": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 12,
+        "pattern": "^[0-9]*$"
+      },
+      "EndingHour2": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 12,
+        "pattern": "^[0-9]*$"
+      },
+      "FirstMonthC32ANbr": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 999999999999.0
+      },
+      "NextMonthC32ANbr": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 999999999999.0
+      },
+      "PlannedHoursNbr": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 999.0
+      },
+      "UsingData": {
+        "$ref": "#/definitions/UsingData"
+      },
+      "Receipt": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 999999999999.0
+      },
+      "JointCommissionNbr": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 6,
+        "pattern": "^[0-9,.]*$"
+      },
+      "WorkerType": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 3
+      },
+      "LastAction": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1
+      },
+      "ExceedingHoursNbr": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 999.0
+      },
+      "QuotaExceeded": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "Belated": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "Status": {
+        "type": "string",
+        "enum": [
+          "Blocked",
+          "InProgress",
+          "OK",
+          "Error"
+        ]
+      },
+      "Error": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "NatureDeclaration",
+      "Email",
+      "StartingDate"
+    ]
+  },{
+    "title": "Address",
+    "description": "address of a worker",
+    "type": "object",
+    "properties": {
+      "Startdate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Enddate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Street": {
+        "type": "string",
+        "maxLength": 100
+      },
+      "HouseNumber": {
+        "type": "string",
+        "maxLength": 10
+      },
+      "PostBox": {
+        "type": "string",
+        "maxLength": 5
+      },
+      "ZIPCode": {
+        "type": "string",
+        "maxLength": 12
+      },
+      "City": {
+        "type": "string",
+        "maxLength": 30
+      },
+      "Country": {
+        "type": "string",
+        "default": "00150",
+        "minLength": 5,
+        "maxLength": 5,
+        "pattern": "^[0-9]*$"
+      },
+      "Distance": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 99999.9
+      }
+    },
+    "required": [
+      "Startdate",
+      "Street",
+      "HouseNumber",
+      "ZIPCode",
+      "City",
+      "Country"
+    ]
+  },
+  {
+    "title": "Communication",
+    "description": "Communication information of a worker",
+    "type": "object",
+    "properties": {
+      "ID": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 100
+      },
+      "CommunicationType": {
+        "type": "string",
+        "enum": [
+          "None",
+          "Phone",
+          "GSM",
+          "Email",
+          "PrivatePhone",
+          "Fax",
+          "InternalPhone",
+          "PrivateEmail",
+          "GSMEntreprise",
+          "Website"
+        ]
+      },
+      "Value": {
+        "type": "string",
+        "maxLength": 100
+      },
+      "ContactPerson": {
+        "type": "string",
+        "maxLength": 100
+      },
+      "ContactPersonFirstname": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 50
+      }
+    },
+    "required": [
+      "CommunicationType",
+      "Value"
+    ]
+  },
+  {
+    "title": "Companycar",
+    "type": "object",
+    "properties": {
+      "StartingDate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "EndingDate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "WorkerId": {
+        "type": "integer"
+      },
+      "LicensePlate": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "CatRSZ": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 3,
+        "pattern": "^[0-9]*$"
+      },
+      "MotorType": {
+        "type": "string",
+        "enum": [
+          "Gasoline",
+          "Diesel",
+          "LPG",
+          "Electric",
+          "CNG"
+        ]
+      },
+      "TaxHorsepower": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 99.0
+      },
+      "Co2EmissionsHybrideWLTP": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 500.0
+      },
+      "Co2EmissionsHybride": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 500.0
+      },
+      "Co2EmissionsWLTP": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 500.0
+      },
+      "Co2Emissions": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 500.0
+      },
+      "Code": {
+        "type": "integer",
+        "minimum": 4000.0,
+        "maximum": 8999.0
+      },
+      "FuelCard": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 20
+      },
+      "Brand": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 50
+      },
+      "OrderDate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "RegistrationDate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "CatalogPrice": {
+        "type": "number"
+      },
+      "LightTruck": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "Informative": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "PoolCar": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "PersContributionAmount": {
+        "type": "number"
+      },
+      "PersContributionPercentage": {
+        "type": "number"
+      },
+      "PersContributionCode": {
+        "type": "integer",
+        "minimum": 4000.0,
+        "maximum": 8999.0
+      }
+    },
+    "required": [
+      "StartingDate",
+      "LicensePlate"
+    ]
+  },
+  {
+    "title": "Contract",
+    "description": "Contract of a Worker",
+    "definitions": {
+      "CareerBreakDefinition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Exist": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Kind": {
+            "type": "string",
+            "enum": [
+              "Fulltime",
+              "PartTimeOneFifth",
+              "PartTimeOneQuarter",
+              "PartTimeOneThird",
+              "PartTimeHalf",
+              "PartTimeThreeFifths",
+              "PartTimeOneTenth"
+            ]
+          },
+          "Reason": {
+            "type": "string",
+            "enum": [
+              "PalliativeCare",
+              "SeriouslyIll",
+              "Other",
+              "ParentalLeave",
+              "Crisis",
+              "FamilyCare",
+              "EndOfCareer",
+              "SickChild",
+              "FamilyCareCorona",
+              "ChildCareUnder8",
+              "ChildCareHandicapUnder21",
+              "CertifiedTraining"
+            ]
+          },
+          "OriginallyContractType": {
+            "type": "string",
+            "enum": [
+              "Fulltime",
+              "PartTime"
+            ]
+          },
+          "WeekhoursWorkerBefore": {
+            "type": "number"
+          },
+          "WeekhoursEmployerBefore": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "Exist"
+        ]
+      },
+      "CertainWorkDefinition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Exist": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 250
+          }
+        },
+        "required": [
+          "Exist"
+        ]
+      },
+      "ClsDimona": {
+        "type": "object",
+        "properties": {
+          "DimonaPeriodId": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 999999999999.0
+          },
+          "StartingDate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "EndingDate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "StartingHour": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 12,
+            "pattern": "^[0-9]*$"
+          },
+          "EndingHour": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 12,
+            "pattern": "^[0-9]*$"
+          },
+          "StartingHour2": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 12,
+            "pattern": "^[0-9]*$"
+          },
+          "EndingHour2": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 12,
+            "pattern": "^[0-9]*$"
+          },
+          "FirstMonthC32ANbr": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 999999999999.0
+          },
+          "NextMonthC32ANbr": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 999999999999.0
+          },
+          "PlannedHoursNbr": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 999.0
+          },
+          "UsingData": {
+            "$ref": "#/definitions/UsingData"
+          },
+          "Receipt": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 999999999999.0
+          },
+          "JointCommissionNbr": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 6,
+            "pattern": "^[0-9,.]*$"
+          },
+          "WorkerType": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "LastAction": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1
+          },
+          "ExceedingHoursNbr": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 999.0
+          },
+          "QuotaExceeded": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Belated": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Status": {
+            "type": "string",
+            "enum": [
+              "Blocked",
+              "InProgress",
+              "OK",
+              "Error"
+            ]
+          },
+          "Error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "StartingDate"
+        ]
+      },
+      "clsSalaryComposition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Startdate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "Enddate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "Code": {
+            "type": "integer",
+            "minimum": 1.0,
+            "maximum": 8999.0
+          },
+          "Days": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 9999.0
+          },
+          "Hours": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 9999.0
+          },
+          "Unity": {
+            "type": "number"
+          },
+          "Percentage": {
+            "type": "number"
+          },
+          "Amount": {
+            "type": "number"
+          },
+          "Supplement": {
+            "type": "number"
+          },
+          "TypeOfIndexing": {
+            "type": "string",
+            "enum": [
+              "NoIndexation",
+              "Indexation",
+              "FrozenSalary",
+              "SalaryAboveScale"
+            ]
+          }
+        },
+        "required": [
+          "Startdate",
+          "Code"
+        ]
+      },
+      "InternationalEmploymentDefinition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Exist": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Kind": {
+            "type": "string",
+            "enum": [
+              "SecondmentFrom",
+              "SalarySplit",
+              "FrontierWorker",
+              "SecondmentTo"
+            ]
+          },
+          "BorderCountry": {
+            "type": "string",
+            "default": "00111",
+            "minLength": 5,
+            "maxLength": 5,
+            "pattern": "^[0-9]*$"
+          }
+        },
+        "required": [
+          "Exist"
+        ]
+      },
+      "MethodOfRemunerationDefinition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Exist": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Remuneration": {
+            "type": "string",
+            "enum": [
+              "Commission",
+              "Piece",
+              "ServiceVouchers"
+            ]
+          },
+          "Payment": {
+            "type": "string",
+            "enum": [
+              "Fixed",
+              "Variable",
+              "Mixed"
+            ]
+          }
+        },
+        "required": [
+          "Exist"
+        ]
+      },
+      "ProgressiveWorkResumptionDefinition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Exist": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Risk": {
+            "type": "string",
+            "enum": [
+              "IncapacityForWork",
+              "MaternityProtection"
+            ]
+          },
+          "Hours": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 40.0
+          },
+          "Minutes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 60.0
+          },
+          "Days": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 5.0
+          },
+          "StartdateIllness": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "Comment": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "Exist"
+        ]
+      },
+      "ProtectedEmployeeDefinition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Exist": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Reason": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 4,
+            "pattern": "^[0-9]*$"
+          },
+          "Startdate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "Enddate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          }
+        },
+        "required": [
+          "Exist"
+        ]
+      },
+      "RetiredDefinition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Exist": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Kind": {
+            "type": "string",
+            "enum": [
+              "PensionPrivateSector",
+              "SurvivalPension",
+              "PensionSelfEmployed",
+              "pensionPublicSector"
+            ]
+          },
+          "DateRetired": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "ApplyCollecting2ndPensionPillar": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          }
+        },
+        "required": [
+          "Exist"
+        ]
+      },
+      "SportsPersonDefinition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Exist": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "RecognizedForeignSportsperson": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "OpportunityContract": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          }
+        },
+        "required": [
+          "Exist"
+        ]
+      },
+      "StudentDefinition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Exist": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "SolidarityContribution": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          }
+        },
+        "required": [
+          "Exist",
+          "SolidarityContribution"
+        ]
+      },
+      "UsingData": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "UsingJointCommissionNbr": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[0-9,.]*$"
+          },
+          "UsingEmployerName": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 40
+          },
+          "UsingEmployerCompanyID": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 9999999999.0
+          },
+          "UsingStreet": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 100
+          },
+          "UsingHouseNumber": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 10
+          },
+          "UsingPostBox": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 5
+          },
+          "UsingZIPCode": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 12
+          },
+          "UsingCity": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 30
+          },
+          "UsingCountry": {
+            "type": "string",
+            "default": "00150",
+            "minLength": 5,
+            "maxLength": 5,
+            "pattern": "^[0-9]*$"
+          }
+        }
+      }
+    },
+    "type": "object",
+    "properties": {
+      "Startdate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Enddate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "EmploymentStatus": {
+        "type": "string",
+        "enum": [
+          "Workman",
+          "Employee",
+          "Director"
+        ]
+      },
+      "Contract": {
+        "type": "string",
+        "enum": [
+          "Usually",
+          "FlexiVerbal",
+          "FlexiWritten",
+          "FlexiLiable",
+          "Sportsperson",
+          "Housekeeper",
+          "Servant",
+          "Agriculture",
+          "Homework",
+          "HomeworkChildcare",
+          "Physician",
+          "PhysicianTraining",
+          "PhysicianIndependant",
+          "ApprenticeFlemisch",
+          "ApprenticeFrench",
+          "ApprenticeGerman",
+          "ApprenticeManager",
+          "ApprenticeIndustrial",
+          "ApprenticeSocio",
+          "ApprenticeBio",
+          "ApprenticeAlternating",
+          "EarlyRetirement",
+          "EarlyRetirementPartTime",
+          "FreeNOSS",
+          "FreeNOSSManager",
+          "FreeNOSSOther",
+          "FreeNOSSSportingEvent",
+          "FreeNOSSHelper",
+          "FreeNOSSSocio",
+          "FreeNOSSEducation",
+          "FreeNOSSSpecialCultures",
+          "FreeNOSSVolunteer",
+          "Horeca",
+          "HorecaExtraHourLiable",
+          "HorecaExtraDayLiable",
+          "HorecaExtraHourForfait",
+          "HorecaExtraDayForfait",
+          "HorecaFlexiVerbal",
+          "HorecaFlexiWritten",
+          "HorecaFlexiLiable",
+          "Construction",
+          "ConstructionAlternating",
+          "ConstructionApprenticeYounger",
+          "ConstructionApprentice",
+          "ConstructionGodfather",
+          "JobTrainingIBO",
+          "JobTrainingSchool",
+          "JobTrainingVDAB",
+          "JobTrainingLiberalProfession",
+          "JobTrainingEntry",
+          "JobTrainingPFIWa",
+          "JobTrainingABO",
+          "JobTrainingPFIBx",
+          "JobTrainingBIO",
+          "JobTrainingAlternating",
+          "JobTrainingDisability",
+          "NonProfitRiziv",
+          "NonProfitGesco",
+          "NonProfitDAC",
+          "NonProfitPrime",
+          "NonProfitLowSkilled",
+          "Artist",
+          "ArtistWithContract",
+          "ArtistWithoutContract",
+          "Transport",
+          "TransportNonMobile",
+          "TransportGarage",
+          "Aircrew",
+          "AircrewPilot",
+          "AircrewCabinCrew",
+          "Interim",
+          "InterimTemporary",
+          "InterimsPermanent",
+          "External",
+          "ExternalApplicant",
+          "ExternalSubcontractor",
+          "ExternalAgentIndependant",
+          "ExternalExtern",
+          "ExternalIntern",
+          "ExternalLegalPerson",
+          "SalesRepresentative",
+          "SportsTrainer"
+        ]
+      },
+      "CatRSZ": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 3,
+        "pattern": "^[0-9]*$"
+      },
+      "ParCom": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 10,
+        "pattern": "^[0-9. ]*$"
+      },
+      "DocumentC78": {
+        "type": "string",
+        "enum": [
+          "Nihil",
+          "C783",
+          "C784",
+          "C78Activa",
+          "C78Start",
+          "C78Sine",
+          "C78ShortTerm",
+          "WalloniaLongtermJobSeekers",
+          "WalloniaYoungJobSeekers",
+          "WalloniaImpulsionInsertion",
+          "BrusselsLongtermJobSeekers",
+          "BrusselsReducedAbility"
+        ]
+      },
+      "CodeC98": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "CodeC131A": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "CodeC131ARequestFT": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "CodeC131": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "Risk": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 10
+      },
+      "SocialSecurityCard": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "WorkPermit": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "DateInService": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Seniority": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "DateProfessionalExperience": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "ScaleSalarySeniority": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "StartProbationPeriod": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "EndProbationPeriod": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "FixedTerm": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "EndFixedTerm": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "DateOutService": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "ReasonOut": {
+        "type": "string"
+      },
+      "WorkingTime": {
+        "type": "string",
+        "enum": [
+          "Fulltime",
+          "PartTime"
+        ]
+      },
+      "SpecWorkingTime": {
+        "type": "string",
+        "enum": [
+          "Regular",
+          "Interruptions",
+          "SeasonalWorker"
+        ]
+      },
+      "Schedule": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 4
+      },
+      "WeekhoursWorker": {
+        "type": "number",
+        "minimum": 1.0,
+        "maximum": 50.0
+      },
+      "WeekhoursEmployer": {
+        "type": "number",
+        "minimum": 1.0,
+        "maximum": 50.0
+      },
+      "WeekhoursWorkerAverage": {
+        "type": "number",
+        "minimum": 1.0,
+        "maximum": 50.0
+      },
+      "WeekhoursEmployerAverage": {
+        "type": "number",
+        "minimum": 1.0,
+        "maximum": 50.0
+      },
+      "WeekhoursWorkerEffective": {
+        "type": "number",
+        "minimum": 1.0,
+        "maximum": 50.0
+      },
+      "WeekhoursEmployerEffective": {
+        "type": "number",
+        "minimum": 1.0,
+        "maximum": 50.0
+      },
+      "DaysWeek": {
+        "type": "number"
+      },
+      "DaysWeekFT": {
+        "type": "number"
+      },
+      "ReducingWorkingKind": {
+        "type": "string",
+        "enum": [
+          "Nihil",
+          "Paid",
+          "Unpaid"
+        ]
+      },
+      "ReducingWorkingKindDays": {
+        "type": "number"
+      },
+      "ReducingWorkingKindHours": {
+        "type": "number"
+      },
+      "PartTimeReturnTowork": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 4
+      },
+      "ASRSchedule": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 2
+      },
+      "ProffCat": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 10
+      },
+      "Function": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 10
+      },
+      "FunctionDescription": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 50
+      },
+      "SocialBalanceJoblevel": {
+        "type": "string",
+        "enum": [
+          "OperationalStaff",
+          "ExecutiveStaff",
+          "ManagementStaff",
+          "ByFunction"
+        ]
+      },
+      "Office": {
+        "type": "integer"
+      },
+      "Division": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 10
+      },
+      "InvoicingDivision": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 10
+      },
+      "CostCentre": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "ScaleSalaryPrisma": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "ScaleSalaryUse": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "ScaleSalaryDefinition": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 10
+      },
+      "ScaleSalaryCategory": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 10
+      },
+      "ScaleSalaryScale": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 100
+      },
+      "AgricultureType": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          null,
+          "Horticulture",
+          "HorticultureChicory",
+          "Agriculture",
+          "HorticultureMushroom",
+          "HorticultureFruit"
+        ]
+      },
+      "NoDimona": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "NoDMFA": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "NoASRDRS": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "Security": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 10
+      },
+      "CareerBreak": {
+        "$ref": "#/definitions/CareerBreakDefinition"
+      },
+      "Retired": {
+        "$ref": "#/definitions/RetiredDefinition"
+      },
+      "ProtectedEmployee": {
+        "$ref": "#/definitions/ProtectedEmployeeDefinition"
+      },
+      "Sportsperson": {
+        "$ref": "#/definitions/SportsPersonDefinition"
+      },
+      "CertainWork": {
+        "$ref": "#/definitions/CertainWorkDefinition"
+      },
+      "Student": {
+        "$ref": "#/definitions/StudentDefinition"
+      },
+      "ProgressiveWorkResumption": {
+        "$ref": "#/definitions/ProgressiveWorkResumptionDefinition"
+      },
+      "MethodOfRemuneration": {
+        "$ref": "#/definitions/MethodOfRemunerationDefinition"
+      },
+      "InternationalEmployment": {
+        "$ref": "#/definitions/InternationalEmploymentDefinition"
+      },
+      "Dimona": {
+        "$ref": "#/definitions/ClsDimona"
+      },
+      "SalaryCompositions": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/clsSalaryComposition"
+        }
+      }
+    },
+    "required": [
+      "Startdate"
+    ]
+  },
+  {
+    "title": "Cost centre",
+    "definitions": {
+      "CostCentre": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "CostCentre": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 15
+          },
+          "Percentage": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 100.0
+          }
+        }
+      }
+    },
+    "type": "object",
+    "properties": {
+      "Startdate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Enddate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "CostCentres": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/CostCentre"
+        }
+      }
+    },
+    "required": [
+      "Startdate",
+      "CostCentres"
+    ]
+  },
+  {
+    "title": "Dimona",
+    "definitions": {
+      "UsingData": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "UsingJointCommissionNbr": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[0-9,.]*$"
+          },
+          "UsingEmployerName": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 40
+          },
+          "UsingEmployerCompanyID": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 9999999999.0
+          },
+          "UsingStreet": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 100
+          },
+          "UsingHouseNumber": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 10
+          },
+          "UsingPostBox": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 5
+          },
+          "UsingZIPCode": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 12
+          },
+          "UsingCity": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 30
+          },
+          "UsingCountry": {
+            "type": "string",
+            "default": "00150",
+            "minLength": 5,
+            "maxLength": 5,
+            "pattern": "^[0-9]*$"
+          }
+        }
+      }
+    },
+    "type": "object",
+    "properties": {
+      "DimonaPeriodId": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 999999999999.0
+      },
+      "StartingDate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "EndingDate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "StartingHour": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 12,
+        "pattern": "^[0-9]*$"
+      },
+      "EndingHour": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 12,
+        "pattern": "^[0-9]*$"
+      },
+      "FirstMonthC32ANbr": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 999999999999.0
+      },
+      "NextMonthC32ANbr": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 999999999999.0
+      },
+      "PlannedHoursNbr": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 999.0
+      },
+      "UsingData": {
+        "$ref": "#/definitions/UsingData"
+      },
+      "Receipt": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 999999999999.0
+      },
+      "JointCommissionNbr": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 6,
+        "pattern": "^[0-9,.]*$"
+      },
+      "WorkerType": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 3
+      },
+      "LastAction": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1
+      },
+      "ExceedingHoursNbr": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 999.0
+      },
+      "QuotaExceeded": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "Belated": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "Status": {
+        "type": "string",
+        "enum": [
+          "Blocked",
+          "InProgress",
+          "OK",
+          "Error"
+        ]
+      },
+      "Error": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "StartingDate"
+    ]
+  },
+  {
+    "title": "Divergent salaryscale",
+    "type": "array",
+    "items": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "Startdate": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 8,
+          "pattern": "^[0-9]*$"
+        },
+        "SalaryScale": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 30
+        },
+        "SalaryScaleShift": {
+          "type": "integer"
+        },
+        "SalaryScaleCategory": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 30
+        }
+      },
+      "required": [
+        "Startdate",
+        "SalaryScale",
+        "SalaryScaleShift",
+        "SalaryScaleCategory"
+      ]
+    }
+  },
+  {
+    "title": "Divergent payment",
+    "type": "object",
+    "properties": {
+      "Startdate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Enddate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "PayoutType": {
+        "type": "string",
+        "enum": [
+          "Salarycode",
+          "Amount",
+          "Percentage"
+        ]
+      },
+      "SalaryCode": {
+        "type": "integer",
+        "minimum": 1.0,
+        "maximum": 8999.0
+      },
+      "Amount": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 10000.0
+      },
+      "PayWay": {
+        "type": "string",
+        "enum": [
+          "Cash",
+          "Transfer",
+          "Electronic",
+          "AssignmentList"
+        ]
+      },
+      "Beneficiary": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 30
+      },
+      "Street": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 30
+      },
+      "HouseNumber": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 5
+      },
+      "PostBox": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 5
+      },
+      "ZIPCode": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 12
+      },
+      "City": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 30
+      },
+      "Reference": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 30
+      },
+      "BankAccount": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 45
+      },
+      "BICCode": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      }
+    },
+    "required": [
+      "Startdate",
+      "Enddate",
+      "PayoutType",
+      "Amount",
+      "PayWay",
+      "BankAccount",
+      "BICCode"
+    ]
+  },
+  {
+    "title": "List of documents",
+    "type": "array",
+    "items": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "DocumentID": {
+          "type": "integer"
+        },
+        "DocumentType": {
+          "type": "string",
+          "enum": [
+            "ASR_informationSheet",
+            "ASR_reinstatement",
+            "ASR_C32employerControlCard",
+            "ASR_C131B",
+            "ASR_TemporaryUnemployment",
+            "ASR_C32employerBenefitRequest",
+            "ASR_C131A",
+            "ASR_FirstDayOfUnemployment",
+            "ASR_progressiveReinstatement",
+            "SalarySlip",
+            "OrderListPayments",
+            "SummaryPayment",
+            "CoinsDistribution",
+            "ElectronicPayments",
+            "Invoice",
+            "Performancestate",
+            "AccountingMovements",
+            "PayrollStatementByCostcentre",
+            "WageCharge",
+            "VacationCertificate",
+            "CertificateFiscalExemption",
+            "IndividualAccount",
+            "SocialBalance",
+            "PerformanceStateTransport",
+            "TotalsPerPaycode",
+            "OverviewMealVouchers",
+            "EmploymentCertificate",
+            "EmployeeSheet",
+            "C103YouthVacation",
+            "SalarySlipFisherman",
+            "ListPrestationsTransport",
+            "ListNegativeSalaryCalculations",
+            "CalculateCost",
+            "LetterPaymentEmployer",
+            "ListCalculatedWageAttachments",
+            "C4",
+            "DetailFees",
+            "MissingVacationCertificates",
+            "ListOfCompanyCars",
+            "C103SeniorVacation",
+            "C98",
+            "Bankfile",
+            "BelcotaxSheets",
+            "UnemploymentFund",
+            "NoticeTempUnemployment",
+            "LetterHeadquarters",
+            "C106ACorona",
+            "ListOpenInvoices",
+            "PaymentReminders",
+            "LetterDomiciliation",
+            "RemindersPT",
+            "RemindersNSSO",
+            "Extra"
+          ]
+        },
+        "PublicationDate": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Worker": {
+          "type": "integer"
+        },
+        "Month": {
+          "type": "integer"
+        },
+        "Year": {
+          "type": "integer"
+        },
+        "Size": {
+          "type": "integer"
+        },
+        "Language": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "DocumentID",
+        "DocumentType",
+        "PublicationDate",
+        "Worker",
+        "Month",
+        "Year",
+        "Size",
+        "Language"
+      ]
+    }
+  },
+  {
+    "title": "Familystatus",
+    "description": "Familystatus of a worker",
+    "type": "object",
+    "properties": {
+      "Startdate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Enddate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "CivilStatus": {
+        "type": "string",
+        "enum": [
+          "Single",
+          "Married",
+          "Widow",
+          "Divorced",
+          "Separated",
+          "Cohabitation",
+          "LiveTogether"
+        ]
+      },
+      "WorkerHandicapped": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "WorkerSingleWithChildren": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "SpouseWithIncome": {
+        "type": "string",
+        "enum": [
+          "WithIncome",
+          "WithoutIncome",
+          "ProffIncomeLessThan235",
+          "ProffIncomeLessThan141",
+          "ProffIncomeLessThan469"
+        ]
+      },
+      "SpouseHandicapped": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "SpouseName": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 40
+      },
+      "SpouseFirstname": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 25
+      },
+      "SpouseINSS": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 99999999999.0
+      },
+      "SpouseSex": {
+        "type": "string",
+        "enum": [
+          "M",
+          "F"
+        ]
+      },
+      "SpouseBirthdate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "SpouseProfession": {
+        "type": "string",
+        "enum": [
+          "Handworker",
+          "Servant",
+          "Employee",
+          "SelfEmployed",
+          "Miner",
+          "Sailor",
+          "CivilServant",
+          "Other",
+          "Nil"
+        ]
+      },
+      "SpouseBirthplace": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 30
+      },
+      "ChildrenAtCharge": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 99.0
+      },
+      "ChildrenHandicapped": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 99.0
+      },
+      "OthersAtCharge": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 99.0
+      },
+      "OthersHandicapped": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 99.0
+      },
+      "Others65AtCharge": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 99.0
+      },
+      "WageGarnishmentChildrenAtCharge": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 99.0
+      },
+      "Others65Handicapped": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 99.0
+      },
+      "Others65NeedOfCare": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 99.0
+      },
+      "ChildBenefitInstitution": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 9999.0
+      },
+      "ChildBenefitReference": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "Weddingdate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      }
+    },
+    "required": [
+      "Startdate"
+    ]
+  },
+  {
+    "title": "Notification of first day of unemployment",
+    "type": "object",
+    "properties": {
+      "DateDeclaration": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "TypeOfUnEmployment": {
+        "type": "string",
+        "enum": [
+          "BadWeather",
+          "EconomicReason",
+          "TechnicalDisorder"
+        ]
+      },
+      "Email": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 255
+      },
+      "SerialNumber": {
+        "type": "integer"
+      },
+      "Comment": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 200
+      },
+      "YardStreet": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 35
+      },
+      "Yardhousenumber": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 10
+      },
+      "yardPostbox": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 4
+      },
+      "YardZIPcode": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 9
+      },
+      "YardCity": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 40
+      },
+      "YardCountry": {
+        "type": "string",
+        "default": "00150",
+        "minLength": 5,
+        "maxLength": 5,
+        "pattern": "^[0-9]*$"
+      },
+      "NatureBadWeather": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 40
+      },
+      "NatureWork": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 80
+      },
+      "ReasonImpossible": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 80
+      },
+      "Status": {
+        "type": "string",
+        "enum": [
+          "InProgress",
+          "OK",
+          "Error"
+        ]
+      },
+      "TicketNumber": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 20
+      },
+      "Error": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 255
+      },
+      "ListOfWorkers": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      }
+    },
+    "required": [
+      "DateDeclaration",
+      "TypeOfUnEmployment",
+      "Email",
+      "ListOfWorkers"
+    ]
+  },
+  {
+    "definitions": {
+      "ClsDimona": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "DimonaPeriodId": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 999999999999.0
+          },
+          "StartingDate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "EndingDate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "StartingHour": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 12,
+            "pattern": "^[0-9]*$"
+          },
+          "EndingHour": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 12,
+            "pattern": "^[0-9]*$"
+          },
+          "StartingHour2": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 12,
+            "pattern": "^[0-9]*$"
+          },
+          "EndingHour2": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 12,
+            "pattern": "^[0-9]*$"
+          },
+          "FirstMonthC32ANbr": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 999999999999.0
+          },
+          "NextMonthC32ANbr": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 999999999999.0
+          },
+          "PlannedHoursNbr": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 999.0
+          },
+          "UsingData": {
+            "$ref": "#/definitions/UsingData"
+          },
+          "Receipt": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 999999999999.0
+          },
+          "JointCommissionNbr": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 6,
+            "pattern": "^[0-9,.]*$"
+          },
+          "WorkerType": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "LastAction": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1
+          },
+          "ExceedingHoursNbr": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 999.0
+          },
+          "QuotaExceeded": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Belated": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Status": {
+            "type": "string",
+            "enum": [
+              "Blocked",
+              "InProgress",
+              "OK",
+              "Error"
+            ]
+          },
+          "Error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "StartingDate"
+        ]
+      },
+      "ClsDimonaWg": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "WorkerNumber": {
+            "type": "integer",
+            "minimum": 1.0,
+            "maximum": 9999999.0
+          },
+          "Dimona": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ClsDimona"
+            }
+          }
+        },
+        "required": [
+          "WorkerNumber"
+        ]
+      },
+      "UsingData": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "UsingJointCommissionNbr": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[0-9,.]*$"
+          },
+          "UsingEmployerName": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 40
+          },
+          "UsingEmployerCompanyID": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 9999999999.0
+          },
+          "UsingStreet": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 100
+          },
+          "UsingHouseNumber": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 10
+          },
+          "UsingPostBox": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 5
+          },
+          "UsingZIPCode": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 12
+          },
+          "UsingCity": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 30
+          },
+          "UsingCountry": {
+            "type": "string",
+            "default": "00150",
+            "minLength": 5,
+            "maxLength": 5,
+            "pattern": "^[0-9]*$"
+          }
+        }
+      }
+    },
+    "type": "array",
+    "items": {
+      "$ref": "#/definitions/ClsDimonaWg"
+    }
+  },
+  {
+    "title": "Modifications",
+    "type": "object",
+    "properties": {
+      "Worker": {
+        "type": "integer",
+        "minimum": 1.0,
+        "maximum": 9999999.0
+      },
+      "Action": {
+        "type": "string",
+        "enum": [
+          "unknown",
+          "add",
+          "update",
+          "delete",
+          "get"
+        ]
+      },
+      "Entity": {
+        "type": "string",
+        "enum": [
+          "Worker",
+          "Contract",
+          "Address",
+          "Communication",
+          "FamilyStatus",
+          "Tax",
+          "SalaryComposition"
+        ]
+      },
+      "Key": {
+        "type": "string"
+      },
+      "PreviousKey": {
+        "type": "string"
+      },
+      "ChangeDate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      }
+    },
+    "required": [
+      "Worker",
+      "Action",
+      "Entity",
+      "Key",
+      "ChangeDate"
+    ]
+  },
+  {
+    "title": "New Dimona",
+    "definitions": {
+      "UsingData": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "UsingJointCommissionNbr": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[0-9,.]*$"
+          },
+          "UsingEmployerName": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 40
+          },
+          "UsingEmployerCompanyID": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 9999999999.0
+          },
+          "UsingStreet": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 100
+          },
+          "UsingHouseNumber": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 10
+          },
+          "UsingPostBox": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 5
+          },
+          "UsingZIPCode": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 12
+          },
+          "UsingCity": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 30
+          },
+          "UsingCountry": {
+            "type": "string",
+            "default": "00150",
+            "minLength": 5,
+            "maxLength": 5,
+            "pattern": "^[0-9]*$"
+          }
+        }
+      }
+    },
+    "type": "object",
+    "properties": {
+      "NatureDeclaration": {
+        "type": "string",
+        "enum": [
+          "DimonaIn",
+          "DimonaOut",
+          "DimonaModification",
+          "DimonaCancel"
+        ]
+      },
+      "ContractType": {
+        "type": "string",
+        "enum": [
+          "Normal",
+          "Extra",
+          "Apprentice",
+          "IBO",
+          "TRI",
+          "DWD",
+          "A17",
+          "Flex",
+          "STG",
+          "S17",
+          "O17"  
+        ]
+      },
+      "Email": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 100
+      },
+      "Name": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 40
+      },
+      "Firstname": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 25
+      },
+      "Initial": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1
+      },
+      "INSS": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 99999999999.0
+      },
+      "Sex": {
+        "type": "string",
+        "enum": [
+          "M",
+          "F"
+        ]
+      },
+      "Birthdate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Birthplace": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 30
+      },
+      "BirthplaceCountry": {
+        "type": "string",
+        "default": "00150",
+        "minLength": 5,
+        "maxLength": 5,
+        "pattern": "^[0-9]*$"
+      },
+      "Nationality": {
+        "type": "string",
+        "default": "00150",
+        "minLength": 5,
+        "maxLength": 5,
+        "pattern": "^[0-9]*$"
+      },
+      "Street": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 100
+      },
+      "HouseNumber": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 10
+      },
+      "PostBox": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 5
+      },
+      "ZIPCode": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 12
+      },
+      "City": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 30
+      },
+      "Country": {
+        "type": "string",
+        "default": "00150",
+        "minLength": 5,
+        "maxLength": 5,
+        "pattern": "^[0-9]*$"
+      },
+      "CatRSZ": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 3,
+        "pattern": "^[0-9]*$"
+      },
+      "Student": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "ActivityWithRisk": {
+        "type": "integer"
+      },
+      "WorkerStatus": {
+        "type": "string",
+        "enum": [
+          "F1",
+          "F2"
+        ]
+      },
+      "EmploymentNature": {
+        "type": "string",
+        "enum": [
+          "Employee",
+          "Worker"
+        ]
+      },
+      "DimonaPeriodId": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 999999999999.0
+      },
+      "StartingDate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "EndingDate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "StartingHour": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 12,
+        "pattern": "^[0-9]*$"
+      },
+      "EndingHour": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 12,
+        "pattern": "^[0-9]*$"
+      },
+      "StartingHour2": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 12,
+        "pattern": "^[0-9]*$"
+      },
+      "EndingHour2": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 12,
+        "pattern": "^[0-9]*$"
+      },
+      "FirstMonthC32ANbr": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 999999999999.0
+      },
+      "NextMonthC32ANbr": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 999999999999.0
+      },
+      "PlannedHoursNbr": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 999.0
+      },
+      "UsingData": {
+        "$ref": "#/definitions/UsingData"
+      },
+      "Receipt": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 999999999999.0
+      },
+      "JointCommissionNbr": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 6,
+        "pattern": "^[0-9,.]*$"
+      },
+      "WorkerType": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 3
+      },
+      "LastAction": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1
+      },
+      "ExceedingHoursNbr": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 999.0
+      },
+      "QuotaExceeded": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "Belated": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      },
+      "Status": {
+        "type": "string",
+        "enum": [
+          "Blocked",
+          "InProgress",
+          "OK",
+          "Error"
+        ]
+      },
+      "Error": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "NatureDeclaration",
+      "Email",
+      "StartingDate"
+    ]
+  },
+  {
+    "title": "Add worker",
+    "description": "Add a new worker",
+    "definitions": {
+      "CareerBreakDefinition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Exist": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Kind": {
+            "type": "string",
+            "enum": [
+              "Fulltime",
+              "PartTimeOneFifth",
+              "PartTimeOneQuarter",
+              "PartTimeOneThird",
+              "PartTimeHalf",
+              "PartTimeThreeFifths",
+              "PartTimeOneTenth"  
+            ]
+          },
+          "Reason": {
+            "type": "string",
+            "enum": [
+              "PalliativeCare",
+              "SeriouslyIll",
+              "Other",
+              "ParentalLeave",
+              "Crisis",
+              "FamilyCare",
+              "EndOfCareer",
+              "SickChild",
+              "FamilyCareCorona",
+              "ChildCareUnder8",
+              "ChildCareHandicapUnder21",
+              "CertifiedTraining"
+            ]
+          },
+          "OriginallyContractType": {
+            "type": "string",
+            "enum": [
+              "Fulltime",
+              "PartTime"
+            ]
+          },
+          "WeekhoursWorkerBefore": {
+            "type": "number"
+          },
+          "WeekhoursEmployerBefore": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "Exist"
+        ]
+      },
+      "CertainWorkDefinition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Exist": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 250
+          }
+        },
+        "required": [
+          "Exist"
+        ]
+      },
+      "clsAddress": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Startdate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "Enddate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "Street": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 100
+          },
+          "HouseNumber": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 10
+          },
+          "PostBox": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 5
+          },
+          "ZIPCode": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 12
+          },
+          "City": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 30
+          },
+          "Country": {
+            "type": "string",
+            "default": "00150",
+            "minLength": 5,
+            "maxLength": 5,
+            "pattern": "^[0-9]*$"
+          },
+          "Distance": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 99999.9
+          }
+        },
+        "required": [
+          "Street",
+          "HouseNumber",
+          "ZIPCode",
+          "City",
+          "Country"
+        ]
+      },
+      "clsCommunication": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "CommunicationType": {
+            "type": "string",
+            "enum": [
+              "None",
+              "Phone",
+              "GSM",
+              "Email",
+              "PrivatePhone",
+              "Fax",
+              "InternalPhone",
+              "PrivateEmail",
+              "GSMEntreprise",
+              "Website"
+            ]
+          },
+          "Value": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 100
+          },
+          "ContactPerson": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "CommunicationType",
+          "Value"
+        ]
+      },
+      "ClsContract": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Startdate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "Enddate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "EmploymentStatus": {
+            "type": "string",
+            "enum": [
+              "Workman",
+              "Employee",
+              "Director"
+            ]
+          },
+          "Contract": {
+            "type": "string",
+            "enum": [
+              "Usually",
+              "FlexiVerbal",
+              "FlexiWritten",
+              "FlexiLiable",
+              "Sportsperson",
+              "Housekeeper",
+              "Servant",
+              "Agriculture",
+              "Homework",
+              "HomeworkChildcare",
+              "Physician",
+              "PhysicianTraining",
+              "PhysicianIndependant",
+              "ApprenticeFlemisch",
+              "ApprenticeFrench",
+              "ApprenticeGerman",
+              "ApprenticeManager",
+              "ApprenticeIndustrial",
+              "ApprenticeSocio",
+              "ApprenticeBio",
+              "ApprenticeAlternating",
+              "EarlyRetirement",
+              "EarlyRetirementPartTime",
+              "FreeNOSS",
+              "FreeNOSSManager",
+              "FreeNOSSOther",
+              "FreeNOSSSportingEvent",
+              "FreeNOSSHelper",
+              "FreeNOSSSocio",
+              "FreeNOSSEducation",
+              "FreeNOSSSpecialCultures",
+              "FreeNOSSVolunteer",
+              "Horeca",
+              "HorecaExtraHourLiable",
+              "HorecaExtraDayLiable",
+              "HorecaExtraHourForfait",
+              "HorecaExtraDayForfait",
+              "HorecaFlexiVerbal",
+              "HorecaFlexiWritten",
+              "HorecaFlexiLiable",
+              "Construction",
+              "ConstructionAlternating",
+              "ConstructionApprenticeYounger",
+              "ConstructionApprentice",
+              "ConstructionGodfather",
+              "JobTrainingIBO",
+              "JobTrainingSchool",
+              "JobTrainingVDAB",
+              "JobTrainingLiberalProfession",
+              "JobTrainingEntry",
+              "JobTrainingPFIWa",
+              "JobTrainingABO",
+              "JobTrainingPFIBx",
+              "JobTrainingBIO",
+              "JobTrainingAlternating",
+              "JobTrainingDisability",
+              "NonProfitRiziv",
+              "NonProfitGesco",
+              "NonProfitDAC",
+              "NonProfitPrime",
+              "NonProfitLowSkilled",
+              "Artist",
+              "ArtistWithContract",
+              "ArtistWithoutContract",
+              "Transport",
+              "TransportNonMobile",
+              "TransportGarage",
+              "Aircrew",
+              "AircrewPilot",
+              "AircrewCabinCrew",
+              "Interim",
+              "InterimTemporary",
+              "InterimsPermanent",
+              "External",
+              "ExternalApplicant",
+              "ExternalSubcontractor",
+              "ExternalAgentIndependant",
+              "ExternalExtern",
+              "ExternalIntern",
+              "ExternalLegalPerson",
+              "SalesRepresentative",
+              "SportsTrainer"
+            ]
+          },
+          "CatRSZ": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[0-9]*$"
+          },
+          "ParCom": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 10,
+            "pattern": "^[0-9. ]*$"
+          },
+          "DocumentC78": {
+            "type": "string",
+            "enum": [
+              "Nihil",
+              "C783",
+              "C784",
+              "C78Activa",
+              "C78Start",
+              "C78Sine",
+              "C78ShortTerm",
+              "WalloniaLongtermJobSeekers",
+              "WalloniaYoungJobSeekers",
+              "WalloniaImpulsionInsertion",
+              "BrusselsLongtermJobSeekers",
+              "BrusselsReducedAbility"
+            ]
+          },
+          "CodeC98": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "CodeC131A": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "CodeC131": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Risk": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 10
+          },
+          "SocialSecurityCard": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 15
+          },
+          "WorkPermit": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 15
+          },
+          "DateInService": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "Seniority": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "DateProfessionalExperience": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "ScaleSalarySeniority": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "StartProbationPeriode": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "EndProbationPeriode": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "FixedTerm": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "EndFixedTerm": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "DateOutService": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "ReasonOut": {
+            "type": "string"
+          },
+          "WorkingTime": {
+            "type": "string",
+            "enum": [
+              "Fulltime",
+              "PartTime"
+            ]
+          },
+          "SpecWorkingTime": {
+            "type": "string",
+            "enum": [
+              "Regular",
+              "Interruptions",
+              "SeasonalWorker"
+            ]
+          },
+          "Schedule": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 4
+          },
+          "WeekhoursWorker": {
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 50.0
+          },
+          "WeekhoursEmployer": {
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 50.0
+          },
+          "WeekhoursWorkerAverage": {
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 50.0
+          },
+          "WeekhoursEmployerAverage": {
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 50.0
+          },
+          "WeekhoursWorkerEffective": {
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 50.0
+          },
+          "WeekhoursEmployerEffective": {
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 50.0
+          },
+          "DaysWeek": {
+            "type": "number"
+          },
+          "DaysWeekFT": {
+            "type": "number"
+          },
+          "ReducingWorkingKind": {
+            "type": "string",
+            "enum": [
+              "Nihil",
+              "Paid",
+              "Unpaid"
+            ]
+          },
+          "ReducingWorkingKindDays": {
+            "type": "number"
+          },
+          "ReducingWorkingKindHours": {
+            "type": "number"
+          },
+          "PartTimeReturnTowork": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 4
+          },
+          "ASRSchedule": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2
+          },
+          "ProffCat": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 10
+          },
+          "Function": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 10
+          },
+          "FunctionDescription": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 50
+          },
+          "Office": {
+            "type": "integer"
+          },
+          "Division": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 10
+          },
+          "InvoicingDivision": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 10
+          },
+          "CostCentre": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 15
+          },
+          "ScaleSalaryPrisma": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "ScaleSalaryUse": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "ScaleSalaryDefinition": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 10
+          },
+          "ScaleSalaryCategory": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 10
+          },
+          "ScaleSalaryScale": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 100
+          },
+          "AgricultureType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              null,
+              "Horticulture",
+              "HorticultureChicory",
+              "Agriculture",
+              "HorticultureMushroom",
+              "HorticultureFruit"
+            ]
+          },
+          "CareerBreak": {
+            "$ref": "#/definitions/CareerBreakDefinition"
+          },
+          "ProtectedEmployee": {
+            "$ref": "#/definitions/ProtectedEmployeeDefinition"
+          },
+          "Sportsperson": {
+            "$ref": "#/definitions/SportsPersonDefinition"
+          },
+          "CertainWork": {
+            "$ref": "#/definitions/CertainWorkDefinition"
+          },
+          "Student": {
+            "$ref": "#/definitions/StudentDefinition"
+          },
+          "MethodOfRemuneration": {
+            "$ref": "#/definitions/MethodOfRemunerationDefinition"
+          },
+          "InternationalEmployment": {
+            "$ref": "#/definitions/InternationalEmploymentDefinition"
+          },
+          "Dimona": {
+            "$ref": "#/definitions/ClsDimona"
+          },
+          "SalaryCompositions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/clsSalaryComposition"
+            }
+          }
+        },
+        "required": [
+          "Startdate"
+        ]
+      },
+      "ClsDimona": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "DimonaPeriodId": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 999999999999.0
+          },
+          "StartingDate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "EndingDate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "StartingHour": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 12,
+            "pattern": "^[0-9]*$"
+          },
+          "EndingHour": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 12,
+            "pattern": "^[0-9]*$"
+          },
+          "FirstMonthC32ANbr": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 999999999999.0
+          },
+          "NextMonthC32ANbr": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 999999999999.0
+          },
+          "PlannedHoursNbr": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 999.0
+          },
+          "UsingData": {
+            "$ref": "#/definitions/UsingData"
+          },
+          "Receipt": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 999999999999.0
+          },
+          "JointCommissionNbr": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 6,
+            "pattern": "^[0-9,.]*$"
+          },
+          "WorkerType": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "LastAction": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1
+          },
+          "ExceedingHoursNbr": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 999.0
+          },
+          "QuotaExceeded": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Belated": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Status": {
+            "type": "string",
+            "enum": [
+              "Blocked",
+              "InProgress",
+              "OK",
+              "Error"
+            ]
+          },
+          "Error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "StartingDate"
+        ]
+      },
+      "clsFamilyStatus": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Startdate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "Enddate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "CivilStatus": {
+            "type": "string",
+            "enum": [
+              "Single",
+              "Married",
+              "Widow",
+              "Divorced",
+              "Separated",
+              "Cohabitation",
+              "LiveTogether"
+            ]
+          },
+          "WorkerHandicapped": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "WorkerSingleWithChildren": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "SpouseWithIncome": {
+            "type": "string",
+            "enum": [
+              "WithIncome",
+              "WithoutIncome",
+              "ProffIncomeLessThan235",
+              "ProffIncomeLessThan141",
+              "ProffIncomeLessThan469"
+            ]
+          },
+          "SpouseHandicapped": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "SpouseName": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 40
+          },
+          "SpouseFirstname": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 25
+          },
+          "SpouseINSS": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 9999999999.0
+          },
+          "SpouseSex": {
+            "type": "string",
+            "enum": [
+              "M",
+              "F"
+            ]
+          },
+          "SpouseBirthdate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "SpouseProfession": {
+            "type": "string",
+            "enum": [
+              "Handworker",
+              "Servant",
+              "Employee",
+              "SelfEmployed",
+              "Miner",
+              "Sailor",
+              "CivilServant",
+              "Other",
+              "Nil"
+            ]
+          },
+          "SpouseBirthplace": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 30
+          },
+          "ChildrenAtCharge": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 99.0
+          },
+          "ChildrenHandicapped": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 99.0
+          },
+          "OthersAtCharge": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 99.0
+          },
+          "OthersHandicapped": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 99.0
+          },
+          "Others65AtCharge": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 99.0
+          },
+          "Others65Handicapped": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 99.0
+          },
+          "ChildBenefitInstitution": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 9999.0
+          },
+          "ChildBenefitReference": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 15
+          },
+          "Weddingdate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          }
+        },
+        "required": [
+          "Startdate"
+        ]
+      },
+      "clsReplacement": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "WorkerNumber": {
+            "type": "integer",
+            "minimum": 1.0,
+            "maximum": 9999999.0
+          },
+          "Startdate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "Enddate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "Percentage": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 100.0
+          }
+        },
+        "required": [
+          "WorkerNumber",
+          "Startdate"
+        ]
+      },
+      "clsSalaryComposition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Startdate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "Enddate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "Code": {
+            "type": "integer",
+            "minimum": 1.0,
+            "maximum": 8999.0
+          },
+          "Days": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 99.0
+          },
+          "Hours": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 9999.0
+          },
+          "Unity": {
+            "type": "number"
+          },
+          "Percentage": {
+            "type": "number"
+          },
+          "Amount": {
+            "type": "number"
+          },
+          "Supplement": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "Startdate",
+          "Code"
+        ]
+      },
+      "clsTax": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Startdate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "TaxCalculation": {
+            "type": "string",
+            "enum": [
+              "Normal",
+              "ConversionPT",
+              "FiscVolAmount",
+              "FiscVolPercent",
+              "Amount",
+              "Percent",
+              "PercentNormal",
+              "NonResident",
+              "NoCity",
+              "NoTax",
+              "Younger",
+              "NormalPlus",
+              "Trainer",
+              "NormalMinPerc",
+              "NormalMinAmount"
+            ]
+          },
+          "Value": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 9999999999.0
+          }
+        },
+        "required": [
+          "Startdate",
+          "TaxCalculation"
+        ]
+      },
+      "InternationalEmploymentDefinition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Exist": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Kind": {
+            "type": "string",
+            "enum": [
+              "SecondmentFrom",
+              "SalarySplit",
+              "FrontierWorker",
+              "SecondmentTo"
+            ]
+          },
+          "BorderCountry": {
+            "type": "string",
+            "default": "00111",
+            "minLength": 5,
+            "maxLength": 5,
+            "pattern": "^[0-9]*$"
+          }
+        },
+        "required": [
+          "Exist"
+        ]
+      },
+      "MethodOfRemunerationDefinition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Exist": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Remuneration": {
+            "type": "string",
+            "enum": [
+              "Commission",
+              "Piece",
+              "ServiceVouchers"
+            ]
+          },
+          "Payment": {
+            "type": "string",
+            "enum": [
+              "Fixed",
+              "Variable",
+              "Mixed"
+            ]
+          }
+        },
+        "required": [
+          "Exist"
+        ]
+      },
+      "ProtectedEmployeeDefinition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Exist": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "Reason": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 4,
+            "pattern": "^[0-9]*$"
+          },
+          "Startdate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "Enddate": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          }
+        },
+        "required": [
+          "Exist"
+        ]
+      },
+      "SportsPersonDefinition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Exist": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "RecognizedForeignSportsperson": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "OpportunityContract": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          }
+        },
+        "required": [
+          "Exist"
+        ]
+      },
+      "StudentDefinition": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Exist": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+          "SolidarityContribution": {
+            "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          }
+        },
+        "required": [
+          "Exist",
+          "SolidarityContribution"
+        ]
+      },
+      "UsingData": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "UsingJointCommissionNbr": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[0-9,.]*$"
+          },
+          "UsingEmployerName": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 40
+          },
+          "UsingEmployerCompanyID": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 9999999999.0
+          },
+          "UsingStreet": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 100
+          },
+          "UsingHouseNumber": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 10
+          },
+          "UsingPostBox": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 5
+          },
+          "UsingZIPCode": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 12
+          },
+          "UsingCity": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 30
+          },
+          "UsingCountry": {
+            "type": "string",
+            "default": "00150",
+            "minLength": 5,
+            "maxLength": 5,
+            "pattern": "^[0-9]*$"
+          }
+        }
+      }
+    },
+    "type": "object",
+    "properties": {
+      "WorkerNumber": {
+        "type": "integer",
+        "minimum": 1.0,
+        "maximum": 9999999.0
+      },
+      "address": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/clsAddress"
+        }
+      },
+      "FamilyStatus": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/clsFamilyStatus"
+        }
+      },
+      "Communication": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/clsCommunication"
+        }
+      },
+      "contract": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ClsContract"
+        }
+      },
+      "Tax": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/clsTax"
+        }
+      },
+      "Replacement": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/clsReplacement"
+        }
+      },
+      "Name": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 40
+      },
+      "Firstname": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 25
+      },
+      "Initial": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1
+      },
+      "INSS": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 99999999999.0
+      },
+      "Sex": {
+        "type": "string",
+        "enum": [
+          "M",
+          "F"
+        ]
+      },
+      "Birthdate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "BirthplaceZIPCode": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 12
+      },
+      "Birthplace": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 30
+      },
+      "BirthplaceCountry": {
+        "type": "string",
+        "default": "00150",
+        "minLength": 5,
+        "maxLength": 5,
+        "pattern": "^[0-9]*$"
+      },
+      "Nationality": {
+        "type": "string",
+        "default": "00150",
+        "minLength": 5,
+        "maxLength": 5,
+        "pattern": "^[0-9]*$"
+      },
+      "Language": {
+        "type": "string",
+        "enum": [
+          "N",
+          "F",
+          "D",
+          "E"
+        ]
+      },
+      "PayWay": {
+        "type": "string",
+        "enum": [
+          "Cash",
+          "Transfer",
+          "Electronic",
+          "AssignmentList"
+        ]
+      },
+      "BankAccount": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 45
+      },
+      "BICCode": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "ID": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "IDType": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 3
+      },
+      "IDValidUntil": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "DriverLicense": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "DriverCategory": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 2
+      },
+      "NumberPlate": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 10
+      },
+      "FuelCard": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 20
+      },
+      "Education": {
+        "type": "string",
+        "enum": [
+          "Basic",
+          "LowerSecondary",
+          "HigherSecondary",
+          "NotUniversity",
+          "University",
+          "Secondary1Degree",
+          "Secondary2Degree",
+          "Secondary3Degree",
+          "Unknown"
+        ]
+      },
+      "Profession": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 50
+      },
+      "EHealthInsurance": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 9999.0
+      },
+      "EHealthInsuranceReference": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 20
+      },
+      "AccidentInsurance": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 9999.0
+      },
+      "MedicalCenter": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 9999.0
+      },
+      "MedicalCenterReference": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "ExternalID": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 50
+      },
+      "InterimFrom": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "InterimTo": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "TravelExpenses": {
+        "type": "string",
+        "enum": [
+          "PublicTransportTrain",
+          "OwnTransport",
+          "PublicTransportOther",
+          "Bicycle",  
+          "None"
+        ]
+      },
+      "TypeOfTravelExpenses": {
+        "type": "string",
+        "enum": [
+          "Other",
+          "PublicCommonTransport",
+          "OrganisedCommonTransport"
+        ]
+      },
+      "SalaryCodeTravelExpenses": {
+        "type": "integer",
+        "minimum": 1.0,
+        "maximum": 9999.0
+      }
+    },
+    "required": [
+      "WorkerNumber",
+      "address",
+      "FamilyStatus",
+      "contract",
+      "Name",
+      "Firstname"
+    ]
+  },
+  {
+    "title": "Prestations",
+    "definitions": {
+      "Cost": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "CostCentre": {
+            "type": "string",
+            "maxLength": 15
+          },
+          "Code": {
+            "type": "integer",
+            "minimum": 1.0,
+            "maximum": 8999.0
+          },
+          "Shift": {
+            "type": "integer",
+            "minimum": 1.0,
+            "maximum": 99.0
+          },
+          "Days": {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 99.0
+          },
+          "Hours": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 9999.0
+          },
+          "Unity": {
+            "type": "number"
+          },
+          "Percentage": {
+            "type": "number"
+          },
+          "Amount": {
+            "type": "number"
+          },
+          "Supplement": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "Code"
+        ]
+      },
+      "Prestation": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Day": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8,
+            "pattern": "^[0-9]*$"
+          },
+          "CostCentre": {
+            "type": "string",
+            "maxLength": 15
+          },
+          "Code": {
+            "type": "integer",
+            "minimum": 1.0,
+            "maximum": 6999.0
+          },
+          "Shift": {
+            "type": "integer",
+            "minimum": 1.0,
+            "maximum": 99.0
+          },
+          "Hours": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 9999.0
+          }
+        },
+        "required": [
+          "Day",
+          "Code"
+        ]
+      }
+    },
+    "type": "object",
+    "properties": {
+      "WorkerNumber": {
+        "type": "integer",
+        "minimum": 1.0,
+        "maximum": 9999999.0
+      },
+      "Month": {
+        "type": "integer",
+        "minimum": 1.0,
+        "maximum": 12.0
+      },
+      "Year": {
+        "type": "integer",
+        "minimum": 1900.0,
+        "maximum": 2075.0
+      },
+      "EndOfPeriod": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Annotation": {
+        "type": "string"
+      },
+      "Reset": {
+        "type": "string",
+            "enum": [
+              "N",
+              "Y"
+            ]
+          },
+      "Prestations": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Prestation"
+        }
+      },
+      "Costs": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Cost"
+        }
+      }
+    },
+    "required": [
+      "WorkerNumber",
+      "Month",
+      "Year",
+      "EndOfPeriod"
+    ]
+  },
+  {
+    "title": "Prestations completed",
+    "type": "object",
+    "properties": {
+      "Month": {
+        "type": "integer",
+        "minimum": 1.0,
+        "maximum": 12.0
+      },
+      "Year": {
+        "type": "integer",
+        "minimum": 1900.0,
+        "maximum": 2075.0
+      },
+      "Correction": {
+        "type": "string",
+        "enum": [
+          "N",
+          "Y"
+        ]
+      }
+    },
+    "required": [
+      "Month",
+      "Year"
+    ]
+  },
+  {
+    "title": "Professional category",
+    "definitions": {
+      "clsParcom": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "JointCommissionNbr": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 6,
+            "pattern": "^[0-9,.]*$"
+          },
+          "ProfCats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/clsProfCat"
+            }
+          }
+        },
+        "required": [
+          "ProfCats"
+        ]
+      },
+      "clsProfCat": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "ProfCat": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "DescriptionD": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "DescriptionF": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ProfCat",
+          "DescriptionD",
+          "DescriptionF"
+        ]
+      }
+    },
+    "type": "array",
+    "items": {
+      "$ref": "#/definitions/clsParcom"
+    }
+  },
+  {
+    "title": "Replacement",
+    "type": "object",
+    "properties": {
+      "WorkerNumber": {
+        "type": "integer",
+        "minimum": 1.0,
+        "maximum": 9999999.0
+      },
+      "Startdate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Enddate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Percentage": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 100.0
+      }
+    },
+    "required": [
+      "WorkerNumber",
+      "Startdate"
+    ]
+  },
+  {
+    "title": "Result",
+    "type": "object",
+    "properties": {
+      "ID": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "Action": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "Type": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "Employer": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "Worker": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "Statuscode": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "StatusDescription": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "User": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "Response": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "ID",
+      "Action",
+      "Type",
+      "Employer",
+      "Worker",
+      "Statuscode",
+      "StatusDescription",
+      "User",
+      "Response"
+    ]
+  },{
+    "title": "Salary composition",
+    "type": "object",
+    "properties": {
+      "Startdate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Enddate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Code": {
+        "type": "integer",
+        "minimum": 1.0,
+        "maximum": 8999.0
+      },
+      "Days": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 99.0
+      },
+      "Hours": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 9999.0
+      },
+      "Unity": {
+        "type": "number"
+      },
+      "Percentage": {
+        "type": "number"
+      },
+      "Amount": {
+        "type": "number"
+      },
+      "Supplement": {
+        "type": "number"
+      },
+   "TypeOfIndexing": {
+        "type": "string",
+        "enum": [
+          "NoIndexation",
+          "Indexation",
+          "FrozenSalary",
+          "SalaryAboveScale"
+        ]
+      }
+    },
+    "required": [
+      "Startdate",
+      "Code"
+    ]
+  },
+  {
+    "title": "Schedule",
+    "definitions": {
+      "ScheduleWeek": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "WeekNumber": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 15
+          },
+          "Day1": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 24.0
+          },
+          "Day2": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 24.0
+          },
+          "Day3": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 24.0
+          },
+          "Day4": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 24.0
+          },
+          "Day5": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 24.0
+          },
+          "Day6": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 24.0
+          },
+          "Day7": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 24.0
+          }
+        },
+        "required": [
+          "WeekNumber"
+        ]
+      }
+    },
+    "type": "object",
+    "properties": {
+      "ScheduleID": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 4
+      },
+      "Description": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 50
+      },
+      "StartDate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+         "Week": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ScheduleWeek"
+        }
+      }
+    },
+    "required": [
+      "ScheduleID",
+      "Description",
+      "StartDate",
+      "Week"
+    ]
+  },{
+    "title": "Tax",
+    "type": "object",
+    "properties": {
+      "Startdate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "TaxCalculation": {
+        "type": "string",
+        "enum": [
+          "Normal",
+          "Conversion PT",
+          "FiscVolAmount",
+          "FiscVolPercent",
+          "Amount",
+          "Percent",
+          "PercentNormal",
+          "NonResident",
+          "NoCity",
+          "NoTax",
+          "Younger",
+          "NormalPlus",
+          "Trainer",
+          "NormalMinPerc",
+          "NormalMinAmount"
+        ]
+      },
+      "Value": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 9999999999.0
+      }
+    },
+    "required": [
+      "Startdate",
+      "TaxCalculation",
+      "Value"
+    ]
+  },{
+    "title": "Notification of temporary unemployment",
+    "type": "object",
+    "properties": {
+      "StartDate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "EndDate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "TypeOfUnEmployment": {
+        "type": "string",
+        "enum": [
+          "EconomicReason",
+          "TechnicalDisorder",
+          "Supremacy",
+          "Employee"
+        ]
+      },
+      "Regime": {
+        "type": "string",
+        "enum": [
+          "FullTime",
+          "AtLeast3DaysAWeek",
+          "LessThan3DaysAWeek"
+        ]
+      },
+      "Reason": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 80
+      },
+      "StartdateTechnicalDisorder": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "Email": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 255
+      },
+      "ListOfWorkers": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "SerialNumber": {
+        "type": "integer"
+      },
+      "Status": {
+        "type": "string",
+        "enum": [
+          "InProgress",
+          "OK",
+          "Error"
+        ]
+      },
+      "TicketNumber": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 20
+      },
+      "Error": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 255
+      }
+    },
+    "required": [
+      "StartDate",
+      "EndDate",
+      "TypeOfUnEmployment",
+          "Reason",
+          "Email",
+      "ListOfWorkers"
+    ]
+  },
+  {
+    "title": "Worker",
+    "description": "Personal data of a worker",
+    "type": "object",
+    "properties": {
+      "Name": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 40
+      },
+      "Firstname": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 25
+      },
+      "Initial": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1
+      },
+      "INSS": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 99999999999.0
+      },
+      "Sex": {
+        "type": "string",
+        "enum": [
+          "M",
+          "F"
+        ]
+      },
+      "Birthdate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "BirthplaceZIPCode": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 12
+      },
+      "Birthplace": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 30
+      },
+      "BirthplaceCountry": {
+        "type": "string",
+        "default": "00150",
+        "minLength": 5,
+        "maxLength": 5,
+        "pattern": "^[0-9]*$"
+      },
+      "Nationality": {
+        "type": "string",
+        "default": "00150",
+        "minLength": 5,
+        "maxLength": 5,
+        "pattern": "^[0-9]*$"
+      },
+      "Language": {
+        "type": "string",
+        "enum": [
+          "N",
+          "F",
+          "D",
+          "E"
+        ]
+      },
+      "PayWay": {
+        "type": "string",
+        "enum": [
+          "Cash",
+          "Transfer",
+          "Electronic",
+          "AssignmentList"
+        ]
+      },
+      "BankAccount": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 45
+      },
+      "BICCode": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "ID": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "IDType": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 3
+      },
+      "IDValidUntil": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "DriverLicense": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "DriverCategory": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 2
+      },
+      "NumberPlate": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 10
+      },
+      "FuelCard": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 20
+      },
+      "Education": {
+        "type": "string",
+        "enum": [
+          "Basic",
+          "LowerSecondary",
+          "HigherSecondary",
+          "NotUniversity",
+          "University",
+          "Secondary1Degree",
+          "Secondary2Degree",
+          "Secondary3Degree",
+          "Unknown"
+        ]
+      },
+      "Profession": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 50
+      },
+      "EHealthInsurance": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 9999.0
+      },
+      "EHealthInsuranceReference": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 20
+      },
+      "AccidentInsurance": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 9999.0
+      },
+      "MedicalCenter": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 9999.0
+      },
+      "MedicalCenterReference": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "ExternalID": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 50
+      },
+      "InterimFrom": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "InterimTo": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "TravelExpenses": {
+        "type": "string",
+        "enum": [
+          "PublicTransportTrain",
+          "OwnTransport",
+          "PublicTransportOther",
+          "Bicycle",  
+          "None"
+        ]
+      },
+      "SalaryCodeTravelExpenses": {
+        "type": "integer",
+        "minimum": 1.0,
+        "maximum": 9999.0
+      }
+    },
+    "required": [
+      "Name",
+      "Firstname"
+    ]
+  },{
+    "title": "Upload document",
+    "type": "object",
+    "properties": {
+      "Filename": {
+        "type": "string"
+      },
+      "DocumentType": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "PublicationDate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "WorkerId": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 12.0
+      },
+      "Day": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 31.0
+      },
+      "Month": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 12.0
+      },
+      "Year": {
+        "type": "integer",
+        "minimum": 2000.0,
+        "maximum": 2075.0
+      },
+      "Language": {
+        "type": "string",
+        "enum": [
+          "N",
+          "F",
+          "D",
+          "E"
+        ]
+      },
+      "Description": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 100
+      },
+      "Document": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "Filename",
+      "DocumentType",
+      "PublicationDate",
+      "Language",
+      "Document"
+    ]
+  },{
+    "title": "Worker",
+    "description": "Personal data of a worker",
+    "type": "object",
+    "properties": {
+      "Name": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 40
+      },
+      "Firstname": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 25
+      },
+      "INSS": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 99999999999.0
+      },
+      "Sex": {
+        "type": "string",
+        "enum": [
+          "M",
+          "F"
+        ]
+      },
+      "Birthdate": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "BirthplaceZIPCode": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 12
+      },
+      "Birthplace": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 30
+      },
+      "BirthplaceCountry": {
+        "type": "string",
+        "default": "00150",
+        "minLength": 5,
+        "maxLength": 5,
+        "pattern": "^[0-9]*$"
+      },
+      "Nationality": {
+        "type": "string",
+        "default": "00150",
+        "minLength": 5,
+        "maxLength": 5,
+        "pattern": "^[0-9]*$"
+      },
+      "Language": {
+        "type": "string",
+        "enum": [
+          "N",
+          "F",
+          "D",
+          "E"
+        ]
+      },
+      "PayWay": {
+        "type": "string",
+        "enum": [
+          "Cash",
+          "Transfer",
+          "Electronic",
+          "AssignmentList"
+        ]
+      },
+      "BankAccount": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 45
+      },
+      "BICCode": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "ID": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "IDType": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 3
+      },
+      "IDValidUntil": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "DriverLicense": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "DriverCategory": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 2
+      },
+      "NumberPlate": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 10
+      },
+      "FuelCard": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 20
+      },
+      "Education": {
+        "type": "string",
+        "enum": [
+          "Basic",
+          "LowerSecondary",
+          "HigherSecondary",
+          "NotUniversity",
+          "University",
+          "Secondary1Degree",
+          "Secondary2Degree",
+          "Secondary3Degree",
+          "Unknown"
+        ]
+      },
+      "Profession": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 50
+      },
+      "EHealthInsurance": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 9999.0
+      },
+      "EHealthInsuranceReference": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 20
+      },
+      "AccidentInsurance": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 9999.0
+      },
+      "MedicalCenter": {
+        "type": "integer",
+        "minimum": 0.0,
+        "maximum": 9999.0
+      },
+      "MedicalCenterReference": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 15
+      },
+      "ExternalID": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 50
+      },
+      "InterimFrom": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "InterimTo": {
+        "type": "string",
+        "minLength": 8,
+        "maxLength": 8,
+        "pattern": "^[0-9]*$"
+      },
+      "TravelExpenses": {
+        "type": "string",
+        "enum": [
+          "PublicTransportTrain",
+          "OwnTransport",
+          "PublicTransportOther",
+          "Bicycle",  
+          "None"
+        ]
+      },
+      "TypeOfTravelExpenses": {
+        "type": "string",
+        "enum": [
+          "Other",
+          "PublicCommonTransport",
+          "OrganisedCommonTransport"
+        ]
+      },
+      "SalaryCodeTravelExpenses": {
+        "type": "integer",
+        "minimum": 1.0,
+        "maximum": 9999.0
+      },
+      "MainDivision": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 10
+      }
+    },
+    "required": [
+      "Name",
+      "Firstname"
+    ]
+  }
+]
