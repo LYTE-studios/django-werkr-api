@@ -58,10 +58,10 @@ class JWTAuthUtil:
 
         # Get the user
         try:
-            user = User.objects.get(email__iexact=email, groups__id__contains=group.id)
+            user = User.objects.filter(email__iexact=email, groups__id__contains=group.id).first()
         except User.DoesNotExist:
             return None
-        
+         
         session_expiry = 0
 
         if group.name == CMS_GROUP_NAME:

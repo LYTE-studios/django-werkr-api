@@ -18,26 +18,28 @@ class WorkerUtil:
             k_phone_number: worker.phone_number,
         }
 
-        if hasattr(worker, 'worker_profile'):
-            worker_profile = worker.worker_profile
-            data.update({
-                k_iban: worker_profile.iban,
-                k_ssn: worker_profile.ssn,
-                k_worker_type: worker_profile.worker_type,
-            })
+        if not hasattr(worker, 'worker_profile'):
+            worker_profile = WorkerProfile.objects.create()
+        
+        worker_profile = worker.worker_profile
+        data.update({
+            k_iban: worker_profile.iban,
+            k_ssn: worker_profile.ssn,
+            k_worker_type: worker_profile.worker_type,
+        })
 
-            try:
-                data[k_address] = worker_profile.worker_address.to_model_view()
-            except Exception:
-                pass
-            try:
-                data[k_date_of_birth] = FormattingUtil.to_timestamp(worker_profile.date_of_birth)
-            except Exception:
-                pass
-            try:
-                data[k_profile_picture] = ProfileUtil.get_user_profile_picture_url(worker)
-            except Exception:
-                pass
+        try:
+            data[k_address] = worker_profile.worker_address.to_model_view()
+        except Exception:
+            pass
+        try:
+            data[k_date_of_birth] = FormattingUtil.to_timestamp(worker_profile.date_of_birth)
+        except Exception:
+            pass
+        try:
+            data[k_profile_picture] = ProfileUtil.get_user_profile_picture_url(worker)
+        except Exception:
+            pass
 
         return data
     

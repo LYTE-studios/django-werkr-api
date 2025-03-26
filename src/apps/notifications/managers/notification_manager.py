@@ -180,8 +180,9 @@ def create_global_mail(title: str, description: str, user_id: str = None, group_
     users = get_user_set(group_name, language)
 
     for user in users:
-        if not user.accepted:
-            continue
+        if hasattr(user, 'worker_profile'):
+            if not user.worker_profile.accepted:
+                continue
         if user.archived:
             continue
 
