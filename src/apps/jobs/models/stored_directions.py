@@ -8,11 +8,11 @@ from django.utils import timezone
 class StoredDirections(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    from_lat = models.IntegerField()
-    from_lon = models.IntegerField()
+    from_lat = models.FloatField()
+    from_lon = models.FloatField()
 
-    to_lat = models.IntegerField()
-    to_lon = models.IntegerField()
+    to_lat = models.FloatField()
+    to_lon = models.FloatField()
 
     directions_response = models.TextField()
 

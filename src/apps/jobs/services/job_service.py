@@ -13,11 +13,17 @@ from apps.jobs.models import (
 )
 from apps.jobs.utils.job_util import JobUtil
 from apps.notifications.managers.notification_manager import NotificationManager
+<<<<<<< HEAD
 from apps.notifications.models.mail_template import (
     CancelledMailTemplate,
     TimeRegisteredTemplate,
 )
 from django.db.models import F
+=======
+from apps.notifications.models.mail_template import CancelledMailTemplate, TimeRegisteredTemplate
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import F, Q
+>>>>>>> main
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
@@ -155,7 +161,12 @@ class JobService:
         now = timezone.now()
 
         if is_worker:
+            # Gets the current time
+            current_time = timezone.now()
+
+            # Query for upcoming jobs based on specified criteria
             jobs = Job.objects.filter(
+<<<<<<< HEAD
                 start_time__gte=now,
                 application_start_time__lte=now,
                 application_end_time__gte=now,
@@ -164,25 +175,67 @@ class JobService:
                 is_draft=False,
                 archived=False,
             ).order_by("start_time")[:50]
+=======
+                # The job must start in the future
+                start_time__gt=current_time,
+                # Ensure the application window is open
+                application_start_time__lte=current_time,
+                application_end_time__gte=current_time,
+                selected_workers__lt=F('max_workers'),
+                archived=False,
+            ).exclude(
+                # Exclude jobs with Pending or Approved applications from the user
+                jobapplication__worker=user,
+                jobapplication__application_state__in=[JobApplicationState.pending, JobApplicationState.approved],
+            ).exclude(
+                # Exclude jobs that overlap with an already approved job of the user
+                Q(
+                    jobapplication__job__start_time__lt=F('end_time'),
+                    jobapplication__job__end_time__gt=F('start_time'),
+                    jobapplication__application_state=JobApplicationState.approved,
+                    jobapplication__worker=user
+                )
+            ).distinct().order_by('start_time')
+
+>>>>>>> main
         else:
             if not start or not end:
                 jobs = Job.objects.filter(
                     start_time__gt=now,
                     job_state=JobState.pending,
                     is_draft=False,
+<<<<<<< HEAD
                     archived=False,
                 ).order_by("start_time")[:50]
+=======
+                    archived=False
+                ).order_by('start_time')
+>>>>>>> main
             else:
                 if start < now:
                     start = now
-                jobs = Job.objects.filter(
+                jobs = Job.objects.filter( 
                     start_time__range=[start, end],
                     job_state=JobState.pending,
                     is_draft=False,
+<<<<<<< HEAD
                     archived=False,
                 ).order_by("start_time")[:50]
+=======
+                    archived=False
+                ).order_by('start_time')
+>>>>>>> main
 
         return [JobUtil.to_model_view(job) for job in jobs]
+    
+    @staticmethod
+    def get_approved_jobs(user):
+        return Job.objects.filter(
+            job_state=JobState.pending,
+            is_draft=False,
+            archived=False,
+            worker_id=user.id,
+        ).order_by('start_time')
 
     @staticmethod
     def get_history_jobs(user, start, end):
@@ -226,6 +279,7 @@ class JobService:
     @staticmethod
     def register_time(data, user):
         formatter = FormattingUtil(data=data)
+<<<<<<< HEAD
         try:
             job_id = formatter.get_value(k_job_id, required=True)
             start_time = FormattingUtil.to_date_time(
@@ -239,6 +293,15 @@ class JobService:
             customer_signature = data.get(k_customer_signature)
         except Exception as e:
             raise e
+=======
+        
+        job_id = formatter.get_value(k_job_id, required=True)
+        start_time = FormattingUtil.to_date_time(int(formatter.get_value(k_start_time, required=True)))
+        end_time = FormattingUtil.to_date_time(int(formatter.get_value(k_end_time, required=True)))
+        break_time = formatter.get_time(k_break_time, required=False)
+        worker_signature = data.get(k_worker_signature)
+        customer_signature = data.get(k_customer_signature)
+>>>>>>> main
 
         job = get_object_or_404(Job, id=job_id)
         worker = user
@@ -246,9 +309,12 @@ class JobService:
         query = TimeRegistration.objects.filter(job_id=job_id, worker_id=worker.id)
         if query.exists():
             registration = query.first()
+<<<<<<< HEAD
             job.customer.hours -= (
                 registration.start_time - registration.end_time
             ).seconds / 3600
+=======
+>>>>>>> main
             job.customer.save()
             registration.delete()
 
@@ -275,9 +341,12 @@ class JobService:
         time_registration_count = TimeRegistration.objects.filter(job_id=job.id).count()
         if time_registration_count >= job.selected_workers:
             job.job_state = JobState.done
+<<<<<<< HEAD
             job.customer.hours += (
                 time_registration.start_time - time_registration.end_time
             ).seconds / 3600
+=======
+>>>>>>> main
             job.customer.save()
             job.save()
 
@@ -338,3 +407,72 @@ class JobService:
     def get_draft_jobs():
         jobs = Job.objects.filter(is_draft=True, archived=False)[:50]
         return [JobUtil.to_model_view(job) for job in jobs]
+    
+    @staticmethod
+    def get_washer_job_history(worker_id, page=1, per_page=25):
+        """
+        Get paginated list of all approved jobs for a washer that haven't been deleted.
+        
+        Args:
+            worker_id: ID of the worker
+            page: Page number (default: 1)
+            per_page: Number of items per page (default: 25)
+            
+        Returns:
+            dict containing:
+            - jobs: List of job model views
+            - total: Total number of jobs
+            - items_per_page: Number of items per page
+        """
+        jobs = Job.objects.filter(
+            jobapplication__worker__id=worker_id,
+            jobapplication__application_state=JobApplicationState.approved,
+            archived=False
+        ).order_by('-start_time').distinct()
+        
+        paginator = Paginator(jobs, per_page=per_page)
+        
+        try:
+            paginated_jobs = paginator.page(page)
+        except (EmptyPage, PageNotAnInteger):
+            paginated_jobs = paginator.page(1)
+            
+        return {
+            'jobs': [JobUtil.to_model_view(job) for job in paginated_jobs],
+            'total': jobs.count(),
+            'items_per_page': per_page
+        }
+
+    @staticmethod
+    def get_customer_job_history(customer_id, page=1, per_page=25):
+        """
+        Get paginated list of all jobs (including future jobs) for a customer.
+        
+        Args:
+            customer_id: ID of the customer
+            page: Page number (default: 1)
+            per_page: Number of items per page (default: 25)
+            
+        Returns:
+            dict containing:
+            - jobs: List of job model views
+            - total: Total number of jobs
+            - items_per_page: Number of items per page
+        """
+        jobs = Job.objects.filter(
+            customer_id=customer_id,
+            archived=False
+        ).order_by('-start_time')
+        
+        paginator = Paginator(jobs, per_page=per_page)
+        
+        try:
+            paginated_jobs = paginator.page(page)
+        except (EmptyPage, PageNotAnInteger):
+            paginated_jobs = paginator.page(1)
+            
+        return {
+            'jobs': [JobUtil.to_model_view(job) for job in paginated_jobs],
+            'total': jobs.count(),
+            'items_per_page': per_page
+        }

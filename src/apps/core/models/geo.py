@@ -1,5 +1,6 @@
 from django.db import models
 from rest_framework.exceptions import *
+from apps.core.utils.wire_names import *
 
 
 class Address(models.Model):
@@ -57,14 +58,14 @@ class Address(models.Model):
         """
 
         return {
-            "k_street_name": self.street_name,
-            "k_house_number": self.house_number,
-            "k_box_number": self.box_number,
-            "k_city": self.city,
-            "k_zip_code": self.zip_code,
-            "k_country": self.country,
-            "k_latitude": self.latitude,
-            "k_longitude": self.longitude,
+            k_street_name: self.street_name,
+            k_house_number: self.house_number,
+            k_box_number: self.box_number,
+            k_city: self.city,
+            k_zip_code: self.zip_code,
+            k_country: self.country,
+            k_latitude: self.latitude,
+            k_longitude: self.longitude,
         }
 
     @staticmethod
@@ -78,8 +79,8 @@ class Address(models.Model):
         # Required fields
         try:
 
-            latitude = data["k_latitude"]
-            longitude = data["k_longitude"]
+            latitude = data[k_latitude]
+            longitude = data[k_longitude]
 
         except KeyError as e:
             # Throw an error upon finding a wrong key.
@@ -94,11 +95,11 @@ class Address(models.Model):
 
         try:
 
-            street_name = data["k_street_name"]
-            house_number = data["k_house_number"]
-            zip_code = data["k_zip_code"]
-            city = data["k_city"]
-            country = data["k_country"]
+            street_name = data[k_street_name]
+            house_number = data[k_house_number]
+            zip_code = data[k_zip_code]
+            city = data[k_city]
+            country = data[k_country]
 
         except KeyError:
             # Pass not found keys on optional fields

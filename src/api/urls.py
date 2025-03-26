@@ -11,7 +11,7 @@ from rest_framework import permissions
 schema_view = get_schema_view(
     openapi.Info(
         title="Werkr API",
-        default_version="v1",
+        default_version='v1',
         description="API documentation for Werkr",
         terms_of_service="https://www.lytestudios.be",
         contact=openapi.Contact(email="hello@lytestudios.be"),
@@ -22,27 +22,23 @@ schema_view = get_schema_view(
 )
 
 api_v1_patterns = [
-    path("auth/", include("apps.authentication.urls")),
-    path("jobs/", include("apps.jobs.urls")),
-    path("legal/", include("apps.legal.urls")),
-    path("exports/", include("apps.exports.urls")),
+    path('auth/', include('apps.authentication.urls')),
+    path('jobs/', include('apps.jobs.urls')),
+    path('legal/', include('apps.legal.urls')),
+    path('notifications/', include('apps.notifications.urls')),
+
     # Swagger documentation
-    path(
-        "swagger<format>/", schema_view.without_ui(cache_timeout=0), name="schema-json"
-    ),
-    path(
-        "swagger/",
-        schema_view.with_ui("swagger", cache_timeout=0),
-        name="schema-swagger-ui",
-    ),
-    path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
+    path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+
     # Admin
-    path("admin/", admin.site.urls),
+    path('admin/', admin.site.urls),
 ]
 
 urlpatterns = [
     # API versions
-    path("api/v1/", include(api_v1_patterns)),
+    path('api/v1/', include(api_v1_patterns)),
 ]
 
 # Serve media files in development

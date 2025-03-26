@@ -6,6 +6,8 @@ from django.contrib.auth import get_user_model
 import asyncio
 from django.conf import settings
 
+from apps.core.decorators import async_task
+
 User = get_user_model()
 
 from apps.core.utils.formatters import FormattingUtil
@@ -207,6 +209,10 @@ class DimonaService:
 
     @staticmethod
     def create_dimona(application: JobApplication):
+        user = application.worker
+
+        ssn = None
+    
         employee_type = DimonaService.get_type_for_user(user)
 
         if employee_type is None:
@@ -214,10 +220,6 @@ class DimonaService:
 
         if Dimona.objects.filter(application_id=application.id).exists():
             return
-
-        user = application.worker
-
-        ssn = None
 
         try:
             ssn = DimonaService.format_ssn(user.worker_profile.ssn)
@@ -269,13 +271,13 @@ class DimonaService:
 
             dimona.save()
 
-            asyncio.create_task(fetch_dimona(id=dimona_id))
+            fetch_dimona(id=dimona_id)
 
             return
 
         raise Exception("{} {}".format(response.content, response.request.body))
 
-
+@async_task
 async def fetch_dimona(id: str, tries=0):
     sleep(2)
 
@@ -296,7 +298,7 @@ async def fetch_dimona(id: str, tries=0):
     )
 
     if search.status_code == 404:
-        asyncio.create_task(fetch_dimona(id=id, tries=tries + 1))
+        fetch_dimona(id=id, tries=tries + 1)
         return
 
     json_data = search.json()

@@ -12,6 +12,10 @@ from apps.jobs.managers.job_manager import JobManager
 from apps.jobs.models import JobApplication, JobApplicationState, Job, JobState
 from django.shortcuts import get_object_or_404
 
+from apps.authentication.utils.worker_util import WorkerUtil
+from rest_framework.exceptions import ValidationError
+
+
 
 class JobApplicationService:
 
@@ -28,7 +32,32 @@ class JobApplicationService:
 
     @staticmethod
     def approve_application(application_id):
+
+        """
+        Approves the job application if the worker's profile is 100% complete.
+
+        Args:
+            application_id (int): The ID of the job application to approve.
+
+        Raises:
+            ValidationError: If the worker's profile is incomplete (less than 100%).
+        """
+
         application = get_object_or_404(JobApplication, id=application_id)
+        worker = application.worker
+        
+        #validate worker's profile before approval
+        completion_data = WorkerUtil.calculate_worker_completion(worker)
+        completion_percentage = completion_data["completion_percentage"]
+        missing_fields = completion_data["missing_fields"]
+
+        if completion_percentage < 100:
+            raise ValidationError(
+                f"Cannot approve application. Profile is incomplete. "
+                f"Completion percentage: {completion_percentage}%. Missing fields: {', '.join(missing_fields)}"
+            )
+
+        #if the profile is completed, proceeed with approval
         JobManager.approve_application(application)
         application.job.save()
         application.save()
@@ -43,13 +72,20 @@ class JobApplicationService:
     @staticmethod
     def fetch_directions(lat, lon, to_lat, to_lon):
 
+        import json
+
         stored_directions = StoredDirections.objects.filter(
             Q(from_lat=lat) & Q(from_lon=lon) & Q(to_lat=to_lat) & Q(to_lon=to_lon)
         ).first()
 
         if stored_directions and not stored_directions.check_expired():
             return stored_directions.directions_response
+<<<<<<< HEAD
         else:
+=======
+        
+        else: 
+>>>>>>> main
             from django.conf import settings
 
             response = requests.post(
@@ -75,7 +111,7 @@ class JobApplicationService:
             )
 
             if response.ok:
-                directions_response = response.json()
+                directions_response = json.dumps(response.json())
 
                 StoredDirections(
                     from_lat=lat,
@@ -84,12 +120,14 @@ class JobApplicationService:
                     to_lon=to_lon,
                     directions_response=directions_response,
                 ).save()
+
                 return directions_response
             else:
                 return None
 
     @staticmethod
     def get_my_applications(user):
+<<<<<<< HEAD
         now = datetime.datetime.now()
         approved_applications = JobApplication.objects.filter(
             worker_id=user.id,
@@ -97,9 +135,13 @@ class JobApplicationService:
             job__archived=False,
             application_state=JobApplicationState.approved,
         )[:25]
+=======
+        
+>>>>>>> main
         applications = JobApplication.objects.filter(
-            ~Q(application_state=JobApplicationState.approved),
+            job__job_state=JobState.pending,
             worker_id=user.id,
+<<<<<<< HEAD
             job__start_time__gt=now,
             job__archived=False,
         )[:50]
@@ -116,6 +158,13 @@ class JobApplicationService:
             application_model_list.append(application.to_model_view())
 
         return application_model_list
+=======
+            job__archived=False).exclude(
+                job__worked_times__worker_id=user.id
+            ).distinct()
+
+        return [application.to_model_view() for application in applications]
+>>>>>>> main
 
     @staticmethod
     def create_application(data, user):
@@ -123,7 +172,7 @@ class JobApplicationService:
         job_id = formatter.get_value(k_job_id, required=True)
         job = get_object_or_404(Job, id=job_id)
         start_address = formatter.get_address(k_address, required=True)
-        no_travel_cost = formatter.get_bool(k_no_travel_cost, default=False)
+        no_travel_cost = formatter.get_bool(k_no_travel_cost, required=True)
         address_title = formatter.get_value(k_address_title)
         note = formatter.get_value(k_note)
         distance = formatter.get_value(k_distance)
@@ -132,11 +181,13 @@ class JobApplicationService:
             raise ValueError("You were too late!")
 
         start_address.save()
+
         if address_title:
             FavoriteAddress(
                 address=start_address, title=address_title, user_id=user.id
             ).save()
 
+<<<<<<< HEAD
         if distance is None:
             try:
                 distance = (
@@ -151,6 +202,8 @@ class JobApplicationService:
             except Exception:
                 pass
 
+=======
+>>>>>>> main
         try:
             Job.objects.get(id=job_id)
         except Job.DoesNotExist:
@@ -168,6 +221,7 @@ class JobApplicationService:
             note=note,
         )
         JobManager.apply(application)
+        
         return application.id
 
     @staticmethod

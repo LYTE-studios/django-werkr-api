@@ -32,7 +32,8 @@ class MailTemplate:
             },
         )
 
-        return response.status_code == 200
+        if response.status_code != 200:
+            raise Exception("Error sending mail: " + response.text)
 
 
 class ApprovedMailTemplate(MailTemplate):
@@ -42,7 +43,11 @@ class ApprovedMailTemplate(MailTemplate):
 
 class CodeMailTemplate(MailTemplate):
     template_id = 5798048
+<<<<<<< HEAD
     subject = "Password reset code"
+=======
+    subject = 'Werkr | Password reset code'
+>>>>>>> main
 
 
 class DeniedMailTemplate(MailTemplate):

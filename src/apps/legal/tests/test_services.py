@@ -130,5 +130,10 @@ class DimonaServiceTest(TestCase):
         mock_dimona = MagicMock()
         mock_dimona_get.return_value = mock_dimona
 
+<<<<<<< HEAD
         asyncio.run(fetch_dimona("mock_id"))
         mock_dimona.save.assert_called_once()
+=======
+        fetch_dimona('mock_id')
+        mock_dimona.save.assert_called_once()
+>>>>>>> main

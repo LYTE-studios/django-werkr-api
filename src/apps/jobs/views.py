@@ -1,7 +1,9 @@
-import datetime
 from http import HTTPStatus
+import requests
 
 from django.shortcuts import get_object_or_404
+from django.conf import settings
+from django.utils import timezone
 
 from apps.authentication.views import JWTBaseAuthView
 from apps.core.assumptions import *
@@ -10,6 +12,7 @@ from apps.core.utils.formatters import FormattingUtil
 from apps.core.utils.wire_names import *
 from apps.jobs.services.contract_service import JobApplicationService
 from apps.jobs.services.job_service import JobService
+from apps.jobs.models.dimona import Dimona
 from apps.jobs.models.job import Job
 from apps.jobs.models.time_registration import TimeRegistration
 from django.core.paginator import Paginator
@@ -21,7 +24,13 @@ from django.http import (
     Http404,
 )
 from rest_framework.response import Response
+from apps.authentication.utils.worker_util import WorkerUtil
 
+from apps.jobs.models.application import JobApplication
+from apps.jobs.models.job_application_state import JobApplicationState
+from apps.jobs.services.statistics_service import StatisticsService
+from apps.core.models.export_file import ExportFile
+from apps.jobs.services.export_service import ExportManager
 
 class JobView(JWTBaseAuthView):
     """
@@ -119,10 +128,14 @@ class CreateJobView(JWTBaseAuthView):
             job_id = JobService.create_job(request.data)
         except DeserializationException as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
+<<<<<<< HEAD
         except Exception as e:
             return Response(
                 {k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR
             )
+=======
+        
+>>>>>>> main
         return Response({k_job_id: job_id})
 
 
@@ -212,8 +225,8 @@ class HistoryJobsView(JWTBaseAuthView):
         Returns:
             Response: A response object containing the list of history jobs.
         """
-        end = datetime.datetime.now()
-        start = datetime.datetime.fromtimestamp(0)
+        end = timezone.now()
+        start = timezone.datetime.fromtimestamp(0)
         try:
             start = FormattingUtil.to_date_time(kwargs["start"])
             end = FormattingUtil.to_date_time(kwargs["end"])
@@ -379,6 +392,49 @@ class ActiveJobList(JWTBaseAuthView):
         """
         jobs = JobService.get_active_jobs()
         return Response({k_jobs: jobs})
+
+
+class WorkersForJobView(JWTBaseAuthView):
+    """
+    [CMS]
+
+    GET
+
+    A view for CMS users to get the workers of a job
+    """
+
+    groups = [
+        CMS_GROUP_NAME,
+    ]
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+
+        try:
+            job = Job.objects.get(id=kwargs["id"])
+        except KeyError:
+            return HttpResponseNotFound()
+
+        applications = JobApplication.objects.filter(job_id=job.id)
+
+        workers = []
+
+        for application in applications:
+            if application.application_state == JobApplicationState.approved:
+                workers.append(WorkerUtil.to_worker_view(application.worker))
+
+        registrations = []
+
+        time_registrations = TimeRegistration.objects.filter(job_id=job.id)
+
+        for time_registration in time_registrations:
+            registrations.append(time_registration.to_model_view())
+
+        return Response(
+            {
+                k_workers: workers,
+                k_time_registrations: registrations,
+            }
+        )
 
 
 class DoneJobList(JWTBaseAuthView):
@@ -550,6 +606,7 @@ class DenyApplicationView(JWTBaseAuthView):
         return Response()
 
 
+<<<<<<< HEAD
 class DirectionsView(JWTBaseAuthView):
     """
     View to handle fetching directions between two geographical points.
@@ -592,6 +649,8 @@ class DirectionsView(JWTBaseAuthView):
         # Return a bad request response if fetching directions fails
         return HttpResponseBadRequest(response)
 
+=======
+>>>>>>> main
 
 class MyApplicationsView(JWTBaseAuthView):
     """
@@ -633,10 +692,13 @@ class MyApplicationsView(JWTBaseAuthView):
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except ValueError as e:
             return Response({k_message: str(e)}, status=HTTPStatus.BAD_REQUEST)
+<<<<<<< HEAD
         except Exception as e:
             return Response(
                 {k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR
             )
+=======
+>>>>>>> main
 
         return Response({k_id: application_id})
 
@@ -670,6 +732,7 @@ class ApplicationsListView(JWTBaseAuthView):
         paginator = Paginator(applications, per_page=25)
         data = [application.to_model_view() for application in applications]
 
+<<<<<<< HEAD
         return Response(
             {
                 k_applications: data,
@@ -677,3 +740,390 @@ class ApplicationsListView(JWTBaseAuthView):
                 k_total: len(applications),
             }
         )
+=======
+        return Response({k_applications: data, k_items_per_page: paginator.per_page, k_total: len(applications)})
+
+
+
+class DirectionsView(JWTBaseAuthView):
+    """
+    View to handle fetching directions between two geographical points.
+    Requires JWT authentication and user to be in specific groups.
+    """
+    groups = [
+        CMS_GROUP_NAME,
+        WORKERS_GROUP_NAME,
+    ]
+
+    def get(self, request, *args, **kwargs):
+        """
+        Handle GET requests to fetch directions.
+
+        Args:
+            request: The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments containing latitude and longitude.
+
+        Returns:
+            HttpResponse: The response containing directions if successful.
+            HttpResponseBadRequest: The response if fetching directions fails.
+        """
+        # Extract and convert latitude and longitude from kwargs
+        from_lat = int(kwargs.get('from_lat', 0)) / 1000000
+        from_lon = int(kwargs.get('from_lon', 0)) / 1000000
+        to_lat = int(kwargs.get('to_lat', 0)) / 1000000
+        to_lon = int(kwargs.get('to_lon', 0)) / 1000000
+
+        # Fetch directions using the JobApplicationService
+        response = JobApplicationService.fetch_directions(from_lat, from_lon, to_lat, to_lon)
+
+        # Return the response if directions are fetched successfully
+        if response is not None:
+            return HttpResponse(response)
+
+        # Return a bad request response if fetching directions fails
+        return HttpResponseBadRequest(response)
+
+class ReverseGeocodeView(JWTBaseAuthView):
+    groups = [
+        CMS_GROUP_NAME,
+        WORKERS_GROUP_NAME,
+    ]
+
+    def get(self, request, *args, **kwargs):
+
+        query = None
+
+        try:
+            query = str(kwargs["query"])
+        except KeyError:
+            pass
+
+        response = requests.get(
+            url="{}/maps/api/geocode/json?latlng={}&key={}".format(
+                settings.GOOGLE_BASE_URL,
+                query,
+                settings.GOOGLE_API_KEY,
+            ),
+        )
+
+        if response.ok:
+            return HttpResponse(
+                response.content,
+            )
+
+        return HttpResponseBadRequest()
+    
+
+
+
+class GeocodeView(JWTBaseAuthView):
+    groups = [
+        CMS_GROUP_NAME,
+        WORKERS_GROUP_NAME,
+    ]
+
+    def get(self, request, *args, **kwargs):
+
+        query = None
+
+        try:
+            query = str(kwargs["query"])
+        except KeyError:
+            pass
+
+        response = requests.get(
+            url="{}/maps/api/geocode/json?address={}&key={}".format(
+                settings.GOOGLE_BASE_URL,
+                query,
+                settings.GOOGLE_API_KEY,
+            ),
+        )
+
+        if response.ok:
+            return HttpResponse(
+                response.content,
+            )
+
+        return HttpResponseBadRequest()
+    
+
+
+
+class AutocompleteView(JWTBaseAuthView):
+    groups = [
+        CMS_GROUP_NAME,
+        WORKERS_GROUP_NAME,
+    ]
+
+    def get(self, request, *args, **kwargs):
+
+        query = None
+
+        try:
+            query = str(kwargs["query"])
+        except KeyError:
+            pass
+
+        response = requests.get(
+            url="{}/maps/api/place/textsearch/json?input={}&region={}&key={}".format(
+                settings.GOOGLE_BASE_URL,
+                query,
+                "be",
+                settings.GOOGLE_API_KEY,
+
+            ),
+        )
+
+        if response.ok:
+            return HttpResponse(
+                response.content,
+            )
+
+        return HttpResponseBadRequest()
+
+
+
+class DimonaListView(JWTBaseAuthView):
+    """
+    [CMS]
+
+    GET
+    """
+
+    # Overrides the app types with access to this view
+    app_types = [
+        CMS_GROUP_NAME,
+    ]
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+        item_count = 25
+        page = 1
+
+        try:
+            item_count = kwargs["count"]
+            page = kwargs["page"]
+        except KeyError:
+            pass
+
+        dimonas = Dimona.objects.all().order_by("-created")
+
+        paginator = Paginator(dimonas, per_page=item_count)
+
+        data = []
+
+        for dimona in paginator.page(page).object_list:
+            data.append(dimona.to_model_view())
+
+        # Return the washer id
+        return Response(
+            {
+                k_dimonas: data,
+                k_items_per_page: paginator.per_page,
+                k_total: len(dimonas),
+            }
+        )
+
+class AdminStatisticsView(JWTBaseAuthView):
+    """
+    [CMS]
+
+    GET
+
+    A view for getting the admin statistics overview
+    """
+
+    app_types = [CMS_GROUP_NAME]
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+        formatter = FormattingUtil(kwargs)
+        start = formatter.get_date(value_key=k_start)
+        end = formatter.get_date(value_key=k_end)
+
+        if not start or not end:
+            return HttpResponseNotFound()
+        
+        return Response(StatisticsService.get_admin_statistics(start, end))
+    
+
+class CustomerJobHistoryView(JWTBaseAuthView):
+    """
+    [CMS, Customers]
+
+    GET
+
+    A view to get a paginated list of all jobs for a customer.
+    """
+
+    groups = [
+        CMS_GROUP_NAME,
+        CUSTOMERS_GROUP_NAME,
+    ]
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle GET request to retrieve paginated job history for a customer.
+
+        Args:
+            request (HttpRequest): The HTTP request object
+            *args: Additional positional arguments
+            **kwargs: Additional keyword arguments containing customer_id, page, count
+
+        Returns:
+            Response: A response object containing the paginated list of jobs
+        """
+        try:
+            customer_id = kwargs['customer_id']
+            page = int(kwargs.get('page', 1))
+            per_page = int(kwargs.get('count', 25))
+        except (KeyError, ValueError):
+            return HttpResponseBadRequest()
+
+        result = JobService.get_customer_job_history(
+            customer_id=customer_id,
+            page=page,
+            per_page=per_page
+        )
+
+        return Response({
+            k_jobs: result['jobs'],
+            k_total: result['total'],
+            k_items_per_page: result['items_per_page']
+        })
+
+
+class WasherJobHistoryView(JWTBaseAuthView):
+    """
+    [CMS, Workers]
+
+    GET
+
+    A view to get a paginated list of all approved jobs for a washer.
+    """
+
+    groups = [
+        CMS_GROUP_NAME,
+        WORKERS_GROUP_NAME,
+    ]
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle GET request to retrieve paginated job history for a washer.
+
+        Args:
+            request (HttpRequest): The HTTP request object
+            *args: Additional positional arguments
+            **kwargs: Additional keyword arguments containing worker_id, page, count
+
+        Returns:
+            Response: A response object containing the paginated list of jobs
+        """
+        try:
+            worker_id = kwargs['worker_id']
+            page = int(kwargs.get('page', 1))
+            per_page = int(kwargs.get('count', 25))
+        except (KeyError, ValueError):
+            return HttpResponseBadRequest()
+
+        result = JobService.get_washer_job_history(
+            worker_id=worker_id,
+            page=page,
+            per_page=per_page
+        )
+
+        return Response({
+            k_jobs: result['jobs'],
+            k_total: result['total'],
+            k_items_per_page: result['items_per_page']
+        })
+
+
+class ExportsView(JWTBaseAuthView):
+    """
+    [CMS]
+
+    GET | POST
+
+    View for refreshing and getting exports
+    """
+
+    groups = [
+        CMS_GROUP_NAME,
+    ]
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+        """
+        View for getting a list of all existing exports
+        """
+
+        item_count = 25
+        page = 1
+        sort_term = None
+        algorithm = None
+
+        try:
+            item_count = kwargs["count"]
+            page = kwargs["page"]
+        except KeyError:
+            pass
+        try:
+            sort_term = kwargs["sort_term"]
+            algorithm = kwargs["algorithm"]
+        except KeyError:
+            pass
+
+        if sort_term is not None:
+            if algorithm == "descending":
+                sort_term = "-{}".format(sort_term)
+
+            export_files = ExportFile.objects.all().order_by(sort_term)
+
+        else:
+            export_files = ExportFile.objects.all().order_by("-created")
+
+        paginator = Paginator(export_files, per_page=item_count)
+
+        data = []
+
+        for export in paginator.page(page).object_list:
+            data.append(export.to_model_view())
+
+        return Response(
+            data={
+                k_exports: data,
+                k_items_per_page: paginator.per_page,
+                k_total: len(
+                    export_files,
+                ),
+            }
+        )
+
+    def post(self, request: HttpRequest):
+        """
+        Creates the latest monthly export
+        """
+
+        formatter = FormattingUtil(data=request.data)
+
+        try:
+            start = formatter.get_date(k_start_time)
+            end = formatter.get_date(k_end_time)
+
+        except DeserializationException as e:
+            # If the inner validation fails, this throws an error
+            return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
+        except Exception as e:
+            # Unhandled exception
+            return Response(
+                {k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR
+            )
+
+        if start is None or end is None:
+            start, end = ExportManager.get_last_month_period()
+
+        ExportManager.create_time_registations_export(start, end)
+
+        ExportManager.create_active_washers_export(start, end)
+
+        return Response()
+>>>>>>> main

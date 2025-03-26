@@ -26,6 +26,7 @@ k_state = "state"
 k_worker = "worker"
 k_customer = "customer"
 
+<<<<<<< HEAD
 k_date_of_birth = "date_of_birth"
 k_first_name = "first_name"
 k_last_name = "last_name"
@@ -39,6 +40,23 @@ k_phone_number = "phone_number"
 k_iban = "iban"
 k_place_of_birth = "place_of_birth"
 k_ssn = "ssn"
+=======
+k_date_of_birth = 'date_of_birth'
+k_first_name = 'first_name'
+k_last_name = 'last_name'
+k_email = 'email'
+k_password = 'password'
+k_address = 'address'
+k_billing_address = 'billing_address'
+k_tax_number = 'tax_number'
+k_initials = 'initials'
+k_phone_number = 'phone_number'
+k_iban = 'iban'
+k_place_of_birth = 'place_of_birth'
+k_ssn = 'ssn'
+k_special_committee = 'special_committee'
+k_worker_type = 'worker_type'
+>>>>>>> main
 
 k_customer_id = "customer_id"
 k_worker_id = "worker_id"

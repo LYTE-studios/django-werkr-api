@@ -15,11 +15,19 @@ def generate_code():
 class CustomPasswordResetUtil:
     def send_reset_code(self, user):
         code = generate_code()
+<<<<<<< HEAD
         pass_code = PassResetCode(user=user, code=code)
+=======
+
+        pass_code = PassResetCode(
+            user=user,
+            code=code
+        )
+>>>>>>> main
 
         pass_code.save()
 
-        CodeMailTemplate().send([user.email], {"code": code})
+        CodeMailTemplate().send(recipients=[{'Email': user.email}], data={"code": code})
 
     def verify_code(self, user, code):
         pass_code = PassResetCode.objects.filter(
