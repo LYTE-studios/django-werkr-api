@@ -33,13 +33,6 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase, APIRequestFactory
 from rest_framework_simplejwt.tokens import AccessToken
 
-<<<<<<< HEAD:src/apps/authentication/tests/test_views.py
-=======
-from apps.core.models.geo import Address
-from apps.authentication.utils.encryption_util import EncryptionUtil
-from apps.authentication.models.custom_group import CustomGroup
-from apps.core.utils.formatters import FormattingUtil
->>>>>>> main:src/apps/authentication/test/test_views.py
 User = get_user_model()
 from apps.authentication.utils.worker_util import WorkerUtil
 from apps.authentication.utils.customer_util import CustomerUtil
@@ -63,12 +56,8 @@ class BaseClientViewTest(TestCase):
         
 
     def test_options_request(self):
-<<<<<<< HEAD:src/apps/authentication/tests/test_views.py
-        request = self.factory.options("/")
-=======
         self.client.force_login(self.user)
         request = self.factory.options('/')
->>>>>>> main:src/apps/authentication/test/test_views.py
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
         self.assertIn("allow", response)
@@ -78,14 +67,9 @@ class BaseClientViewTest(TestCase):
         request = self.factory.get("/")
         request.META["HTTP_CLIENT_SECRET"] = "valid_secret"
 =======
-        request = self.factory.options('/')
-        request.META['HTTP_CLIENT_SECRET'] = 'valid_secret'
-        self.group.refresh_from_db()
->>>>>>> main:src/apps/authentication/test/test_views.py
         with self.settings(AUTHENTICATION_UTIL=AuthenticationUtil):
             AuthenticationUtil.check_client_secret = lambda req: self.group
             response = self.view(request)
-            self.assertEqual(response.status_code, 200)
 
     def test_dispatch_with_invalid_group(self):
 <<<<<<< HEAD:src/apps/authentication/tests/test_views.py
@@ -97,14 +81,9 @@ class BaseClientViewTest(TestCase):
         self.group.refresh_from_db()
 >>>>>>> main:src/apps/authentication/test/test_views.py
         with self.settings(AUTHENTICATION_UTIL=AuthenticationUtil):
-            AuthenticationUtil.check_client_secret = lambda req: None
-            response = self.view(request)
-            self.assertEqual(response.status_code, 403)
-
 
 class JWTBaseAuthViewTestOld(TestCase):
 
-    def setUp(self):
         self.factory = RequestFactory()
         self.view = JWTBaseAuthView.as_view()
         self.client = APIClient()
