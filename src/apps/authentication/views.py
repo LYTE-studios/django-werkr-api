@@ -1456,11 +1456,31 @@ class MediaForwardView(APIView):
         return HttpResponseNotFound()
 
 
-class ProfileCompletionView(JWTBaseAuthView):
+class UserDashboardFlowView(JWTBaseAuthView):
+    """
+    API Endpoint to fetch a specific user's DashboardFlow.
+    """
 
+    def get(self, request, user_id):
+        """
+        Get the DashboardFlow for a specific user.
+
+        Args:
+            request: The HTTP request object.
+            user_id: The ID of the user whose DashboardFlow to fetch.
+
+        Returns:
+            Response: Contains the serialized DashboardFlow data.
+        """
+        dashboard_flow = get_object_or_404(DashboardFlow, user__id=user_id)
+        serializer = DashboardFlowSerializer(dashboard_flow)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ProfileCompletionView(JWTBaseAuthView):
     """
     API Endpoint to evaluate the worker's profile completion.
-    Returns completion percentage and missing fields, 
+    Returns completion percentage and missing fields,
     or raises a ValidationError with detailed missing fields if incomplete.
     """
     

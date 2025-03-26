@@ -1,5 +1,5 @@
 import json
-from uuid import UUID
+from uuid import UUID, uuid4
 from django.test import RequestFactory
 import datetime
 import tempfile
@@ -915,6 +915,71 @@ class CustomerSearchTermViewTest(TestCase):
 class OnboardingFlowViewTest(APITestCase):
 
     def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='testuser@example.com',
+            password='password123'
+        )
+        self.worker_profile = WorkerProfile.objects.create(user=self.user)
+        self.client.force_login(self.user)
+        self.url = reverse('onboarding_flow')
+
+    def test_onboarding_flow_success(self):
+        data = {
+            'car_washing_experience_type': 'beginner',
+            'waiter_experience_type': 'beginner',
+            'cleaning_experience_type': 'beginner',
+            'chauffeur_experience_type': 'beginner',
+            'gardening_experience_type': 'beginner',
+            'situation_type': 'flexi',
+            'work_type': 'weekday_mornings'
+        }
+        response = self.client.get(self.url, data, format='json', headers={"Client": settings.WORKER_GROUP_SECRET})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.worker_profile.refresh_from_db()
+        self.assertIn('job_types', response.data)
+
+    def test_onboarding_flow_invalid_data(self):
+        data = {
+            'car_washing_experience_type': 'invalid_type'
+        }
+        response = self.client.get(self.url, data, format='json', headers={"Client": settings.WORKER_GROUP_SECRET})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class UserDashboardFlowViewTest(APITestCase):
+    """
+    Test cases for the UserDashboardFlowView endpoint.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='testuser@example.com',
+            password='password123'
+        )
+        self.dashboard_flow = DashboardFlow.objects.create(
+            user=self.user
+        )
+        self.url = reverse('user_dashboard_flow', kwargs={'user_id': self.user.id})
+        self.client.force_login(self.user)
+
+    def test_get_dashboard_flow_success(self):
+        """Test successful retrieval of a user's dashboard flow"""
+        response = self.client.get(self.url, headers={"Client": settings.WORKER_GROUP_SECRET})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], str(self.dashboard_flow.id))
+        self.assertEqual(response.data['user'], self.user.id)
+
+    def test_get_dashboard_flow_not_found(self):
+        """Test attempting to get a non-existent dashboard flow"""
+        url = reverse('user_dashboard_flow', kwargs={'user_id': uuid4()})
+        response = self.client.get(url, headers={"Client": settings.WORKER_GROUP_SECRET})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
         self.client = APIClient()
         self.user = User.objects.create_user(
             username='testuser',

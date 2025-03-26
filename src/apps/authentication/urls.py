@@ -8,7 +8,8 @@ from .views import (
     WorkerRegisterView, StatisticsView, WorkerDetailView,
     WorkersListView, AcceptWorkerView,
     CreateCustomerView, CustomersListView, CustomerDetailView,
-    CustomerSearchTermView, DashboardFlowView, WorkerProfileDetailView, MediaForwardView, ProfileCompletionView
+    CustomerSearchTermView, DashboardFlowView, WorkerProfileDetailView, MediaForwardView,
+    ProfileCompletionView, UserDashboardFlowView
 )
 
 urlpatterns = [
@@ -39,6 +40,7 @@ urlpatterns = [
     path('<str:state>/workers/<int:count>/<int:page>', WorkersListView.as_view()),
     path('<str:state>/workers/<int:count>/<int:page>/<str:search_term>', WorkersListView.as_view()),
     path('admin/workers/profile/<str:user_id>', WorkerProfileDetailView.as_view(), name='worker_profile_detail'),
+    path('users/<str:user_id>/dashboard-flow', UserDashboardFlowView.as_view(), name='user_dashboard_flow'),
 
     # Customers
     path('customers/create', CreateCustomerView.as_view(), name="create_customer"),
