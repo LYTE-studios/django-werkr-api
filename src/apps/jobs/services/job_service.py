@@ -166,16 +166,6 @@ class JobService:
 
             # Query for upcoming jobs based on specified criteria
             jobs = Job.objects.filter(
-<<<<<<< HEAD
-                start_time__gte=now,
-                application_start_time__lte=now,
-                application_end_time__gte=now,
-                job_state=JobState.pending,
-                selected_workers__lt=F("max_workers"),
-                is_draft=False,
-                archived=False,
-            ).order_by("start_time")[:50]
-=======
                 # The job must start in the future
                 start_time__gt=current_time,
                 # Ensure the application window is open
@@ -197,7 +187,6 @@ class JobService:
                 )
             ).distinct().order_by('start_time')
 
->>>>>>> main
         else:
             if not start or not end:
                 jobs = Job.objects.filter(
@@ -215,13 +204,8 @@ class JobService:
                 if start < now:
                     start = now
                 jobs = Job.objects.filter( 
-                    start_time__range=[start, end],
-                    job_state=JobState.pending,
-                    is_draft=False,
-<<<<<<< HEAD
                     archived=False,
                 ).order_by("start_time")[:50]
-=======
                     archived=False
                 ).order_by('start_time')
 >>>>>>> main
