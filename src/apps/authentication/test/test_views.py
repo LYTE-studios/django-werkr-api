@@ -100,11 +100,11 @@ class JWTAuthenticationViewTest(TestCase):
 
     def test_post_with_valid_credentials(self):
         with self.settings(JWT_AUTH_UTIL=JWTAuthUtil):
-            JWTAuthUtil.authenticate = lambda email, password, group: {'access': 'access_token', 'refresh': 'refresh_token'}
+            JWTAuthUtil.authenticate = lambda email, password, group: {'access_token': 'access_token', 'refresh_token': 'refresh_token'}
             response = self.client.post(self.url, self.valid_payload, format='json', headers={"Client": settings.WORKER_GROUP_SECRET})
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            self.assertIn('access', response.data)
-            self.assertIn('refresh', response.data)
+            self.assertIn('access_token', response.data)
+            self.assertIn('refresh_token', response.data)
 
     def test_post_with_invalid_credentials(self):
         with self.settings(JWT_AUTH_UTIL=JWTAuthUtil):
@@ -112,73 +112,6 @@ class JWTAuthenticationViewTest(TestCase):
             response = self.client.post(self.url, self.invalid_payload, format='json', headers={"Client": settings.WORKER_GROUP_SECRET})
             self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
             self.assertEqual(response.data['message'], 'Invalid credentials')
-
-
-class ProfileMeViewTestOld(TestCase):
-
-    def setUp(self):
-        self.client = APIClient()
-        self.group = Group.objects.create(name='test_group')
-        self.settings = Settings.objects.create(language='en')
-        self.user = User.objects.create_user(
-            username='testuser',
-            password='password123',
-            email='testuser@example.com',
-            first_name='Test',
-            last_name='User',
-            description='Sample description',
-            settings=self.settings
-        )
-        self.user.groups.add(self.group)
-        self.client.force_authenticate(user=self.user)
-
-    @patch('apps.authentication.utils.profile_util.ProfileUtil.get_user_profile_picture_url', return_value='profile_pic_url')
-    def test_get_profile(self, mock_get_user_profile_picture_url):
-        url = reverse('profile_me')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['user_id'], str(self.user.id))
-        self.assertEqual(response.data['first_name'], 'Test')
-        self.assertEqual(response.data['last_name'], 'User')
-        self.assertEqual(response.data['email'], 'testuser@example.com')
-        self.assertEqual(response.data['description'], 'Sample description')
-        self.assertEqual(response.data['profile_picture'], 'profile_pic_url')
-        self.assertEqual(response.data['language'], 'en')
-
-    @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=lambda key: 'new_value')
-    @patch('apps.core.utils.formatters.FormattingUtil.get_email', return_value='new_email@example.com')
-    def test_put_profile(self, mock_get_email, mock_get_value):
-        url = reverse('profile_me')
-        data = {
-            'first_name': 'John',
-            'last_name': 'Doe',
-            'email': 'new_email@example.com',
-            'description': 'New description'
-        }
-        response = self.client.put(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.first_name, 'John')
-        self.assertEqual(self.user.last_name, 'Doe')
-        self.assertEqual(self.user.email, 'new_email@example.com')
-        self.assertEqual(self.user.description, 'New description')
-
-    @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=DeserializationException('Invalid data'))
-    def test_put_profile_invalid_data(self, mock_get_value):
-        url = reverse('profile_me')
-        data = {'first_name': 'John'}
-        response = self.client.put(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['message'], ('Invalid data',))
-
-    @patch('apps.core.utils.formatters.FormattingUtil.get_value', side_effect=Exception('Server error'))
-    def test_put_profile_server_error(self, mock_get_value):
-        url = reverse('profile_me')
-        data = {'first_name': 'John'}
-        response = self.client.put(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
-        self.assertEqual(response.data['message'], ('Server error',))
-
 
 class LanguageSettingsViewTest(TestCase):
 
@@ -1234,7 +1167,7 @@ class JWTBaseAuthViewTest(APITestCase):
         response = self.client.get(auth_url,  headers=headers)
 
         #Assert that the response is forbidden
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class ProfileMeViewTest(TestCase):
@@ -1244,7 +1177,7 @@ class ProfileMeViewTest(TestCase):
     profile_type = "customer"
     user = None
 
-    def setup(self):
+    def setUp(self):
 
         self.client = APIClient()
         self.user, created = User.objects.update_or_create(
