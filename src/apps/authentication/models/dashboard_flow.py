@@ -50,6 +50,14 @@ class UserJobType(models.Model):
 
     experience_type = models.CharField(max_length=20, choices=ExperienceType.choices, default=ExperienceType.BEGINNER)
 
+    def to_model_view(self):
+        return {
+            "id": self.id,
+            "name": self.name.name,
+            "icon": self.name.icon,
+            "mastery": self.experience_type,
+        }
+
 class SituationType(models.Model):
     name = models.CharField(max_length=32, unique=True, null=False)
 
@@ -94,4 +102,14 @@ class DashboardFlow(models.Model):
     work_types = models.ManyToManyField(WorkType, related_name='dashboard_flow_work_type')
 
     locations = models.ManyToManyField(Location, related_name='dashboard_flow_location')
+
+    def to_model_view(self):
+        return {
+            'id': self.id,
+            'user_id': self.user.id,
+            'situation_types': [st.to_model_view() for st in self.situation_types.all()],
+            'job_types': [jt.to_model_view() for jt in self.job_types.all()],
+            'work_types': [wt.to_model_view() for wt in self.work_types.all()],
+            'locations': [l.to_model_view() for l in self.locations.all()],
+        }
 

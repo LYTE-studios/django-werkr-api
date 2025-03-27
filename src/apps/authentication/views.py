@@ -1473,8 +1473,8 @@ class UserDashboardFlowView(JWTBaseAuthView):
             Response: Contains the serialized DashboardFlow data.
         """
         dashboard_flow = get_object_or_404(DashboardFlow, user__id=user_id)
-        serializer = DashboardFlowSerializer(dashboard_flow)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(dashboard_flow.to_model_view(), status=status.HTTP_200_OK)
 
 
 class ProfileCompletionView(JWTBaseAuthView):
