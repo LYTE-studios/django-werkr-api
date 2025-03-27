@@ -61,7 +61,6 @@ class WorkerUtil:
             "ssn": worker.worker_profile.ssn,
             "worker_address": worker.worker_profile.worker_address,
             "date_of_birth": worker.worker_profile.date_of_birth,
-            "place_of_birth": worker.worker_profile.place_of_birth,
         }
 
         # Find missing fields

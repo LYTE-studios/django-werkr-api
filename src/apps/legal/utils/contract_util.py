@@ -97,7 +97,7 @@ class ContractUtil:
             raise e
         contract_path = os.path.join('media', f'{application.id}_contract.pdf')
 
-        with open(contract_path, 'w+b') as result_file:
+        with open(contract_path, 'w+') as result_file:
             pisa_status = pisa.CreatePDF(html_string, dest=result_file)
             if pisa_status.err:
                 raise pisa_status.err

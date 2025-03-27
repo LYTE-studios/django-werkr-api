@@ -49,7 +49,7 @@ class JobApplicationService:
         #validate worker's profile before approval
         completion_data = WorkerUtil.calculate_worker_completion(worker)
         completion_percentage = completion_data[0]
-        missing_fields = completion_data["missing_fields"]
+        missing_fields = completion_data[1]
 
         if completion_percentage < 100:
             raise ValidationError(

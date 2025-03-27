@@ -122,7 +122,11 @@ class JobManager(models.Manager):
 
         application.save()
 
-        ContractUtil.generate_contract(application)
+        try:
+            ContractUtil.generate_contract(application)
+        except Exception as e:
+            print(e)
+            pass
 
     @staticmethod
     def remove_unselected_workers(job: Job) -> None:

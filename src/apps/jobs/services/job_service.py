@@ -135,9 +135,6 @@ class JobService:
     @staticmethod
     def get_upcoming_jobs(user, is_worker=True, start=None, end=None):
         now = timezone.now()
-
-        start = timezone.make_aware(start)
-        end = timezone.make_aware(end)
         
         if is_worker:
             # Gets the current time
@@ -175,6 +172,9 @@ class JobService:
                     archived=False
                 ).order_by('start_time')
             else:
+                start = timezone.make_aware(start)
+                end = timezone.make_aware(end)
+                
                 if start < now:
                     start = now
                 jobs = Job.objects.filter( 
