@@ -19,7 +19,7 @@ class WorkerUtil:
         }
 
         if not hasattr(worker, 'worker_profile'):
-            worker_profile = WorkerProfile.objects.create()
+            worker_profile = WorkerProfile.objects.create(user=worker)
         
         worker_profile = worker.worker_profile
         data.update({

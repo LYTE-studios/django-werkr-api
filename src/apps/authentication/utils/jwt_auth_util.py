@@ -62,6 +62,9 @@ class JWTAuthUtil:
         except User.DoesNotExist:
             return None
          
+        if not user:
+            return None
+
         session_expiry = 0
 
         if group.name == CMS_GROUP_NAME:

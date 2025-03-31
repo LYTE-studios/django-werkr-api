@@ -91,7 +91,7 @@ class JobManager(models.Manager):
         SelectedWorkerTemplate().send(recipients=[{'Email': application.job.customer.email}],   
                                       data={"title": job.title, "weekday": FormattingUtil.to_day_of_the_week(start), 
                                             "date": FormattingUtil.to_date(start), "interval": FormattingUtil.to_readable_time(start), \
-                                            "worker": application.worker.first_name, "address": job.address.to_readable(), "phone_number": application.worker.phone_number, })
+                                            "worker": application.worker.first_name, "address": job.address.to_readable(), "phone_number": application.worker.phone_number or "", })
 
 
     @staticmethod

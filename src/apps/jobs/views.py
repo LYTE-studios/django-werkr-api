@@ -275,7 +275,7 @@ class TimeRegistrationView(JWTBaseAuthView):
         WORKERS_GROUP_NAME
     ]
 
-    def get(self, request: HttpRequest, job_id: str) -> Response:
+    def get(self, request: HttpRequest, job_id: str, user_id:str = None) -> Response:
         """
         Handle GET request to retrieve time registrations.
 
@@ -288,7 +288,7 @@ class TimeRegistrationView(JWTBaseAuthView):
         get_object_or_404(Job, id=job_id)
 
         try:
-            registration = TimeRegistration.objects.get(job_id=job_id, worker_id=request.user.id)
+            registration = TimeRegistration.objects.get(job_id=job_id, worker_id=user_id or request.user.id)
 
             return Response({k_time_registration: registration.to_model_view()})
 

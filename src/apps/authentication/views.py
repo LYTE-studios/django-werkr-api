@@ -1082,10 +1082,10 @@ class AcceptWorkerView(JWTBaseAuthView):
             return HttpResponseNotFound()
 
         # Mark the worker as accepted
-        worker.accepted = True
+        worker.worker_profile.accepted = True
 
         # Save the worker
-        worker.save()
+        worker.worker_profile.save()
 
         return Response()
 

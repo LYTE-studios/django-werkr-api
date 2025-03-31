@@ -147,3 +147,49 @@ class NotificationView(JWTBaseAuthView):
 
         # Return a successful response with the notification ID
         return Response({k_id: str(notification.id)}, status=HTTPStatus.OK)
+
+
+
+class UpdateFcmTokenView(JWTBaseAuthView):
+    """
+    [CMS]
+
+    POST
+
+    View for updating base user details.
+    """
+
+    groups = [
+        CMS_GROUP_NAME,
+        WORKERS_GROUP_NAME,
+    ]
+
+    def post(self, request: HttpRequest, *args, **kwargs):
+
+        formatter = FormattingUtil(data=request.data)
+
+        try:
+            # Get the user id
+            user = self.user
+            fcm_token = formatter.get_value(k_fcm_token, required=True)
+            if fcm_token:
+                user.fcm_token = fcm_token
+            else:
+                return Response(
+                    {k_message: "FCM token not provided"}, status=HTTPStatus.BAD_REQUEST
+                )
+
+        except DeserializationException as e:
+            # If the inner validation fails, this throws an error
+            return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
+        except Exception as e:
+            # Unhandled exception
+            return Response(
+                {k_message: e.args}, status=HTTPStatus.INTERNAL_SERVER_ERROR
+            )
+
+        # Save the user
+        user.save()
+
+        # Return the user's id
+        return Response({k_user_id: user.id})

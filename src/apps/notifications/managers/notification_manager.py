@@ -124,10 +124,12 @@ class NotificationManager:
             ),
             token=token,
         )
-
+        
         try:
             messaging.send(message)
-        except Exception:
+        except ValueError as e:
+            raise e
+        except Exception as e:
             pass
 
 

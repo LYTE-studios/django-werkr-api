@@ -40,6 +40,7 @@ urlpatterns = [
     path('jobs/history/<int:start>/<int:end>', HistoryJobsView.as_view()),
     path('jobs/get', GetJobsBasedOnUserView.as_view(), name="get-jobs-based-on-user"),
     path('jobs/timeregistration/<str:job_id>', TimeRegistrationView.as_view()),
+    path('jobs/timeregistration/<str:job_id>/<str:user_id>', TimeRegistrationView.as_view()),
     path('jobs/timeregistration/sign', SignTimeRegistrationView.as_view(), name="sign-time-registration"),
     path('jobs/active', ActiveJobList.as_view(), name="active-job-list"),
     path('jobs/done', DoneJobList.as_view(), name="done-job-list"),

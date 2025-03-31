@@ -3,6 +3,8 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+import firebase_admin
+from firebase_admin import credentials
 from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -224,3 +226,7 @@ if SENTRY_DSN:
 CUSTOMER_GROUP_SECRET = os.getenv('CUSTOMER_GROUP_SECRET', 'customer')
 WORKER_GROUP_SECRET = os.getenv('WORKER_GROUP_SECRET', 'worker')
 CMS_GROUP_SECRET = os.getenv('CMS_GROUP_SECRET', 'cms')
+
+# Initialize Firebase Admin SDK
+firebase_cred = credentials.Certificate("certificates/firebase.json")
+firebase_admin.initialize_app(firebase_cred)
