@@ -1,5 +1,6 @@
 from click import File
 from django.utils import timezone
+import datetime
 import io
 import os
 
@@ -47,7 +48,7 @@ class ExportManager:
 
         class TimeRegistrationExport:
             ssn: str
-            date: timezone.date
+            date: datetime.date
             name: str
             first_name: str
             start_time: timezone.datetime
@@ -60,7 +61,7 @@ class ExportManager:
             def __init__(
                 self,
                 ssn: str,
-                date: timezone.date,
+                date: datetime.date,
                 name: str,
                 first_name: str,
                 start_time,
