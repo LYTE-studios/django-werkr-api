@@ -6,6 +6,10 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 # Add this line to include your trusted origin
 CSRF_TRUSTED_ORIGINS = ['https://staging.api.werkr.lytestudios.be']
 
+DIMONA_URL = "https://services-sim.socialsecurity.be/REST/dimona/v2"
+DIMONA_AUTH_URL = "https://services-sim.socialsecurity.be/REST/oauth/v5/token"
+
+
 # Database
 DATABASES = {
     'default': {

@@ -1020,7 +1020,7 @@ class WorkersListView(JWTBaseAuthView):
             archived=False
         ).filter(worker_profile__accepted=block_unaccepted_workers)
 
-        term = '-created'
+        term = '-date_joined'
 
         if sort_term:
             if algorithm == 'descending':
