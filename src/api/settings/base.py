@@ -3,8 +3,6 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-import firebase_admin
-from firebase_admin import credentials
 from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -227,6 +225,20 @@ CUSTOMER_GROUP_SECRET = os.getenv('CUSTOMER_GROUP_SECRET', 'customer')
 WORKER_GROUP_SECRET = os.getenv('WORKER_GROUP_SECRET', 'worker')
 CMS_GROUP_SECRET = os.getenv('CMS_GROUP_SECRET', 'cms')
 
+from firebase_admin import credentials, initialize_app
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Firebase configuration
+FIREBASE_CERT_PATH = config('FIREBASE_CERT_PATH', default='certificates/firebase.json')
+
 # Initialize Firebase Admin SDK
-firebase_cred = credentials.Certificate("certificates/firebase.json")
-firebase_admin.initialize_app(firebase_cred)
+try:
+    firebase_cred = credentials.Certificate(FIREBASE_CERT_PATH)
+    initialize_app(firebase_cred)
+    logger.info("Firebase Admin SDK initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize Firebase Admin SDK: {str(e)}")
+    # Don't raise the error here - let the notification sending handle it
+    # This allows the app to start even if Firebase isn't properly configured

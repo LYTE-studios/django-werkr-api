@@ -3,28 +3,37 @@ import asyncio
 
 def async_task(func):
     """
-    Decorator to run a coroutine function as an asyncio task
-    when called like a regular function.
+    Decorator to run a coroutine function as a background task
+    without blocking the main thread. The task will be scheduled
+    on the event loop and executed asynchronously.
+    
+    This decorator is designed to work with ASGI applications
+    and expects to be running in an async context.
     """
-
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    async def wrapper(*args, **kwargs):
         if not asyncio.iscoroutinefunction(func):
             raise ValueError("The decorated function must be a coroutine")
-        
+
+        async def wrapped_task():
+            try:
+                await func(*args, **kwargs)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error in background task {func.__name__}: {str(e)}")
+                raise
+
         try:
-            # Try getting the current event loop
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            # Possibly no event loop in the thread, so create a new one
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            
-        if loop.is_running():
-            # If the event loop is running, schedule the task
-            return asyncio.create_task(func(*args, **kwargs))
-        else:
-            # If no event loop is running, start a new one and run the task
-            return asyncio.run(func(*args, **kwargs))
+            # Get the running loop (will raise RuntimeError if no loop is running)
+            loop = asyncio.get_running_loop()
+            # Create and schedule the task
+            task = loop.create_task(wrapped_task())
+            return None  # Return immediately, don't wait for the task
+        except RuntimeError as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"No running event loop available: {str(e)}")
+            raise
 
     return wrapper

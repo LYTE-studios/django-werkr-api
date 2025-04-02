@@ -43,16 +43,9 @@ class TimeRegistration(models.Model):
             k_start_time: FormattingUtil.to_timestamp(self.start_time),
             k_end_time: FormattingUtil.to_timestamp(self.end_time),
             k_break_time: FormattingUtil.to_timestamp(self.break_time),
+            k_worker_signature:  MediaUtil.to_media_url(self.worker_signature.url) if self.worker_signature else None,
+            k_customer_signature: MediaUtil.to_media_url(self.customer_signature.url) if self.customer_signature else None,
+            k_worker: WorkerUtil.to_worker_view(self.worker) if self.worker else None,
         }
-
-        if self.worker is not None:
-            data[k_worker] = WorkerUtil.to_worker_view(self.worker)
-
-        if self.worker_signature is not None:
-            try:
-                data[k_worker_signature] = MediaUtil.to_media_url(self.worker_signature.url)
-                data[k_customer_signature] = MediaUtil.to_media_url(self.customer_signature.url)
-            except Exception:
-                pass
 
         return data

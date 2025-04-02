@@ -5,6 +5,10 @@ from apps.core.decorators import async_task
 User = get_user_model()
 from asgiref.sync import sync_to_async
 
+class ThirdPartyAuthError(Exception):
+    """Raised when there's an authentication error with a third-party service."""
+    pass
+
 from apps.authentication.user_exceptions import UserNotFoundException
 from apps.core.utils.formatters import FormattingUtil
 from apps.notifications.models.mail_template import MailTemplate
@@ -19,7 +23,7 @@ class NotificationManager:
     """
 
     @staticmethod
-    def notify_admin(title: str, description: str, send_mail=False):
+    async def notify_admin(title: str, description: str, send_mail=False):
         """
         Notify all admin users with a given title and description.
 
@@ -28,17 +32,19 @@ class NotificationManager:
             description (str): The description of the notification.
             send_mail (bool): Whether to send an email notification. Defaults to False.
         """
-        users = get_user_set(group_name=CMS_GROUP_NAME)
+        get_users = sync_to_async(get_user_set)
+        save_notification = sync_to_async(lambda x: x.save())
 
-        notification = NotificationManager.create_notification(title, description, None)
+        users = await get_users(group_name=CMS_GROUP_NAME)
+        notification = await NotificationManager.create_notification(title, description, None)
         notification.is_global = True
-        notification.save()
+        await save_notification(notification)
 
         for user in users:
-            NotificationManager.assign_notification(user, notification, send_push=True, send_mail=send_mail)
+            await NotificationManager.assign_notification(user, notification, send_push=True, send_mail=send_mail)
 
     @staticmethod
-    def create_notification_for_user(user: User, title: str, description: str, image_url, send_mail=False):
+    async def create_notification_for_user(user: User, title: str, description: str, image_url, send_mail=False):
         """
         Create a new notification and assign it to a single user.
 
@@ -52,13 +58,13 @@ class NotificationManager:
         Returns:
             NotificationStatus: The status of the notification.
         """
-        notification = NotificationManager.create_notification(title, description, image_url)
-        notification_status = NotificationManager.assign_notification(user, notification, send_push=True,
+        notification = await NotificationManager.create_notification(title, description, image_url)
+        notification_status = await NotificationManager.assign_notification(user, notification, send_push=True,
                                                                       send_mail=send_mail)
         return notification_status
 
     @staticmethod
-    def assign_notification(user: User, notification: Notification, send_push=True, send_mail=False):
+    async def assign_notification(user: User, notification: Notification, send_push=True, send_mail=False):
         """
         Assign a notification to a user.
 
@@ -71,22 +77,31 @@ class NotificationManager:
         Returns:
             NotificationStatus: The status of the notification.
         """
+        # Wrap database operations in sync_to_async
+        save_status = sync_to_async(lambda x: x.save())
+        send_mail_template = sync_to_async(lambda x: MailTemplate().send(**x))
+
+        # Create and save notification status
         notification_status = NotificationStatus(user=user, notification_id=notification.id)
-        notification_status.save()
+        await save_status(notification_status)
 
         if send_push and user.fcm_token is not None:
-            NotificationManager.send_push_notification(user.fcm_token, notification)
+            await NotificationManager.send_push_notification(user.fcm_token, notification)
 
         if send_mail:
-            MailTemplate().send(recipients=[{'Email': user.email}], data={
-                "title": notification.title,
-                "description": notification.description,
-            })
+            mail_args = {
+                'recipients': [{'Email': user.email}],
+                'data': {
+                    "title": notification.title,
+                    "description": notification.description,
+                }
+            }
+            await send_mail_template(mail_args)
 
         return notification_status
 
     @staticmethod
-    def create_notification(title: str, description: str, image_url):
+    async def create_notification(title: str, description: str, image_url):
         """
         Create a new notification.
 
@@ -98,39 +113,68 @@ class NotificationManager:
         Returns:
             Notification: The created notification.
         """
+        save_notification = sync_to_async(lambda x: x.save())
         notification = Notification(title=title, description=description, pfp_url=image_url)
-        notification.save()
+        await save_notification(notification)
         return notification
 
     @staticmethod
-    def send_push_notification(token: str, notification: Notification):
+    async def send_push_notification(token: str, notification: Notification):
         """
         Send a push notification to a specified FCM token.
 
         Args:
             token (str): The FCM token to send the notification to.
             notification (Notification): The notification to send.
+
+        Raises:
+            ThirdPartyAuthError: If there's an authentication error with FCM/APNS
+            Exception: For other errors during notification sending
         """
-        message = messaging.Message(
-            notification=messaging.Notification(
-                title=notification.title,
-                body=notification.description,
-                image=notification.pfp_url,
-            ),
-            apns=messaging.APNSConfig(
-                payload=messaging.APNSPayload(
-                    aps=messaging.Aps(sound='default'),
-                ),
-            ),
-            token=token,
-        )
-        
         try:
-            messaging.send(message)
-        except ValueError as e:
-            raise e
+            # Configure APNS with more detailed settings
+            apns_config = messaging.APNSConfig(
+                headers={
+                    'apns-priority': '10'  # High priority
+                },
+                payload=messaging.APNSPayload(
+                    aps=messaging.Aps(
+                        alert=messaging.ApsAlert(
+                            title=notification.title,
+                            body=notification.description
+                        ),
+                        sound='default',
+                        badge=1
+                    ),
+                ),
+            )
+
+            message = messaging.Message(
+                notification=messaging.Notification(
+                    title=notification.title,
+                    body=notification.description,
+                    image=notification.pfp_url,
+                ),
+                apns=apns_config,
+                token=token,
+            )
+        
+            # Wrap Firebase messaging send in sync_to_async
+            send_message = sync_to_async(messaging.send)
+            response = await send_message(message)
+            print(f"Successfully sent message: {response}")
+            
+        except messaging.ApiCallError as firebase_error:
+            error_message = f"Firebase API error: {firebase_error.code} - {firebase_error.message}"
+            print(error_message)
+            if 'authentication' in str(firebase_error).lower():
+                raise ThirdPartyAuthError(error_message)
+            raise Exception(error_message)
+            
         except Exception as e:
-            pass
+            error_message = f"Error sending push notification: {str(e)}"
+            print(error_message)
+            raise Exception(error_message)
 
 
 def get_user_set(group_name: str = WORKERS_GROUP_NAME, language: str = None):
@@ -156,8 +200,8 @@ def get_user_set(group_name: str = WORKERS_GROUP_NAME, language: str = None):
 
     return users
 
-def create_global_mail(title: str, description: str, user_id: str = None, group_name: str = WORKERS_GROUP_NAME,
-                       language: str = None):
+async def create_global_mail(title: str, description: str, user_id: str = None, group_name: str = WORKERS_GROUP_NAME,
+                        language: str = None):
     """
     Send a mail to the specified group without saving it as a notification.
 
@@ -168,33 +212,47 @@ def create_global_mail(title: str, description: str, user_id: str = None, group_
         group_name (str): The name of the group. Defaults to WORKERS_GROUP_NAME.
         language (str): The language filter. Defaults to None.
     """
+    get_user = sync_to_async(User.objects.get)
+    get_users = sync_to_async(get_user_set)
+    send_mail = sync_to_async(lambda x: MailTemplate().send(**x))
+    has_worker_profile = sync_to_async(lambda u: hasattr(u, 'worker_profile'))
+    is_worker_accepted = sync_to_async(lambda u: u.worker_profile.accepted)
+
     if user_id is not None and user_id != '':
         try:
-            user = User.objects.get(id=user_id)
-            MailTemplate().send(recipients=[{'Email': user.email}], data={
-                "title": title,
-                "description": description,
-            })
+            user = await get_user(id=user_id)
+            mail_args = {
+                'recipients': [{'Email': user.email}],
+                'data': {
+                    "title": title,
+                    "description": description,
+                }
+            }
+            await send_mail(mail_args)
             return
         except User.DoesNotExist:
             raise Exception('User does not exist')
 
-    users = get_user_set(group_name, language)
+    users = await get_users(group_name, language)
 
     for user in users:
-        if hasattr(user, 'worker_profile'):
-            if not user.worker_profile.accepted:
+        if await has_worker_profile(user):
+            if not await is_worker_accepted(user):
                 continue
         if user.archived:
             continue
 
-        MailTemplate().send(recipients=[{'Email': user.email}], data={
-            "title": title,
-            "description": description,
-        })
+        mail_args = {
+            'recipients': [{'Email': user.email}],
+            'data': {
+                "title": title,
+                "description": description,
+            }
+        }
+        await send_mail(mail_args)
 
-def send_lonely_push(title: str, description: str, user_id: str = None, group_name: str = WORKERS_GROUP_NAME,
-                     language: str = None) -> None:
+async def send_lonely_push(title: str, description: str, user_id: str = None, group_name: str = WORKERS_GROUP_NAME,
+                      language: str = None) -> None:
     """
     Send a push notification without saving it to the notification center.
 
@@ -205,24 +263,28 @@ def send_lonely_push(title: str, description: str, user_id: str = None, group_na
         group_name (str): The name of the group. Defaults to WORKERS_GROUP_NAME.
         language (str): The language filter. Defaults to None.
     """
+    get_user = sync_to_async(User.objects.get)
+    get_users = sync_to_async(get_user_set)
+    is_accepted = sync_to_async(lambda u: u.accepted)
+
     if user_id is not None and user_id != '':
         try:
-            user = User.objects.get(id=user_id)
-            NotificationManager.send_push_notification(user.fcm_token,
-                                                       Notification(title=title, description=description))
+            user = await get_user(id=user_id)
+            await NotificationManager.send_push_notification(user.fcm_token,
+                                                        Notification(title=title, description=description))
             return
         except User.DoesNotExist:
             raise Exception('User does not exist')
 
-    users = get_user_set(group_name, language)
+    users = await get_users(group_name, language)
 
     for user in users:
-        if not user.accepted:
+        if not await is_accepted(user):
             continue
         if user.archived:
             continue
 
-        NotificationManager.send_push_notification(user.fcm_token, Notification(title=title, description=description))
+        await NotificationManager.send_push_notification(user.fcm_token, Notification(title=title, description=description))
 
 @async_task
 async def create_global_notification(title: str, description: str, image_url: str = None, user_id: str = None,
@@ -241,25 +303,33 @@ async def create_global_notification(title: str, description: str, image_url: st
         language (str): The language filter. Defaults to None.
     """
 
-    def send():
-        notification = NotificationManager.create_notification(title, description, image_url)
+    async def send():
+        # Wrap database operations in sync_to_async
+        create_notification = sync_to_async(NotificationManager.create_notification)
+        get_user = sync_to_async(User.objects.get)
+        get_users = sync_to_async(get_user_set)
+        assign_notification = sync_to_async(NotificationManager.assign_notification)
+
+        # Create notification
+        notification = await create_notification(title, description, image_url)
 
         if user_id is not None and user_id != '':
             try:
-                user = User.objects.get(id=user_id)
-                NotificationManager.assign_notification(user, notification, send_push=send_push)
+                user = await get_user(id=user_id)
+                await assign_notification(user, notification, send_push=send_push)
                 return
             except User.DoesNotExist:
                 raise Exception('User does not exist')
 
-        users = get_user_set(group_name, language)
+        users = await get_users(group_name, language)
 
         for user in users:
-            if not user.is_accepted():
+            if not await sync_to_async(user.is_accepted)():
                 continue
             if user.archived:
                 continue
 
-            NotificationManager.assign_notification(user, notification, send_push=send_push)
+            await assign_notification(user, notification, send_push=send_push)
 
-    sync_to_async(send)()
+    # No need to wrap in sync_to_async since send() is already async
+    await send()

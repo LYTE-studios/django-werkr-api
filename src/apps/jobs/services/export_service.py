@@ -1,4 +1,4 @@
-from click import File
+from django.core.files import File
 from django.utils import timezone
 import datetime
 import io
@@ -53,7 +53,7 @@ class ExportManager:
             first_name: str
             start_time: timezone.datetime
             end_time: timezone.datetime
-            break_time: timezone.time
+            break_time: datetime.time
             job_title: str
             client: str
             kilometres: float
@@ -101,12 +101,12 @@ class ExportManager:
 
                     total = (
                         t
-                        - timezone.timedelta(
+                        - datetime.timedelta(
                             hours=self.break_time.hour, minutes=self.break_time.minute
                         )
                     ).time()
                     readable_break_time = FormattingUtil.to_readable_duration(
-                        timezone.timedelta(
+                        datetime.timedelta(
                             hours=self.break_time.hour, minutes=self.break_time.minute
                         )
                     )
@@ -152,6 +152,9 @@ class ExportManager:
                 worker=registration.worker, job=registration.job
             ).first()
 
+            if not application:
+                continue
+
             kilometres = 0
 
             # try:
@@ -186,7 +189,7 @@ class ExportManager:
                     registration.job.customer.last_name,
                 ),
                 kilometres=kilometres,
-                worker_type=registration.worker.worker_profile.worker_type or "STU",
+                worker_type=registration.worker.worker_profile.worker_type or "student",
             )
 
             data.append(export)

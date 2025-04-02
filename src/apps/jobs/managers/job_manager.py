@@ -300,14 +300,14 @@ class JobManager(models.Manager):
     def create(job: Job):
         
         """
-        Creates a new job, initializes its selected workers count, saves the job's address, and sends a 
-        notification if the job is visible.
+        Creates a new job, initializes its selected workers count, saves the job's address, and sends a
+        notification if the job is visible and not a draft.
 
         This method performs the following tasks:
         - Sets the selected_workers to 0 by default.
         - Saves the job's address.
         - Saves the job itself.
-        - If the job is visible, sends a notification to workers.
+        - If the job is visible and not a draft, sends a notification to workers.
 
         Args:
         job (Job): The job object to be created.
@@ -321,7 +321,8 @@ class JobManager(models.Manager):
 
         job.save()
 
-        if job.is_visible():
+        # Only send notification if the job is not a draft
+        if not job.is_draft:
             JobManager._send_job_notification(job)
 
         return job

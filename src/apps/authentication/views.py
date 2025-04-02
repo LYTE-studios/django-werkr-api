@@ -724,6 +724,7 @@ class WorkerRegisterView(BaseClientView):
 
             first_name = formatter.get_value(k_first_name, required=False)
             last_name = formatter.get_value(k_last_name, required=False)
+            phone_number = formatter.get_value(k_phone_number, required=False)
             date_of_birth = formatter.get_date(k_date_of_birth, required=False)
             iban = formatter.get_value(k_tax_number, required=False)
             place_of_birth = formatter.get_value(k_place_of_birth, required=False)
@@ -745,6 +746,7 @@ class WorkerRegisterView(BaseClientView):
 
         # Create the user with the encrypted password
         user = User(
+            phone_number=phone_number,
             username=email,
             first_name=first_name,
             last_name=last_name,
@@ -1018,10 +1020,15 @@ class WorkersListView(JWTBaseAuthView):
             archived=False
         ).filter(worker_profile__accepted=block_unaccepted_workers)
 
+        term = '-created'
+
         if sort_term:
             if algorithm == 'descending':
                 sort_term = f'-{sort_term}'
-            workers = workers.order_by(sort_term)
+            
+            term = sort_term
+
+        workers = workers.order_by(term)
 
         if search_term:
             queries = [

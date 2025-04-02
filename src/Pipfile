@@ -32,6 +32,7 @@ xhtml2pdf = "*"
 bcrypt = "*"
 django-cors-headers = "*"
 pandas = "*"
+xlsxwriter = "3.1.6"
 
 [dev-packages]
 pytest = "*"
