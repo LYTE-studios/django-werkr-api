@@ -20,7 +20,6 @@ boto3 = "*"
 python-decouple = "~=3.8"
 requests = "~=2.31.0"
 python-dateutil = "~=2.8.2"
-Pillow = "~=10.0.1"
 pydantic = "*"
 numpy = "~=1.26.4"
 sentry-sdk = {extras = ["django"], version = "~=1.29.2"}

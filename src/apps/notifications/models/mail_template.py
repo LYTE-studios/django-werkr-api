@@ -4,7 +4,7 @@ import asyncio
 
 class MailTemplate:
 
-    template_id: int = 5794325
+    template_id: int = 6868496
     subject: str = 'Werkr | New message'
 
     def send(self, recipients: list[str], data: dict):
@@ -33,29 +33,29 @@ class MailTemplate:
             raise Exception("Error sending mail: " + response.text)
 
 class ApprovedMailTemplate(MailTemplate):
-    template_id = 5792978
+    template_id = 6867411
     subject = "Werkr | You\'ve been approved!"
 
 class CodeMailTemplate(MailTemplate):
-    template_id = 5798048
+    template_id = 6867284
     subject = 'Werkr | Password reset code'
 
 
 class DeniedMailTemplate(MailTemplate):
-    template_id = 5771049
+    template_id = 6857054
     subject = 'Werkr | Job was full!'
 
 
 class SelectedWorkerTemplate(MailTemplate):
-    template_id = 6150888
+    template_id = 6868426
     subject = 'Werkr | A washer has been selected for your job!'
 
 
 class TimeRegisteredTemplate(MailTemplate):
-    template_id = 6095618
+    template_id = 6868519
     subject = 'Werkr | A washer registered time for your job!'
 
 
 class CancelledMailTemplate(MailTemplate):
-    template_id = 5792996
+    template_id = 6867436
     subject = 'Werkr | Your job was cancelled!'

@@ -173,7 +173,7 @@ class ExportManager:
             #     return e
 
             if application.no_travel_cost is False:
-                kilometres = application.distance * 2
+                kilometres = application.distance
 
             export = TimeRegistrationExport(
                 ssn=registration.worker.worker_profile.ssn,
