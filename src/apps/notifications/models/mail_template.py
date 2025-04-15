@@ -52,7 +52,7 @@ class SelectedWorkerTemplate(MailTemplate):
 
 
 class TimeRegisteredTemplate(MailTemplate):
-    template_id = 6868519
+    template_id = 6867346
     subject = 'Werkr | A washer registered time for your job!'
 
 
