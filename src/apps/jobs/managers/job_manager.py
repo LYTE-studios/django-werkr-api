@@ -22,39 +22,34 @@ class JobManager(models.Manager):
     """
 
     @staticmethod
-    def deny_application(application: JobApplication) -> None:
-
+    def deny_application(application: JobApplication, send_notifications: bool = True) -> None:
         """
         Handles the denial of a job application by updating its state, notifying the worker and managing related services.
 
         Args:
         Application (JobApplication): The job application being denied.
-
+        send_notifications (bool): Whether to send notifications to the worker. Defaults to True.
         """
+        # Store the original state before making changes
+        was_pending = application.application_state == JobApplicationState.pending
 
         send_new_push = application.job.max_workers - application.job.selected_workers == 0
 
         application.application_state = JobApplicationState.rejected
-
         application.save()
 
         job = application.job
-
         selected_workers = JobManager.calculate_selected_workers(application)
 
         if (job.max_workers - selected_workers) > 0 and send_new_push:
-            JobManager._send_job_notification(job=job, title='New spot available!', )
+            JobManager._send_job_notification(job=job, title='New spot available!')
 
         DimonaService.cancel_dimona(application)
         
-        DeniedMailTemplate().send(recipients=[{'Email': application.worker.email}], 
-                                  data={"job_title": job.title, "city": job.address.city or 'Belgium',})
-
-        NotificationManager.create_notification_for_user(application.worker,
-                                                         'Job full! - {}'.format(job.title),
-                                                         'You weren\'t selected for a job you applied to!',
-                                                         image_url=None,
-                                                         send_mail=False, )
+        # Only send notifications if explicitly requested AND the application was pending before
+        if send_notifications and was_pending:
+            DeniedMailTemplate().send(recipients=[{'Email': application.worker.email}], data={"job_title": job.title, "city": job.address.city or 'Belgium'})
+            NotificationManager.create_notification_for_user(application.worker, 'Job full! - {}'.format(job.title), 'You weren\'t selected for a job you applied to!', image_url=None, send_mail=False)
 
     @staticmethod
     def _notify_approved_worker(application: JobApplication) -> None:
@@ -91,7 +86,7 @@ class JobManager(models.Manager):
         SelectedWorkerTemplate().send(recipients=[{'Email': application.job.customer.email}],   
                                       data={"title": job.title, "weekday": FormattingUtil.to_day_of_the_week(start), 
                                             "date": FormattingUtil.to_date(start), "interval": FormattingUtil.to_readable_time(start), \
-                                            "worker": application.worker.first_name, "address": job.address.to_readable(), "phone_number": application.worker.phone_number or "", })
+                                            "worker": application.worker.first_name or "", "address": job.address.to_readable(), "phone_number": application.worker.phone_number or "", })
 
 
     @staticmethod
@@ -127,21 +122,14 @@ class JobManager(models.Manager):
         except Exception as e:
             print(e)
             pass
-
     @staticmethod
     def remove_unselected_workers(job: Job) -> None:
-        
-        """
-        Rejects pending application for a job.
-        Updates workers state from 'pending' to 'rejected' using JobManager.deny_application.
-
-        Args:
-        application (JobApplication): The job being denied.
-        """
-        applications = JobApplication.objects.filter(job_id=job.id, application_state=JobApplicationState.pending)
-
-        for application in applications:
-            JobManager.deny_application(application)
+        """Rejects pending applications and notifies workers."""
+        pending = JobApplication.objects.filter(job_id=job.id, application_state=JobApplicationState.pending)
+        for app in pending:
+            JobManager.deny_application(app, send_notifications=False)
+            DeniedMailTemplate().send(recipients=[{'Email': app.worker.email}], data={"job_title": job.title, "city": job.address.city or 'Belgium'})
+            NotificationManager.create_notification_for_user(app.worker, 'Job full! - {}'.format(job.title), 'You weren\'t selected for a job you applied to!', image_url=None, send_mail=False)
 
     @staticmethod
     def calculate_selected_workers(application: JobApplication):
