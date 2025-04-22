@@ -61,7 +61,7 @@ urlpatterns = [
     path('applications', ApplicationsListView.as_view()),
     path('applications/<str:job_id>', ApplicationsListView.as_view(), name="applications-list"),
 
-    path('directions/<int:from_lat>/<int:from_lon>/<int:to_lat>/<int:to_lon>', DirectionsView.as_view(), name="directions-view"),
+    path('directions/<str:from_lat>/<str:from_lon>/<str:to_lat>/<str:to_lon>', DirectionsView.as_view(), name="directions-view"),
     path('reverse_geocode/<str:query>', ReverseGeocodeView.as_view(), name="reverse_geocode"),
     path('geocode/<str:query>', GeocodeView.as_view(), name="geocode"),
     path('autocomplete/<str:query>', AutocompleteView.as_view(), name="autocomplete"),

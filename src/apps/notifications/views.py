@@ -85,32 +85,23 @@ class NotificationView(JWTBaseAuthView):
 
         try:
             title = formatter.get_value(k_title, required=True)
-            description = formatter.get_value(k_description) or ""
-            user_id = formatter.get_value(k_user_id) or None
-            send_notification = formatter.get_bool(k_send_notification, required=False)
-            send_push = formatter.get_bool(k_send_push, required=False)
-            send_mail = formatter.get_bool(k_send_mail, required=False)
-            language = formatter.get_value(k_language, required=False) or None
+            description = formatter.get_value(k_description, required=True)
+            user_id = formatter.get_value(k_user_id, required=False)
+            send_push = formatter.get_bool(k_send_push, required=False) or False
+            send_mail = formatter.get_bool(k_send_mail, required=False) or False
+            language = formatter.get_value(k_language, required=False)
 
         except DeserializationException as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
 
-        if send_mail == True:
-            create_global_mail(
-                title=title,
-                description=description,
-                language=language,
-                user_id=user_id,
-            )
-
-        if send_notification == True:
-            create_global_notification(
-                title=title,
-                description=description,
-                send_push=send_push,
-                user_id=user_id,
-                language=language,
-            )
+        create_global_notification(
+            title=title,
+            description=description,
+            send_push=send_push,
+            send_mail=send_mail,
+            user_id=user_id,
+            language=language,
+        )
 
         return Response(status=HTTPStatus.OK)
 

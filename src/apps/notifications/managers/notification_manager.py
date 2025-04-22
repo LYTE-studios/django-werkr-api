@@ -288,7 +288,7 @@ async def send_lonely_push(title: str, description: str, user_id: str = None, gr
 
 @async_task
 async def create_global_notification(title: str, description: str, image_url: str = None, user_id: str = None,
-                               send_push: bool = False, group_name: str = WORKERS_GROUP_NAME,
+                               send_push: bool = False, group_name: str = WORKERS_GROUP_NAME, send_mail: bool = False,
                                language: str = None) -> None:
     """
     Create a global notification for all users in a group.
@@ -313,10 +313,13 @@ async def create_global_notification(title: str, description: str, image_url: st
         # Create notification
         notification = await create_notification(title, description, image_url)
 
+        async def assign(user: User):
+            await assign_notification(user, notification, send_push=send_push, send_mail=send_mail)
+
         if user_id is not None and user_id != '':
             try:
                 user = await get_user(id=user_id)
-                await assign_notification(user, notification, send_push=send_push)
+                await assign(user)
                 return
             except User.DoesNotExist:
                 raise Exception('User does not exist')
@@ -329,7 +332,7 @@ async def create_global_notification(title: str, description: str, image_url: st
             if user.archived:
                 continue
 
-            await assign_notification(user, notification, send_push=send_push)
+            await assign(user)
 
     # No need to wrap in sync_to_async since send() is already async
     await send()

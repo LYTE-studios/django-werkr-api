@@ -687,10 +687,10 @@ class DirectionsView(JWTBaseAuthView):
             HttpResponseBadRequest: The response if fetching directions fails.
         """
         # Extract and convert latitude and longitude from kwargs
-        from_lat = int(kwargs.get('from_lat', 0)) / 1000000
-        from_lon = int(kwargs.get('from_lon', 0)) / 1000000
-        to_lat = int(kwargs.get('to_lat', 0)) / 1000000
-        to_lon = int(kwargs.get('to_lon', 0)) / 1000000
+        from_lat = int(kwargs.get('from_lat', '0')) / 1000000
+        from_lon = int(kwargs.get('from_lon', '0')) / 1000000
+        to_lat = int(kwargs.get('to_lat', '0')) / 1000000
+        to_lon = int(kwargs.get('to_lon', '0')) / 1000000
 
         # Fetch directions using the JobApplicationService
         response = JobApplicationService.fetch_directions(from_lat, from_lon, to_lat, to_lon)
