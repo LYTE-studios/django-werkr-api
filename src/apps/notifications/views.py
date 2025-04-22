@@ -9,7 +9,7 @@ from apps.notifications.models.notification_status import NotificationStatus
 from apps.core.utils.wire_names import *
 from apps.core.utils.formatters import FormattingUtil
 from apps.core.model_exceptions import DeserializationException
-from apps.notifications.managers.notification_manager import create_global_mail, create_global_notification
+from apps.notifications.managers.notification_manager import create_global_notification
 from apps.notifications.models.notification import Notification
 
 # Create your views here.
