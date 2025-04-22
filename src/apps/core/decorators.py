@@ -1,13 +1,18 @@
 from functools import wraps
 import asyncio
 
+from asgiref.sync import async_to_sync
+from django.core.signals import request_finished
+from django.dispatch import receiver
+import threading
+
 def async_task(func):
     """
     Decorator to run a coroutine function as a background task
     without blocking the main thread. The task will be scheduled
-    on the event loop and executed asynchronously.
+    and executed asynchronously using Django's async utilities.
     
-    This decorator is designed to work with ASGI applications
+    This decorator is designed to work with Django applications
     and can be called from both sync and async contexts.
     """
     @wraps(func)
@@ -22,24 +27,15 @@ def async_task(func):
                 import logging
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error in background task {func.__name__}: {str(e)}")
-                raise
 
-        try:
-            # Try to get the running loop
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                # If no loop is running, create a new one
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
+        def run_async_task():
+            asyncio.run(wrapped_task())
 
-            # Create and schedule the task
-            loop.create_task(wrapped_task())
-            return None  # Return immediately, don't wait for the task
-        except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error scheduling background task: {str(e)}")
-            raise
+        # Start the task in a separate thread
+        thread = threading.Thread(target=run_async_task)
+        thread.daemon = True  # Make the thread daemon so it won't block program exit
+        thread.start()
+        
+        return None  # Return immediately, don't wait for the task
 
     return wrapper
