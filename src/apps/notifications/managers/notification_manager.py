@@ -101,7 +101,7 @@ class NotificationManager:
         return notification_status
 
     @staticmethod
-    def create_notification(title: str, description: str, image_url):
+    async def create_notification(title: str, description: str, image_url):
         """
         Create a new notification.
 
@@ -113,9 +113,10 @@ class NotificationManager:
         Returns:
             Notification: The created notification.
         """
-
+            
         notification = Notification(title=title, description=description, pfp_url=image_url)
-        notification.save()
+
+        await sync_to_async(notification.save)()
 
         return notification
 
@@ -306,12 +307,11 @@ async def create_global_notification(title: str, description: str, image_url: st
 
     async def send():
         # Wrap database operations in sync_to_async
-        create_notification = sync_to_async(NotificationManager.create_notification)
         get_user = sync_to_async(User.objects.get)
         get_users = sync_to_async(get_user_set)
 
         # Create notification
-        notification = await create_notification(title, description, image_url)
+        notification = await NotificationManager.create_notification(title, description, image_url)
 
         async def assign(user: User):
             await NotificationManager.assign_notification(user, notification, send_push=send_push, send_mail=send_mail)
