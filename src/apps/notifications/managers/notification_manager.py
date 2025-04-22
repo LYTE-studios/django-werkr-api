@@ -36,7 +36,7 @@ class NotificationManager:
         save_notification = sync_to_async(lambda x: x.save())
 
         users = await get_users(group_name=CMS_GROUP_NAME)
-        notification = await NotificationManager.create_notification(title, description, None)
+        notification = await sync_to_async(Notification.objects.create)(title=title, description=description)
         notification.is_global = True
         await save_notification(notification)
 
@@ -58,7 +58,7 @@ class NotificationManager:
         Returns:
             NotificationStatus: The status of the notification.
         """
-        notification = await NotificationManager.create_notification(title, description, image_url)
+        notification = await sync_to_async(Notification.objects.create)(title=title, description=description, pfp_url=image_url)
         notification_status = await NotificationManager.assign_notification(user, notification, send_push=True,
                                                                       send_mail=send_mail)
         return notification_status
@@ -99,26 +99,6 @@ class NotificationManager:
             await send_mail_template(mail_args)
 
         return notification_status
-
-    @staticmethod
-    async def create_notification(title: str, description: str, image_url):
-        """
-        Create a new notification.
-
-        Args:
-            title (str): The title of the notification.
-            description (str): The description of the notification.
-            image_url (str): The URL of the image associated with the notification.
-
-        Returns:
-            Notification: The created notification.
-        """
-            
-        notification = Notification(title=title, description=description, pfp_url=image_url)
-
-        await sync_to_async(notification.save)()
-
-        return notification
 
     @staticmethod
     async def send_push_notification(token: str, notification: Notification):
@@ -311,7 +291,7 @@ async def create_global_notification(title: str, description: str, image_url: st
         get_users = sync_to_async(get_user_set)
 
         # Create notification
-        notification = await NotificationManager.create_notification(title, description, image_url)
+        notification = await sync_to_async(Notification.objects.create)(title=title, description=description, pfp_url=image_url)
 
         async def assign(user: User):
             await NotificationManager.assign_notification(user, notification, send_push=send_push, send_mail=send_mail)
