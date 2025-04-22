@@ -77,26 +77,17 @@ class NotificationManager:
         Returns:
             NotificationStatus: The status of the notification.
         """
-        # Wrap database operations in sync_to_async
-        save_status = sync_to_async(lambda x: x.save())
-        send_mail_template = sync_to_async(lambda x: MailTemplate().send(**x))
-
         # Create and save notification status
-        notification_status = NotificationStatus(user=user, notification_id=notification.id)
-        await save_status(notification_status)
+        notification_status = await sync_to_async(NotificationStatus.objects.create)(user=user, notification_id=notification.id)
 
         if send_push and user.fcm_token is not None:
             await NotificationManager.send_push_notification(user.fcm_token, notification)
 
         if send_mail:
-            mail_args = {
-                'recipients': [{'Email': user.email}],
-                'data': {
+            MailTemplate().send([{'Email': user.email}], {
                     "title": notification.title,
                     "description": notification.description,
-                }
-            }
-            await send_mail_template(mail_args)
+                })
 
         return notification_status
 
@@ -286,9 +277,6 @@ async def create_global_notification(title: str, description: str, image_url: st
     """
 
     async def send():
-        # Wrap database operations in sync_to_async
-        get_user = sync_to_async(User.objects.get)
-        get_users = sync_to_async(get_user_set)
 
         # Create notification
         notification = await sync_to_async(Notification.objects.create)(title=title, description=description, pfp_url=image_url)
@@ -298,16 +286,16 @@ async def create_global_notification(title: str, description: str, image_url: st
 
         if user_id is not None and user_id != '':
             try:
-                user = await get_user(id=user_id)
+                user = await sync_to_async(get_user_set)(id=user_id)
                 await assign(user)
                 return
             except User.DoesNotExist:
                 raise Exception('User does not exist')
 
-        users = await get_users(group_name, language)
+        users = await sync_to_async(get_user_set)(group_name, language)
 
         for user in users:
-            if not await sync_to_async(user.is_accepted)():
+            if not user.is_accepted():
                 continue
             if user.archived:
                 continue
