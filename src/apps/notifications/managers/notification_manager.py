@@ -7,10 +7,6 @@ from asgiref.sync import sync_to_async
 import logging
 logger = logging.getLogger(__name__)
 
-class ThirdPartyAuthError(Exception):
-    """Raised when there's an authentication error with a third-party service."""
-    pass
-
 from apps.authentication.user_exceptions import UserNotFoundException
 from apps.core.utils.formatters import FormattingUtil
 from apps.notifications.models.mail_template import MailTemplate
@@ -25,6 +21,31 @@ class NotificationManager:
     """
 
     @staticmethod
+    async def get_user_set(group_name: str = WORKERS_GROUP_NAME, language: str = None):
+        """
+        Get the set of users in a specified group.
+
+        Args:
+            group_name (str): The name of the group. Defaults to WORKERS_GROUP_NAME.
+            language (str): The language filter. Defaults to None.
+
+        Returns:
+            QuerySet: The set of users in the specified group.
+        """
+        try:
+            from django.contrib.auth.models import Group
+            group = await sync_to_async(Group.objects.get)(name=group_name)
+            users = await sync_to_async(group.user_set.all)()
+        except User.DoesNotExist:
+            raise UserNotFoundException
+
+        if language is not None:
+            setting =  await sync_to_async(Settings.objects.filter)(language=language.lower())
+            users = await sync_to_async(users.filter)(settings_id__in=setting.values_list('id'))
+
+        return users
+
+    @staticmethod
     async def notify_admin(title: str, description: str, send_mail=False):
         """
         Notify all admin users with a given title and description.
@@ -34,10 +55,9 @@ class NotificationManager:
             description (str): The description of the notification.
             send_mail (bool): Whether to send an email notification. Defaults to False.
         """
-        get_users = sync_to_async(get_user_set)
         save_notification = sync_to_async(lambda x: x.save())
 
-        users = await get_users(group_name=CMS_GROUP_NAME)
+        users = await NotificationManager.get_user_set(group_name=CMS_GROUP_NAME)
         notification = await sync_to_async(Notification.objects.create)(title=title, description=description)
         notification.is_global = True
         await save_notification(notification)
@@ -151,124 +171,12 @@ class NotificationManager:
         except messaging.ApiCallError as firebase_error:
             error_message = f"Firebase API error: {firebase_error.code} - {firebase_error.message}"
             logger.error(error_message)
-            if 'authentication' in str(firebase_error).lower():
-                raise ThirdPartyAuthError(error_message)
             raise Exception(error_message)
             
         except Exception as e:
             error_message = f"Error sending push notification: {str(e)}"
             logger.error(error_message)
             raise Exception(error_message)
-
-
-def get_user_set(group_name: str = WORKERS_GROUP_NAME, language: str = None):
-    """
-    Get the set of users in a specified group.
-
-    Args:
-        group_name (str): The name of the group. Defaults to WORKERS_GROUP_NAME.
-        language (str): The language filter. Defaults to None.
-
-    Returns:
-        QuerySet: The set of users in the specified group.
-    """
-    try:
-        group = FormattingUtil.to_group(group_name)
-        users = group.user_set.all()
-    except User.DoesNotExist:
-        raise UserNotFoundException
-
-    if language is not None:
-        setting = Settings.objects.filter(language=language.lower())
-        users = users.filter(settings_id__in=setting.values_list('id'))
-
-    return users
-
-async def create_global_mail(title: str, description: str, user_id: str = None, group_name: str = WORKERS_GROUP_NAME,
-                        language: str = None):
-    """
-    Send a mail to the specified group without saving it as a notification.
-
-    Args:
-        title (str): The title of the mail.
-        description (str): The description of the mail.
-        user_id (str): The ID of the user to send the mail to. Defaults to None.
-        group_name (str): The name of the group. Defaults to WORKERS_GROUP_NAME.
-        language (str): The language filter. Defaults to None.
-    """
-    get_user = sync_to_async(User.objects.get)
-    get_users = sync_to_async(get_user_set)
-    send_mail = sync_to_async(lambda x: MailTemplate().send(**x))
-    has_worker_profile = sync_to_async(lambda u: hasattr(u, 'worker_profile'))
-    is_worker_accepted = sync_to_async(lambda u: u.worker_profile.accepted)
-
-    if user_id is not None and user_id != '':
-        try:
-            user = await get_user(id=user_id)
-            mail_args = {
-                'recipients': [{'Email': user.email}],
-                'data': {
-                    "title": title,
-                    "description": description,
-                }
-            }
-            await send_mail(mail_args)
-            return
-        except User.DoesNotExist:
-            raise Exception('User does not exist')
-
-    users = await get_users(group_name, language)
-
-    for user in users:
-        if await has_worker_profile(user):
-            if not await is_worker_accepted(user):
-                continue
-        if user.archived:
-            continue
-
-        mail_args = {
-            'recipients': [{'Email': user.email}],
-            'data': {
-                "title": title,
-                "description": description,
-            }
-        }
-        await send_mail(mail_args)
-
-async def send_lonely_push(title: str, description: str, user_id: str = None, group_name: str = WORKERS_GROUP_NAME,
-                      language: str = None) -> None:
-    """
-    Send a push notification without saving it to the notification center.
-
-    Args:
-        title (str): The title of the push notification.
-        description (str): The description of the push notification.
-        user_id (str): The ID of the user to send the notification to. Defaults to None.
-        group_name (str): The name of the group. Defaults to WORKERS_GROUP_NAME.
-        language (str): The language filter. Defaults to None.
-    """
-    get_user = sync_to_async(User.objects.get)
-    get_users = sync_to_async(get_user_set)
-    is_accepted = sync_to_async(lambda u: u.accepted)
-
-    if user_id is not None and user_id != '':
-        try:
-            user = await get_user(id=user_id)
-            await NotificationManager.send_push_notification(user.fcm_token,
-                                                        Notification(title=title, description=description))
-            return
-        except User.DoesNotExist:
-            raise Exception('User does not exist')
-
-    users = await get_users(group_name, language)
-
-    for user in users:
-        if not await is_accepted(user):
-            continue
-        if user.archived:
-            continue
-
-        await NotificationManager.send_push_notification(user.fcm_token, Notification(title=title, description=description))
 
 @async_task
 async def create_global_notification(title: str, description: str, image_url: str = None, user_id: str = None,
@@ -301,7 +209,7 @@ async def create_global_notification(title: str, description: str, image_url: st
 
         if user_id is not None and user_id != '':
             try:
-                user = await sync_to_async(get_user_set)(id=user_id)
+                user = await sync_to_async(User.objects.get)(id=user_id)
                 await assign(user)
                 return
             except User.DoesNotExist:
@@ -311,10 +219,9 @@ async def create_global_notification(title: str, description: str, image_url: st
                 raise e
 
         try:
-            users = await sync_to_async(get_user_set)(group_name, language)
+            users = await NotificationManager.get_user_set(group_name, language)
 
             for user in users:
-
                 if not user.is_accepted():
                     continue
                 if user.archived:
