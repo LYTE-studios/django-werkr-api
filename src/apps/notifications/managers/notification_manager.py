@@ -4,6 +4,8 @@ from firebase_admin import messaging
 from apps.core.decorators import async_task
 User = get_user_model()
 from asgiref.sync import sync_to_async
+import logging
+logger = logging.getLogger(__name__)
 
 class ThirdPartyAuthError(Exception):
     """Raised when there's an authentication error with a third-party service."""
@@ -77,17 +79,26 @@ class NotificationManager:
         Returns:
             NotificationStatus: The status of the notification.
         """
+
         # Create and save notification status
         notification_status = await sync_to_async(NotificationStatus.objects.create)(user=user, notification_id=notification.id)
 
         if send_push and user.fcm_token is not None:
-            await NotificationManager.send_push_notification(user.fcm_token, notification)
+            try:
+                await NotificationManager.send_push_notification(user.fcm_token, notification)
+            except Exception as e: 
+                logger.error(f"Error sending push notification to user {user.id}: {str(e)}")
+                raise e
 
         if send_mail:
-            MailTemplate().send([{'Email': user.email}], {
-                    "title": notification.title,
-                    "description": notification.description,
-                })
+            try:
+                MailTemplate().send([{'Email': user.email}], {
+                        "title": notification.title,
+                        "description": notification.description,
+                    })
+            except Exception as e: 
+                logger.error(f"Error sending mail to user {user.id}: {str(e)}")
+                raise e 
 
         return notification_status
 
@@ -135,18 +146,18 @@ class NotificationManager:
             # Wrap Firebase messaging send in sync_to_async
             send_message = sync_to_async(messaging.send)
             response = await send_message(message)
-            print(f"Successfully sent message: {response}")
+            logger.info(f"Successfully sent message: {response}")
             
         except messaging.ApiCallError as firebase_error:
             error_message = f"Firebase API error: {firebase_error.code} - {firebase_error.message}"
-            print(error_message)
+            logger.error(error_message)
             if 'authentication' in str(firebase_error).lower():
                 raise ThirdPartyAuthError(error_message)
             raise Exception(error_message)
             
         except Exception as e:
             error_message = f"Error sending push notification: {str(e)}"
-            print(error_message)
+            logger.error(error_message)
             raise Exception(error_message)
 
 
@@ -282,7 +293,11 @@ async def create_global_notification(title: str, description: str, image_url: st
         notification = await sync_to_async(Notification.objects.create)(title=title, description=description, pfp_url=image_url)
 
         async def assign(user: User):
-            await NotificationManager.assign_notification(user, notification, send_push=send_push, send_mail=send_mail)
+            try:
+                await NotificationManager.assign_notification(user, notification, send_push=send_push, send_mail=send_mail)
+            except Exception as e:
+                logger.error(f"Error assigning notification to user {user.id}: {str(e)}")
+                raise e 
 
         if user_id is not None and user_id != '':
             try:
@@ -291,16 +306,24 @@ async def create_global_notification(title: str, description: str, image_url: st
                 return
             except User.DoesNotExist:
                 raise Exception('User does not exist')
+            except Exception as e:
+                logger.error(f"Error setting notification: {str(e)}")
+                raise e
 
-        users = await sync_to_async(get_user_set)(group_name, language)
+        try:
+            users = await sync_to_async(get_user_set)(group_name, language)
 
-        for user in users:
-            if not user.is_accepted():
-                continue
-            if user.archived:
-                continue
+            for user in users:
 
-            await assign(user)
+                if not user.is_accepted():
+                    continue
+                if user.archived:
+                    continue
+
+                await assign(user)
+        except Exception as e: 
+            logger.error(f"Error fetching user set: {str(e)}")
+            raise e 
 
     # No need to wrap in sync_to_async since send() is already async
     await send()
