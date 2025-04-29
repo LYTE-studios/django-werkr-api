@@ -7,12 +7,13 @@ from asgiref.sync import sync_to_async
 import logging
 logger = logging.getLogger(__name__)
 
-from apps.authentication.user_exceptions import UserNotFoundException
-from apps.core.utils.formatters import FormattingUtil
+from apps.authentication.models import WorkerProfile
 from apps.notifications.models.mail_template import MailTemplate
 from apps.notifications.models.notification import Notification
 from apps.notifications.models.notification_status import NotificationStatus
 from apps.core.models.settings import Settings
+from django.contrib.auth.models import Group
+
 
 
 class NotificationManager:
@@ -33,17 +34,18 @@ class NotificationManager:
             QuerySet: The set of users in the specified group.
         """
         try:
-            from django.contrib.auth.models import Group
             group = await sync_to_async(Group.objects.get)(name=group_name)
             users = await sync_to_async(group.user_set.all)()
-        except User.DoesNotExist:
-            raise UserNotFoundException
 
-        if language is not None:
-            setting =  await sync_to_async(Settings.objects.filter)(language=language.lower())
-            users = await sync_to_async(users.filter)(settings_id__in=setting.values_list('id'))
+            if language is not None:
+                setting =  await sync_to_async(Settings.objects.filter)(language=language.lower())
+                setting_ids = await sync_to_async(setting.values_list)('id')
+                users = await sync_to_async(users.filter)(settings_id__in=setting_ids)
 
-        return users
+            return await sync_to_async(users.values)()
+        except Exception as e:
+            logger.error(f"Error getting user set: {str(e)}")
+            raise e
 
     @staticmethod
     async def notify_admin(title: str, description: str, send_mail=False):
@@ -207,7 +209,7 @@ async def create_global_notification(title: str, description: str, image_url: st
                 logger.error(f"Error assigning notification to user {user.id}: {str(e)}")
                 raise e 
 
-        if user_id is not None and user_id != '':
+        if user_id:
             try:
                 user = await sync_to_async(User.objects.get)(id=user_id)
                 await assign(user)
@@ -218,19 +220,25 @@ async def create_global_notification(title: str, description: str, image_url: st
                 logger.error(f"Error setting notification: {str(e)}")
                 raise e
 
-        try:
-            users = await NotificationManager.get_user_set(group_name, language)
+        users = await NotificationManager.get_user_set(group_name, language)
 
-            for user in users:
-                if not user.is_accepted():
-                    continue
+        logger.info(f"Sending notification to {len(users)} users")
+
+        for user in users:
+            logger.info(f"Sending notification to {user.id}")
+
+            try:
+                if hasattr(user, 'worker_profile'):
+                    worker_profile = await sync_to_async(WorkerProfile.objects.get)(user=user)
+                    if not worker_profile.accepted:
+                        continue
                 if user.archived:
                     continue
-
-                await assign(user)
-        except Exception as e: 
-            logger.error(f"Error fetching user set: {str(e)}")
-            raise e 
+            except Exception as e: 
+                logger.error(f"Error checking user status: {str(e)}")
+                raise e 
+    
+            await assign(user)
 
     # No need to wrap in sync_to_async since send() is already async
     await send()
