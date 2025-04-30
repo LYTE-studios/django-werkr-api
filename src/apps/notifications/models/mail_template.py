@@ -34,28 +34,28 @@ class MailTemplate:
 
 class ApprovedMailTemplate(MailTemplate):
     template_id = 6867411
-    subject = "Werkr | You\'ve been approved!"
+    subject = "WERKR | You\'ve been approved!"
 
 class CodeMailTemplate(MailTemplate):
     template_id = 6867284
-    subject = 'Werkr | Password reset code'
+    subject = 'WERKR | Password reset code'
 
 
 class DeniedMailTemplate(MailTemplate):
     template_id = 6857054
-    subject = 'Werkr | Job was full!'
+    subject = 'WERKR | Job was full!'
 
 
 class SelectedWorkerTemplate(MailTemplate):
     template_id = 6868426
-    subject = 'Werkr | A washer has been selected for your job!'
+    subject = 'WERKR | A WERKR has been selected for your job!'
 
 
 class TimeRegisteredTemplate(MailTemplate):
     template_id = 6867346
-    subject = 'Werkr | A washer registered time for your job!'
+    subject = 'WERKR | A WERKR registered time for your job!'
 
 
 class CancelledMailTemplate(MailTemplate):
     template_id = 6867436
-    subject = 'Werkr | Your job was cancelled!'
+    subject = 'WERKR | Your job was cancelled!'

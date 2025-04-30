@@ -15,7 +15,7 @@ from apps.core.model_exceptions import DeserializationException
 from apps.core.models.settings import Settings
 from apps.core.utils.formatters import FormattingUtil
 from apps.core.utils.wire_names import *
-from apps.jobs.models import Job, JobState
+from apps.jobs.models import Job, JobState, Tag
 from apps.jobs.services.statistics_service import StatisticsService
 from django.contrib.auth.models import Group
 from django.core.paginator import Paginator
@@ -312,6 +312,7 @@ class ProfileMeView(JWTBaseAuthView):
                     'company_name': customer.company_name,
                     'customer_billing_address': customer.customer_billing_address.to_model_view() if customer.customer_billing_address else None,
                     'address': customer.customer_address.to_model_view() if customer.customer_address else None,
+                    'tag': customer.tag.to_model_view() if customer.tag else None,
                 })
         if hasattr(self.user, 'worker_profile'):
             worker = self.user.worker_profile
@@ -324,6 +325,7 @@ class ProfileMeView(JWTBaseAuthView):
                     'place_of_birth': worker.place_of_birth,
                     'accepted': worker.accepted,
                     'hours': worker.hours,
+                    'tags': [tag.to_model_view() for tag in worker.tags.all()],
                 })
         if hasattr(self.user, 'admin_profile'):
             admin = self.user.admin_profile
@@ -367,6 +369,7 @@ class ProfileMeView(JWTBaseAuthView):
                 company_name = formatter.get_value('company_name')
                 customer_address = formatter.get_address('address')
                 customer_billing_address = formatter.get_address('billing_address')
+                tag_id = formatter.get_value('tag_id')
             except DeserializationException as e:
                 return Response({'message': e.args}, status=status.HTTP_400_BAD_REQUEST)
             except Exception as e:
@@ -377,6 +380,12 @@ class ProfileMeView(JWTBaseAuthView):
             customer.company_name = company_name or customer.company_name
             customer.customer_address = customer_address or customer.customer_address
             customer.customer_billing_address = customer_billing_address or customer.customer_billing_address
+            if tag_id:
+                try:
+                    tag = Tag.objects.get(id=tag_id)
+                    customer.tag = tag
+                except Tag.DoesNotExist:
+                    pass
             customer.customer_address.save()
             customer.customer_billing_address.save()
             customer.save()
@@ -390,6 +399,7 @@ class ProfileMeView(JWTBaseAuthView):
                 place_of_birth = formatter.get_value('place_of_birth')
                 accepted = formatter.get_value('accepted')
                 hours = formatter.get_value('hours')
+                tag_ids = formatter.get_value('tag_ids')
             except DeserializationException as e:
                 return Response({'message': e.args}, status=status.HTTP_400_BAD_REQUEST)
             except Exception as e:
@@ -403,6 +413,16 @@ class ProfileMeView(JWTBaseAuthView):
             worker.place_of_birth = place_of_birth or worker.place_of_birth
             worker.accepted = accepted if accepted is not None else worker.accepted
             worker.hours = hours or worker.hours
+            
+            if tag_ids:
+                # Clear existing tags and add new ones
+                worker.tags.clear()
+                try:
+                    tags = Tag.objects.filter(id__in=tag_ids)
+                    worker.tags.add(*tags)
+                except Tag.DoesNotExist:
+                    pass
+                    
             worker.worker_address.save()
             worker.save()
 
@@ -953,6 +973,7 @@ class WorkerDetailView(JWTBaseAuthView):
             iban = formatter.get_value(k_iban)
             ssn = formatter.get_value(k_ssn)
             worker_type = formatter.get_value(k_worker_type)
+            tag_ids = formatter.get_value('tag_ids')
         except DeserializationException as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
@@ -968,6 +989,15 @@ class WorkerDetailView(JWTBaseAuthView):
         worker.worker_profile.ssn = ssn or worker.worker_profile.ssn
         worker.worker_profile.date_of_birth = date_of_birth or worker.worker_profile.date_of_birth
         worker.worker_profile.worker_type = worker_type or worker.worker_profile.worker_type
+
+        if tag_ids:
+            # Clear existing tags and add new ones
+            worker.worker_profile.tags.clear()
+            try:
+                tags = Tag.objects.filter(id__in=tag_ids)
+                worker.worker_profile.tags.add(*tags)
+            except Tag.DoesNotExist:
+                pass
 
         if address:
             address.save()
@@ -1358,6 +1388,7 @@ class CustomerDetailView(JWTBaseAuthView):
             company = formatter.get_value('company')
             phone_number = formatter.get_value('phone_number')
             special_committee = formatter.get_value('special_committee')
+            tag_id = formatter.get_value('tag_id')
         except DeserializationException as e:
             return Response({'message': e.args}, status=HTTPStatus.BAD_REQUEST)
         except Exception as e:
@@ -1374,6 +1405,13 @@ class CustomerDetailView(JWTBaseAuthView):
         customer_profile.tax_number = tax_number or customer_profile.tax_number
         customer_profile.company_name = company or customer_profile.company_name
         customer_profile.special_committee = special_committee or customer_profile.special_committee
+
+        if tag_id:
+            try:
+                tag = Tag.objects.get(id=tag_id)
+                customer_profile.tag = tag
+            except Tag.DoesNotExist:
+                pass
 
         if address:
             address.save()
