@@ -45,6 +45,7 @@ k_worker_type = 'worker_type'
 k_customer_id = 'customer_id'
 k_worker_id = 'worker_id'
 k_job_id = 'job_id'
+k_tag_id = 'tag_id'
 
 k_longitude = 'longitude'
 k_latitude = 'latitude'

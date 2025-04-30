@@ -13,6 +13,9 @@ from django.db.models import F, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
+from apps.jobs.models.tag import Tag
+from apps.authentication.models.user import User
+
 
 class JobService:
 
@@ -103,6 +106,7 @@ class JobService:
             start_time = formatter.get_date(k_start_time, required=True)
             end_time = formatter.get_date(k_end_time, required=True)
             customer_id = formatter.get_value(k_customer_id, required=True)
+            tag_id = formatter.get_value(k_tag_id, required=False)
             address = formatter.get_address(k_address, required=True)
             max_workers = formatter.get_value(k_max_workers, required=True)
             description = formatter.get_value(k_description)
@@ -113,6 +117,13 @@ class JobService:
             raise e
         except Exception as e:
             raise e
+
+        if tag_id:
+            tag = get_object_or_404(Tag, id=tag_id)
+        else: 
+            customer = get_object_or_404(User, id=customer_id)
+            tag = customer.customer_profile.tag
+            
 
         job = Job(
             customer_id=customer_id,
@@ -126,7 +137,8 @@ class JobService:
             application_end_time=application_end_time,
             max_workers=max_workers,
             selected_workers=0,
-            is_draft=is_draft
+            is_draft=is_draft,
+            tag=tag,
         )
 
         JobManager.create(job)

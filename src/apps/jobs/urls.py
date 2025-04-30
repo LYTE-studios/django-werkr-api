@@ -27,6 +27,8 @@ from .views import (
     ExportsView,
     CustomerJobHistoryView,
     WasherJobHistoryView,
+    TagView,
+    TagListView,
 )
 
 urlpatterns = [
@@ -75,5 +77,9 @@ urlpatterns = [
     ),
     path("exports/<int:count>/<int:page>", ExportsView.as_view()),
     path("exports/<int:count>/<int:page>/<str:search_term>", ExportsView.as_view()),
+
+    # Tags
+    path('tags', TagListView.as_view(), name='tag-list'),
+    path('tags/<str:id>', TagView.as_view(), name='tag-detail'),
 ]
 

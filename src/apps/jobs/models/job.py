@@ -4,6 +4,7 @@ import uuid
 import pytz
 from apps.core.models.geo import Address
 from .job_state import JobState
+from .tag import Tag
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -50,6 +51,8 @@ class Job(models.Model):
     max_workers = models.IntegerField(null=True, blank=True)
 
     selected_workers = models.IntegerField(null=True, blank=True)
+
+    tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True, blank=True)
 
     def is_visible(self):
 

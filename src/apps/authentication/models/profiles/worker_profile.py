@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from apps.core.models.geo import Address
+from apps.jobs.models.tag import Tag
 
 User = get_user_model()
 
@@ -20,5 +21,6 @@ class WorkerProfile(models.Model):
     accepted = models.BooleanField(default=True, null=False)
     hours = models.FloatField(default=0, null=True)
     worker_type = models.CharField(max_length=10, choices=WorkerType.choices, default=WorkerType.STUDENT)
-    # Once a Worker registers, their account should get a “flag” that indicates that they have not yet done a onboarding flow
+    # Once a Worker registers, their account should get a "flag" that indicates that they have not yet done a onboarding flow
     has_passed_onboarding = models.BooleanField(default=False)
+    tags = models.ManyToManyField(Tag, blank=True)

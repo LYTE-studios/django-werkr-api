@@ -15,6 +15,7 @@ from apps.jobs.services.job_service import JobService
 from apps.jobs.models.dimona import Dimona
 from apps.jobs.models.job import Job
 from apps.jobs.models.time_registration import TimeRegistration
+from apps.jobs.models.tag import Tag
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, Http404
 from rest_framework.response import Response
@@ -1040,3 +1041,139 @@ class ExportsView(JWTBaseAuthView):
         ExportManager.create_active_washers_export(start, end)
 
         return Response()
+
+
+class TagView(JWTBaseAuthView):
+    """
+    [CMS]
+
+    GET | PUT | DELETE
+
+    A view for managing individual tags.
+    """
+
+    groups = [
+        CMS_GROUP_NAME,
+    ]
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle GET request to retrieve tag details.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments including tag_id.
+
+        Returns:
+            Response: A response object containing tag details.
+        """
+        try:
+            tag = get_object_or_404(Tag, id=kwargs['id'])
+            return Response(tag.to_model_view())
+        except KeyError:
+            return HttpResponseNotFound()
+
+    def put(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle PUT request to update a tag.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments including tag_id.
+
+        Returns:
+            Response: A response object indicating success or failure.
+        """
+        try:
+            tag = get_object_or_404(Tag, id=kwargs['id'])
+            data = request.data
+
+            tag.title = data.get('title', tag.title)
+            tag.color = data.get('color', tag.color)
+            tag.icon = data.get('icon', tag.icon)
+            tag.special_committee = data.get('special_committee', tag.special_committee)
+            tag.save()
+
+            return Response(tag.to_model_view())
+        except KeyError:
+            return HttpResponseNotFound()
+        except Exception as e:
+            return Response({'message': str(e)}, status=HTTPStatus.BAD_REQUEST)
+
+    def delete(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle DELETE request to remove a tag.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments including tag_id.
+
+        Returns:
+            Response: A response object indicating success or failure.
+        """
+        try:
+            tag = get_object_or_404(Tag, id=kwargs['id'])
+            tag.delete()
+            return Response()
+        except KeyError:
+            return HttpResponseNotFound()
+
+
+class TagListView(JWTBaseAuthView):
+    """
+    [CMS]
+
+    GET | POST
+
+    A view for listing all tags and creating new ones.
+    """
+
+    groups = [
+        CMS_GROUP_NAME,
+    ]
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle GET request to retrieve all tags.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A response object containing list of all tags.
+        """
+        tags = Tag.objects.all()
+        return Response({
+            'tags': [tag.to_model_view() for tag in tags]
+        })
+
+    def post(self, request: HttpRequest, *args, **kwargs):
+        """
+        Handle POST request to create a new tag.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: A response object containing the created tag's details.
+        """
+        try:
+            data = request.data
+            tag = Tag.objects.create(
+                title=data['title'],
+                color=data['color'],
+                icon=data['icon'],
+                special_committee=data.get('special_committee', False)
+            )
+            return Response(tag.to_model_view())
+        except KeyError as e:
+            return Response({'message': f'Missing required field: {str(e)}'}, status=HTTPStatus.BAD_REQUEST)
+        except Exception as e:
+            return Response({'message': str(e)}, status=HTTPStatus.BAD_REQUEST)
