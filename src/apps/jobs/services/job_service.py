@@ -58,6 +58,7 @@ class JobService:
             application_start_time = formatter.get_date(k_application_start_time)
             application_end_time = formatter.get_date(k_application_end_time)
             is_draft = formatter.get_bool(k_is_draft)
+            tag_id = formatter.get_value(k_tag_id)
         except DeserializationException as e:
             raise e
         except Exception as e:
@@ -95,6 +96,12 @@ class JobService:
         if is_draft is not None:
             job.is_draft = is_draft
             fields_to_update.append('is_draft')
+        if tag_id:
+            try:
+                tag = Tag.objects.get(id=tag_id)
+                job.tag = tag
+            except Tag.DoesNotExist:
+                pass
 
         job.save(update_fields=fields_to_update)
 
