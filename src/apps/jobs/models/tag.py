@@ -13,7 +13,7 @@ class Tag(models.Model):
     title = models.CharField(max_length=64)
     color = models.CharField(max_length=32)  # Store color as string (e.g., "#FF0000")
     icon = models.TextField()  # Store SVG as string
-    special_committee = models.BooleanField(default=False)
+    special_committee = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
 

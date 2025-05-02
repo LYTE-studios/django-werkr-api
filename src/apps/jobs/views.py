@@ -1170,7 +1170,7 @@ class TagListView(JWTBaseAuthView):
                 title=data['title'],
                 color=data['color'],
                 icon=data['icon'],
-                special_committee=data.get('special_committee', False)
+                special_committee=data.get('special_committee', None)
             )
             return Response(tag.to_model_view())
         except KeyError as e:
