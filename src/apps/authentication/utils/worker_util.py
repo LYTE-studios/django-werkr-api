@@ -26,7 +26,7 @@ class WorkerUtil:
             k_iban: worker_profile.iban,
             k_ssn: worker_profile.ssn,
             k_worker_type: worker_profile.worker_type,
-            k_tags: [tag.to_model_view() for tag in worker_profile.tags.all()],
+            k_tags: [tag.to_model_view() for tag in worker_profile.tags.all()] if worker_profile.tags.all() else None,
         })
 
         try:
