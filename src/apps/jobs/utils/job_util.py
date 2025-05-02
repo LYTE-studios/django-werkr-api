@@ -45,5 +45,6 @@ class JobUtil:
             k_is_draft: job.is_draft,
             k_selected_workers: job.selected_workers,
             k_state: job.job_state,
+            k_tag: job.tag.to_model_view() if job.tag else None,
             k_customer: CustomerUtil.to_customer_view(customer),
         }

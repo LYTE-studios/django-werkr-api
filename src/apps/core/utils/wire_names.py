@@ -25,6 +25,7 @@ k_state = 'state'
 
 k_worker = 'worker'
 k_customer = 'customer'
+k_tag = 'tag'
 
 k_date_of_birth = 'date_of_birth'
 k_first_name = 'first_name'

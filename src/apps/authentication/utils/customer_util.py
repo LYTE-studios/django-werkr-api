@@ -29,6 +29,7 @@ class CustomerUtil:
             k_company: customer_profile.company_name,
             k_has_active_job: has_active_job,
             k_phone_number: customer.phone_number,
+            k_tag: customer_profile.tag.to_model_view() if customer_profile.tag else None,
             k_special_committee: customer_profile.special_committee,
         }
 
