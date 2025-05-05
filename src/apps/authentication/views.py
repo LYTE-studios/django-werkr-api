@@ -325,7 +325,7 @@ class ProfileMeView(JWTBaseAuthView):
                     'place_of_birth': worker.place_of_birth,
                     'accepted': worker.accepted,
                     'hours': worker.hours,
-                    'tags': [tag.to_model_view() for tag in worker.tags.all()],
+                    'tags': [tag.to_model_view() for tag in worker.tags.all()] if worker.tags.all() else None,
                 })
         if hasattr(self.user, 'admin_profile'):
             admin = self.user.admin_profile
