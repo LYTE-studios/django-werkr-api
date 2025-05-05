@@ -71,11 +71,12 @@ class DimonaService:
 
         token = DimonaService._get_auth_token()
 
-        return requests.post(url, json=data, headers={
+        return requests.post(
+            url, json=data, headers={
             'Content-Type': 'application/json',
             'Authorization': 'Bearer {}'.format(token),
-        },
-                             )
+            },
+        )
 
     @staticmethod
     def _make_get(url: str):
@@ -208,26 +209,53 @@ class DimonaService:
         start_time = FormattingUtil.to_user_timezone(application.job.start_time)
         end_time = FormattingUtil.to_user_timezone(application.job.end_time)
 
-        dimona_data = {
-            "employer": settings.EMPLOYER_DATA,
-            "worker": {
-                "ssin": ssn,
-                "familyName": user.last_name,
-                "givenName": user.first_name
-            },
-            "features": {
-                "workerType": employee_type,
-            },
-            "dimonaIn": {
-                "features": {
-                    "workerType": employee_type,
-                    "jointCommissionNumber": "XXX",
+        start_time_formatted = start_time.strftime("%H%M")
+        end_time_formatted = end_time.strftime("%H%M")
+
+
+        if employee_type == 'STU':
+            dimona_data = {
+                "employer": settings.EMPLOYER_DATA,
+                "worker": {
+                    "ssin": ssn,
+                    "familyName": user.last_name,
+                    "givenName": user.first_name
                 },
-                "plannedHoursNumber": round((end_time - start_time).seconds / 3600),
-                "startDate": str(start_time.date()),
-                "endDate": str(end_time.date()),
-            },
-        }
+                "features": {
+                    "workerType": "STU",
+                },
+                "dimonaIn": {
+                    "features": {
+                        "workerType": "STU",
+                        "jointCommissionNumber": "XXX",
+                    },
+                    "plannedHoursNumber": round((end_time - start_time).seconds / 3600),
+                    "startDate": str(start_time.date()),
+                    "endDate": str(end_time.date()),
+                },
+            }
+        else: 
+            dimona_data = {
+                "employer": settings.EMPLOYER_DATA,
+                "worker": {
+                    "ssin": ssn,
+                    "familyName": user.last_name,
+                    "givenName": user.first_name
+                },
+                "features": {
+                    "workerType": "FLX",
+                },
+                "dimonaIn": {
+                    "features": {
+                        "workerType": "FLX",
+                        "jointCommissionNumber": "XXX",
+                    },
+                    "startDate": str(start_time.date()),
+                    "endDate": str(end_time.date()),
+                    "startHour": str(start_time_formatted),
+                    "endHour": str(end_time_formatted),
+                },
+            }
 
         response = DimonaService._make_post(settings.DIMONA_URL + '/declarations', dimona_data)
 
