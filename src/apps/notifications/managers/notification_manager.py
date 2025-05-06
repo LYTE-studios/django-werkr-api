@@ -64,7 +64,7 @@ class NotificationManager:
         notification.is_global = True
         await save_notification(notification)
 
-        for user in users:
+        async for user in users:
             await NotificationManager.assign_notification(user, notification, send_push=True, send_mail=send_mail)
 
     @staticmethod
@@ -224,7 +224,7 @@ async def create_global_notification(title: str, description: str, image_url: st
 
         logger.info(f"Sending notification to {len(users)} users")
 
-        for user in users:
+        async for user in users:
             logger.info(f"Sending notification to {user.id}")
 
             try:
