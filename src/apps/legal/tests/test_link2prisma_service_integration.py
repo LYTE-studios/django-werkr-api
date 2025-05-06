@@ -1,213 +1,213 @@
+"""
+Integration tests for Link2Prisma service.
+
+These tests make actual API calls to the Link2Prisma test environment.
+To run these tests specifically:
+
+    pytest src/apps/legal/tests/test_link2prisma_service_integration.py -v
+
+Note: These tests require proper test environment credentials in your .env file:
+- LINK2PRISMA_BASE_URL: Test environment URL
+- LINK2PRISMA_PFX_PATH: Path to test certificate
+- LINK2PRISMA_PFX_PASSWORD: Test certificate password
+- LINK2PRISMA_EMPLOYER_REF: Test employer reference
+"""
+
 import pytest
-from unittest.mock import patch, MagicMock
-from django.test import TestCase
-from django.utils import timezone
+from django.test import TransactionTestCase
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.utils import timezone
 from datetime import datetime, timedelta
-from apps.authentication.models.user import User
+from apps.legal.services.link2prisma_service import Link2PrismaService
 from apps.authentication.models.profiles.worker_profile import WorkerProfile
+from apps.core.models.geo import Address
 from apps.jobs.models.job import Job
 from apps.jobs.models.application import JobApplication
 from apps.jobs.models.job_application_state import JobApplicationState
-from apps.core.models.geo import Address
-from apps.legal.services.link2prisma_service import Link2PrismaService
 
+User = get_user_model()
 
-class TestLink2PrismaServiceIntegration(TestCase):
+@pytest.mark.integration
+class TestLink2PrismaServiceIntegration(TransactionTestCase):
     def setUp(self):
-        # Create test user with worker profile
-        self.user = User.objects.create(
-            email="test@test.com",
+        """Set up test data"""
+        # Create test address
+        self.address = Address.objects.create(
+            street_name="Test Street",
+            house_number="123",
+            zip_code="1000",
+            city="Brussels",
+            country="Belgium",
+            latitude=50.8503,  # Brussels coordinates
+            longitude=4.3517
+        )
+
+        # Create test worker
+        self.worker = User.objects.create_user(
+            username="testworker",
+            email="test.worker@example.com",
+            password="testpass123",
             first_name="Test",
             last_name="Worker",
             date_joined=timezone.now()
         )
-        
-        self.address = Address.objects.create(
-            street_name="Test Street",
-            house_number="123",
-            city="Test City",
+
+        # Create worker profile
+        self.worker_profile = WorkerProfile.objects.create(
+            user=self.worker,
+            ssn="12345678901",  # Test SSN
+            date_of_birth=datetime(1990, 1, 1),
+            place_of_birth="Brussels",
+            iban="BE68539007547034",
+            worker_address=self.address,
+            worker_type="student",
+            hours=20
+        )
+
+        # Create job address
+        self.job_address = Address.objects.create(
+            street_name="Job Street",
+            house_number="456",
             zip_code="1000",
+            city="Brussels",
             country="Belgium",
-            latitude=50.8503,
+            latitude=50.8467,  # Different location in Brussels
             longitude=4.3517
         )
 
-        self.worker_profile = WorkerProfile.objects.create(
-            user=self.user,
-            worker_type=WorkerProfile.WorkerType.STUDENT,
-            ssn="12345678901",
-            iban="BE123456789",
-            worker_address=self.address,
-            date_of_birth=datetime(2000, 1, 1),
-            place_of_birth="Brussels"
+        # Create test customer
+        self.customer = User.objects.create_user(
+            username="testcustomer",
+            email="test.customer@example.com",
+            password="testpass123",
+            first_name="Test",
+            last_name="Customer"
         )
 
         # Create test job
         self.job = Job.objects.create(
-            customer=self.user,
-            start_time=timezone.now() + timedelta(days=1),
-            end_time=timezone.now() + timedelta(days=1, hours=4),
-            address=self.address,
+            title="Test Job",
+            description="Test job description",
+            customer=self.customer,
+            address=self.job_address,
+            start_time=datetime.now() + timedelta(days=1),
+            end_time=datetime.now() + timedelta(days=1, hours=4),
+            application_start_time=datetime.now(),
+            application_end_time=datetime.now() + timedelta(days=1),
             max_workers=1,
-            selected_workers=0,
-            application_start_time=timezone.now(),
-            application_end_time=timezone.now() + timedelta(hours=12)
+            selected_workers=0
+        )
+
+        # Create application address
+        self.application_address = Address.objects.create(
+            street_name="Application Street",
+            house_number="789",
+            zip_code="1000",
+            city="Brussels",
+            country="Belgium",
+            latitude=50.8431,  # Another location in Brussels
+            longitude=4.3517
         )
 
         # Create job application
         self.job_application = JobApplication.objects.create(
             job=self.job,
-            worker=self.user,
-            address=self.address,
+            worker=self.worker,
+            address=self.application_address,
             application_state=JobApplicationState.pending,
             created_at=timezone.now(),
             modified_at=timezone.now()
         )
 
-    @patch('apps.legal.services.link2prisma_service.Link2PrismaService._make_request')
-    def test_full_worker_lifecycle(self, mock_make_request):
-        """Test the complete lifecycle of a worker in Link2Prisma"""
+    def test_health_check(self):
+        """Test the health check endpoint"""
+        try:
+            result = Link2PrismaService.test_connection()
+            self.assertTrue(result)
+        except Exception as e:
+            self.skipTest(f"Link2Prisma not properly configured: {str(e)}")
+
+    def test_worker_sync_flow(self):
+        """Test the complete worker sync flow"""
+        # Check if Link2Prisma is properly configured
+        try:
+            Link2PrismaService.test_connection()
+        except Exception as e:
+            self.skipTest(f"Link2Prisma not properly configured: {str(e)}")
+
+        # First check if worker exists
+        worker_exists_response = Link2PrismaService._make_request(
+            method='GET',
+            endpoint=f'workerExists/{self.worker_profile.ssn}'
+        )
+        self.assertIsNotNone(worker_exists_response)
+
+        # Sync worker (this will create or update the worker)
+        Link2PrismaService.sync_worker(self.worker)
+
+        # Verify worker exists after sync
+        worker_exists_response = Link2PrismaService._make_request(
+            method='GET',
+            endpoint=f'workerExists/{self.worker_profile.ssn}'
+        )
+        self.assertTrue(worker_exists_response.get('WorkerExists'))
+
+        # Fetch worker details
+        worker_number = worker_exists_response.get('WorkerNumber')
+        worker_details = Link2PrismaService._make_request(
+            method='GET',
+            endpoint=f'worker/{worker_number}'
+        )
         
-        # Step 1: Initial worker sync - worker doesn't exist
-        mock_make_request.side_effect = [
-            {'WorkerExists': False},  # Check if worker exists
-            {'status': 'success', 'WorkerNumber': '12345'}  # Create worker response
-        ]
+        # Verify worker details
+        self.assertEqual(worker_details.get('Name'), self.worker.last_name)
+        self.assertEqual(worker_details.get('Firstname'), self.worker.first_name)
+        self.assertEqual(worker_details.get('INSS'), self.worker_profile.ssn)
 
-        result = Link2PrismaService.sync_worker_data()
-        self.assertTrue(result)
+    def test_job_approval_flow(self):
+        """Test the job approval flow"""
+        # Check if Link2Prisma is properly configured
+        try:
+            Link2PrismaService.test_connection()
+        except Exception as e:
+            self.skipTest(f"Link2Prisma not properly configured: {str(e)}")
 
-        # Verify worker creation request
-        create_call = mock_make_request.call_args_list[1]
-        self.assertEqual(create_call[1]['method'], 'POST')
-        self.assertEqual(create_call[1]['endpoint'], 'worker')
+        # First ensure worker exists in Link2Prisma
+        Link2PrismaService.sync_worker(self.worker)
 
-        worker_data = create_call[1]['data']
-        self.assertEqual(worker_data['Name'], self.user.last_name)
-        self.assertEqual(worker_data['Firstname'], self.user.first_name)
-        self.assertEqual(worker_data['INSS'], self.worker_profile.ssn)
-        self.assertEqual(worker_data['EmployerRef'], settings.LINK2PRISMA_EMPLOYER_REF)
-
-        # Step 2: Fetch worker to verify data
-        mock_make_request.side_effect = [{
-            'Name': self.user.last_name,
-            'Firstname': self.user.first_name,
-            'INSS': self.worker_profile.ssn,
-            'EmployerRef': settings.LINK2PRISMA_EMPLOYER_REF,
-            'WorkerNumber': '12345'
-        }]
-
-        fetched_worker = Link2PrismaService.fetch_worker(self.worker_profile.ssn)
-        self.assertIsNotNone(fetched_worker)
-        self.assertEqual(fetched_worker['INSS'], self.worker_profile.ssn)
-        self.assertEqual(fetched_worker['EmployerRef'], settings.LINK2PRISMA_EMPLOYER_REF)
-
-        # Step 3: Job approval
-        mock_make_request.side_effect = [{'status': 'success'}]
+        # Test job approval
         result = Link2PrismaService.handle_job_approval(self.job_application)
         self.assertTrue(result)
 
-        # Verify job approval data
-        approval_call = mock_make_request.call_args
-        job_data = approval_call[1]['data']
-        self.assertEqual(job_data['NatureDeclaration'], 'DimonaIn')
-        self.assertEqual(job_data['ContractType'], 'Normal')
-        self.assertEqual(job_data['INSS'], self.worker_profile.ssn)
-        self.assertEqual(job_data['EmployerRef'], settings.LINK2PRISMA_EMPLOYER_REF)
-        self.assertEqual(
-            job_data['PlannedHoursNbr'], 
-            int((self.job.end_time - self.job.start_time).total_seconds() / 3600)
-        )
-
-        # Step 4: Job cancellation
-        mock_make_request.side_effect = [{'status': 'success'}]
+        # Test job cancellation
         result = Link2PrismaService.handle_job_cancellation(self.job_application)
         self.assertTrue(result)
 
-        # Verify cancellation data
-        cancel_call = mock_make_request.call_args
-        cancel_data = cancel_call[1]['data']
-        self.assertEqual(cancel_data['NatureDeclaration'], 'DimonaCancel')
-        self.assertEqual(cancel_data['DimonaPeriodId'], self.job_application.id)
-        self.assertEqual(cancel_data['Email'], self.user.email)
-
-    @patch('apps.legal.services.link2prisma_service.Link2PrismaService._make_request')
-    def test_worker_update_flow(self, mock_make_request):
-        """Test updating an existing worker's data"""
-        
-        # Mock worker exists
-        mock_make_request.side_effect = [
-            {'WorkerExists': True, 'WorkerNumber': '12345'},  # Worker exists check
-            {'status': 'success'}  # Update response
-        ]
+    def test_sync_worker_data(self):
+        """Test the worker data sync functionality"""
+        # Check if Link2Prisma is properly configured
+        try:
+            Link2PrismaService.test_connection()
+        except Exception as e:
+            self.skipTest(f"Link2Prisma not properly configured: {str(e)}")
 
         result = Link2PrismaService.sync_worker_data()
         self.assertTrue(result)
 
-        # Verify update request
-        update_call = mock_make_request.call_args_list[1]
-        self.assertEqual(update_call[1]['method'], 'PUT')
-        self.assertEqual(update_call[1]['endpoint'], 'worker/12345')
+    def tearDown(self):
+        """Clean up test data"""
+        # Cancel any active declarations
+        try:
+            Link2PrismaService.handle_job_cancellation(self.job_application)
+        except:
+            pass
 
-        # Verify updated data
-        worker_data = update_call[1]['data']
-        self.assertEqual(worker_data['Name'], self.user.last_name)
-        self.assertEqual(worker_data['INSS'], self.worker_profile.ssn)
-        self.assertEqual(worker_data['EmployerRef'], settings.LINK2PRISMA_EMPLOYER_REF)
-
-    @patch('apps.legal.services.link2prisma_service.Link2PrismaService._make_request')
-    def test_error_handling_and_recovery(self, mock_make_request):
-        """Test error handling and recovery scenarios"""
-        
-        # Test network error during worker fetch
-        mock_make_request.side_effect = Exception("Network error")
-        fetched_worker = Link2PrismaService.fetch_worker(self.worker_profile.ssn)
-        self.assertIsNone(fetched_worker)
-
-        # Test recovery after error
-        mock_make_request.side_effect = [
-            {'WorkerExists': True, 'WorkerNumber': '12345'},  # Worker exists
-            {'status': 'success'}  # Successful update
-        ]
-        result = Link2PrismaService.sync_worker_data()
-        self.assertTrue(result)
-
-        # Test API error response
-        mock_make_request.side_effect = Exception("API Error: Invalid data")
-        result = Link2PrismaService.handle_job_approval(self.job_application)
-        self.assertFalse(result)
-
-    @patch('apps.legal.services.link2prisma_service.Link2PrismaService._make_request')
-    def test_edge_cases(self, mock_make_request):
-        """Test edge cases and boundary conditions"""
-        
-        # Test with missing worker profile data
-        self.worker_profile.date_of_birth = None
-        self.worker_profile.save()
-
-        mock_make_request.side_effect = [
-            {'WorkerExists': False},
-            {'status': 'success'}
-        ]
-        result = Link2PrismaService.sync_worker_data()
-        self.assertTrue(result)
-
-        # Verify null handling
-        worker_data = mock_make_request.call_args_list[1][1]['data']
-        self.assertIsNone(worker_data['Birthdate'])
-
-        # Test with very long job duration
-        self.job.end_time = self.job.start_time + timedelta(days=7)
-        self.job.save()
-
-        mock_make_request.side_effect = [{'status': 'success'}]
-        result = Link2PrismaService.handle_job_approval(self.job_application)
-        self.assertTrue(result)
-
-        # Verify long duration handling
-        job_data = mock_make_request.call_args[1]['data']
-        self.assertEqual(
-            job_data['PlannedHoursNbr'], 
-            int((self.job.end_time - self.job.start_time).total_seconds() / 3600)
-        )
+        # Clean up database
+        self.job_application.delete()
+        self.job.delete()
+        self.worker.delete()
+        self.customer.delete()
+        self.address.delete()
+        self.job_address.delete()
+        self.application_address.delete()

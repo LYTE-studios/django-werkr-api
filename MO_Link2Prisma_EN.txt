@@ -632,7 +632,7 @@ BODY:
 
 ENDPOINT:
 
-/workerExistst/{rrnr}
+/workerExists/{rrnr}
 In this context, {rrnr} represents the national registration number (rijksregisternummer) of the individual for whom
 the employee number is being requested.
 
