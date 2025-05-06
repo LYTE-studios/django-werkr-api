@@ -168,6 +168,7 @@ class JobService:
                 application_end_time__gte=current_time,
                 selected_workers__lt=F('max_workers'),
                 archived=False,
+                tag__in=user.worker_profile.tags.all(),
             ).exclude(
                 # Exclude jobs with Pending or Approved applications from the user
                 jobapplication__worker=user,
