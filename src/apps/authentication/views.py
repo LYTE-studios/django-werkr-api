@@ -540,9 +540,6 @@ class UploadUserProfilePictureView(JWTBaseAuthView):
     def delete(self, request, *args, **kwargs):
         profile_user = self.user
 
-        if not request.data:
-            return HttpResponseBadRequest()
-
         profile_user.profile_picture = None
         profile_user.save()
 
