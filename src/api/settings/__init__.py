@@ -1,10 +1,7 @@
-# api/settings/__init__.py
-from .base import *
-
 # Load different settings based on environment
 from decouple import config
 
-ENV = config('DJANGO_ENV', default='development')
+ENV = config('DJANGO_ENV', default='staging')
 
 if ENV == 'production':
     from .production import *

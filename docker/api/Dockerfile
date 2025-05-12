@@ -1,26 +1,16 @@
-FROM python:3.11.10-bullseye
+FROM werkr-base:latest
 
 WORKDIR /app
-COPY . .
 
-RUN pip install pipenv 
+# Copy only Pipfile and Pipfile.lock first to leverage Docker cache
+COPY Pipfile Pipfile.lock ./
+
+# Create virtualenv in a specific location that we can volume mount
+ENV PIPENV_VENV_IN_PROJECT=1
 RUN pipenv sync
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    wget \
-    xz-utils \
-    libxrender1 \
-    libjpeg62-turbo \
-    fontconfig \
-    xfonts-base \
-    xfonts-75dpi \
-    && rm -rf /var/lib/apt/lists/*
-
-# Download and install wkhtmltopdf
-RUN wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.bullseye_amd64.deb \
-    && dpkg -i wkhtmltox_0.12.6.1-2.bullseye_amd64.deb \
-    && rm wkhtmltox_0.12.6.1-2.bullseye_amd64.deb
+# Now copy the rest of the application
+COPY . .
 
 EXPOSE 8000
 

@@ -1,15 +1,29 @@
 services:
+  base:
+    image: werkr-base:latest
+    build:
+      context: .
+      dockerfile: docker/base/Dockerfile
+
   api:
-    network_mode: "host"
-    expose:
-      - "80"
     build:
       context: ./src/
       dockerfile: ../docker/api/Dockerfile
+    command: ["pipenv", "run", "uvicorn", "api.asgi:application", "--host", "0.0.0.0", "--port", "80"]
+    working_dir: /app
+    ports:
+      - "80:80"
+    volumes:
+      - venv_data:/app/.venv
+      - ./src/.env:/app/.env
     restart: on-failure
     environment:
       - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
+    env_file:
+      - ./src/.env
     depends_on:
+      - base
       - redis
       - celery_worker
 
@@ -23,9 +37,24 @@ services:
     build:
       context: ./src/
       dockerfile: ../docker/api/Dockerfile
-    command: celery -A api worker -l info
+    command: ["pipenv", "run", "celery", "-A", "api", "worker", "--loglevel=info"]
+    working_dir: /app
+    volumes:
+      - venv_data:/app/.venv
+      - ./src/.env:/app/.env
     environment:
       - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
+    env_file:
+      - ./src/.env
     depends_on:
+      - base
       - redis
     restart: on-failure
+
+volumes:
+  venv_data:
+
+networks:
+  default:
+    driver: bridge
