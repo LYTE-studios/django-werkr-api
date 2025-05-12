@@ -9,7 +9,9 @@ services:
     build:
       context: ./src/
       dockerfile: ../docker/api/Dockerfile
-    command: ["pipenv", "run", "uvicorn", "api.asgi:application", "--host", "0.0.0.0", "--port", "80"]
+    command: >
+      sh -c "pipenv run python manage.py migrate &&
+             pipenv run uvicorn api.asgi:application --host 0.0.0.0 --port 80"
     working_dir: /app
     ports:
       - "80:80"
