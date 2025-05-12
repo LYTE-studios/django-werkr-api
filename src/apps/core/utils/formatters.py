@@ -225,6 +225,8 @@ class FormattingUtil:
     def to_email(value):
         value = value.replace(' ', '')
 
+        value = value.lower()
+
         try:
             validate_email(value)
         except ValidationError as e:

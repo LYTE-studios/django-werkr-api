@@ -24,7 +24,16 @@ THIRD_PARTY_APPS = [
     'rest_framework',
     'corsheaders',
     'drf_yasg',
+    'django_celery_results',
 ]
+
+# Celery Configuration
+CELERY_BROKER_URL = config('REDIS_URL', default='redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
 
 LOCAL_APPS = [
     'apps.authentication',
