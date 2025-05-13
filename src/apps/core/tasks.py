@@ -1,9 +1,13 @@
 from celery import shared_task
+from celery.exceptions import MaxRetriesExceededError
+import logging
 
-@shared_task
-def execute_task(func_path, *args, **kwargs):
+logger = logging.getLogger(__name__)
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def execute_task(self, func_path, *args, **kwargs):
     """
-    Execute a function as a Celery task.
+    Execute a function as a Celery task with retry mechanism.
     
     Args:
         func_path (str): Import path to the function (e.g., 'apps.core.utils.my_function')
@@ -16,7 +20,11 @@ def execute_task(func_path, *args, **kwargs):
         func = import_string(func_path)
         return func(*args, **kwargs)
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
         logger.error(f"Error executing task {func_path}: {str(e)}")
-        raise
+        try:
+            # Retry the task with exponential backoff
+            retry_delay = (2 ** self.request.retries) * 60  # 60s, 120s, 240s
+            raise self.retry(exc=e, countdown=retry_delay)
+        except MaxRetriesExceededError:
+            logger.error(f"Max retries exceeded for task {func_path}")
+            raise e

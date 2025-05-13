@@ -106,9 +106,14 @@ class NotificationManager:
         if send_push and user.fcm_token is not None:
             try:
                 NotificationManager.send_push_notification(user.fcm_token, notification)
-            except Exception as e: 
+            except messaging.ApiCallError as e:
+                logger.warning(f"Firebase API error for user {user.id}: {e.code} - {e.message}")
+                # Don't raise for FCM errors - continue with other notifications
+                pass
+            except Exception as e:
                 logger.error(f"Error sending push notification to user {user.id}: {str(e)}")
-                raise e
+                # Don't raise for push notification errors - continue with other notifications
+                pass
 
         if send_mail:
             try:
@@ -116,9 +121,10 @@ class NotificationManager:
                         "title": notification.title,
                         "description": notification.description,
                     })
-            except Exception as e: 
+            except Exception as e:
                 logger.error(f"Error sending mail to user {user.id}: {str(e)}")
-                raise e 
+                # Don't raise for email errors - continue with other notifications
+                pass
 
         return notification_status
 
@@ -181,10 +187,9 @@ class NotificationManager:
             logger.error(error_message)
             raise Exception(error_message)
 
-@async_task
 def create_global_notification(title: str, description: str, image_url: str = None, user_id: str = None,
-                               send_push: bool = False, group_name: str = WORKERS_GROUP_NAME, send_mail: bool = False,
-                               language: str = None) -> None:
+                                send_push: bool = False, group_name: str = WORKERS_GROUP_NAME, send_mail: bool = False,
+                                language: str = None) -> None:
     """
     Create a global notification for all users in a group.
 
@@ -221,5 +226,5 @@ def create_global_notification(title: str, description: str, image_url: str = No
         if not user.is_accepted():
             continue
 
-        return NotificationManager.assign_notification(user, notification, send_push=send_push, send_mail=send_mail)
+        NotificationManager.assign_notification(user, notification, send_push=send_push, send_mail=send_mail)
 

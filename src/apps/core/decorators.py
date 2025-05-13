@@ -1,5 +1,4 @@
 from functools import wraps
-import inspect
 
 def async_task(func):
     """
