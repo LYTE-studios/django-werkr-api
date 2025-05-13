@@ -11,8 +11,18 @@ try:
     print(f"Current working directory: {os.getcwd()}", file=sys.stderr)
     print(f"PYTHONPATH: {sys.path}", file=sys.stderr)
     
+    # Force remove any existing DJANGO_SETTINGS_MODULE
+    if 'DJANGO_SETTINGS_MODULE' in os.environ:
+        print(f"Removing existing DJANGO_SETTINGS_MODULE: {os.environ['DJANGO_SETTINGS_MODULE']}", file=sys.stderr)
+        del os.environ['DJANGO_SETTINGS_MODULE']
+    
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'api.settings')
-    print(f"Settings module: {os.environ['DJANGO_SETTINGS_MODULE']}", file=sys.stderr)
+    print(f"Settings module set to: {os.environ['DJANGO_SETTINGS_MODULE']}", file=sys.stderr)
+    
+    # Import settings to trigger initialization
+    print("Importing settings...", file=sys.stderr)
+    from api import settings
+    print("Settings imported", file=sys.stderr)
     
     from django.core.asgi import get_asgi_application
     
