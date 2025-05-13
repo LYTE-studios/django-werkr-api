@@ -14,5 +14,5 @@ COPY . .
 
 EXPOSE 8000
 
-# Command to run the Python script with more verbose logging
-CMD ["pipenv", "run", "gunicorn", "-b", "0.0.0.0:80", "api.asgi:application", "-k", "uvicorn.workers.UvicornWorker", "--log-level", "debug"]
+# Command to run the Python script with more verbose logging and output capture
+CMD ["pipenv", "run", "gunicorn", "-b", "0.0.0.0:80", "api.asgi:application", "-k", "uvicorn.workers.UvicornWorker", "--log-level", "debug", "--capture-output", "--preload"]
