@@ -9,10 +9,7 @@ COPY Pipfile Pipfile.lock ./
 ENV PIPENV_VENV_IN_PROJECT=1
 RUN pipenv sync
 
-# Copy the .env file first
-COPY .env .env
-
-# Now copy the rest of the application
+# Copy the application
 COPY . .
 
 EXPOSE 8000

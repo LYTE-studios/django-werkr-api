@@ -3,18 +3,8 @@ ASGI config for api project.
 """
 
 import os
-from decouple import config
 
-# Set default environment to development
-ENV = config('DJANGO_ENV', default='development')
-
-# Set the Django settings module based on environment
-if ENV == 'production':
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'api.settings.production')
-elif ENV == 'staging':
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'api.settings.staging')
-else:
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'api.settings.development')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'api.settings')
 
 from django.core.asgi import get_asgi_application
 
