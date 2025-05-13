@@ -163,11 +163,14 @@ class NotificationManager:
                 token=token,
             )
         
-            # Wrap Firebase messaging send in sync_to_async
-            send_message = messaging.send()
-            response = send_message(message)
-            logger.info(f"Successfully sent message: {response}")
-            
+            response = messaging.send(message)
+
+            if response:
+                logger.info(f"Successfully sent message: {response}")
+            else: 
+                logger.error(f"Error sending message: {response}")
+                raise Exception(f"Error sending message: {response}")
+
         except messaging.ApiCallError as firebase_error:
             error_message = f"Firebase API error: {firebase_error.code} - {firebase_error.message}"
             logger.error(error_message)
