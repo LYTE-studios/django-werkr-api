@@ -218,16 +218,8 @@ def create_global_notification(title: str, description: str, image_url: str = No
     for user in users:
         logger.info(f"Sending notification to {user.id}")
 
-        try:
-            if hasattr(user, 'worker_profile'):
-                worker_profile = WorkerProfile.objects.get(user=user)
-                if not worker_profile.accepted:
-                    continue
-            if user.archived:
-                continue
-        except Exception as e: 
-            logger.error(f"Error checking user status: {str(e)}")
-            raise e 
+        if not user.is_accepted():
+            continue
 
         return NotificationManager.assign_notification(user, notification, send_push=send_push, send_mail=send_mail)
 
