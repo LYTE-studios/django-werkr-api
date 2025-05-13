@@ -9,10 +9,13 @@ COPY Pipfile Pipfile.lock ./
 ENV PIPENV_VENV_IN_PROJECT=1
 RUN pipenv sync
 
+# Copy the .env file first
+COPY .env .env
+
 # Now copy the rest of the application
 COPY . .
 
 EXPOSE 8000
 
-# Command to run the Python script
-CMD ["pipenv", "run", "gunicorn", "-b", "0.0.0.0:80", "api.asgi:application", "-k", "uvicorn.workers.UvicornWorker"]
+# Command to run the Python script with more verbose logging
+CMD ["pipenv", "run", "gunicorn", "-b", "0.0.0.0:80", "api.asgi:application", "-k", "uvicorn.workers.UvicornWorker", "--log-level", "debug"]

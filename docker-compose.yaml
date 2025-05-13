@@ -33,10 +33,11 @@ services:
     build:
       context: ./src/
       dockerfile: ../docker/api/Dockerfile
-    command: ["pipenv", "run", "celery", "-A", "api", "worker", "--loglevel=info"]
+    command: ["pipenv", "run", "celery", "-A", "api", "worker", "--loglevel=debug"]
     working_dir: /app
     volumes:
       - venv_data:/app/.venv
+      - ./src/.env:/app/.env
     environment:
       - REDIS_URL=redis://redis:6379/0
       - PYTHONPATH=/app
