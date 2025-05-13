@@ -42,7 +42,7 @@ class NotificationManager:
                 setting_ids = setting.values_list('id')
                 users = users.filter(settings_id__in=setting_ids)
 
-            return users.values()
+            return users
         except Exception as e:
             logger.error(f"Error getting user set: {str(e)}")
             raise e
@@ -218,13 +218,18 @@ def create_global_notification(title: str, description: str, image_url: str = No
 
     users = NotificationManager.get_user_set(group_name, language)
 
-    logger.info(f"Sending notification to {len(users)} users")
+    logger.info(f"Sending notification to {users.count()} users")
 
     for user in users:
-        logger.info(f"Sending notification to {user.id}")
+        try:
+            logger.info(f"Sending notification to {user.id}")
 
-        if not user.is_accepted():
+            if not hasattr(user, 'is_accepted') or not user.is_accepted():
+                logger.info(f"Skipping user {user.id} - not accepted")
+                continue
+
+            NotificationManager.assign_notification(user, notification, send_push=send_push, send_mail=send_mail)
+        except Exception as e:
+            logger.error(f"Error processing notification for user {user.id}: {str(e)}")
             continue
-
-        NotificationManager.assign_notification(user, notification, send_push=send_push, send_mail=send_mail)
 
