@@ -9,21 +9,15 @@ services:
     build:
       context: ./src/
       dockerfile: ../docker/api/Dockerfile
-    command: >
-      sh -c "pipenv run python manage.py migrate &&
-             pipenv run uvicorn api.asgi:application --host 0.0.0.0 --port 80"
     working_dir: /app
     ports:
       - "80:80"
     volumes:
       - venv_data:/app/.venv
-      - ./src/.env:/app/.env
     restart: on-failure
     environment:
       - REDIS_URL=redis://redis:6379/0
       - PYTHONPATH=/app
-    env_file:
-      - ./src/.env
     depends_on:
       - base
       - redis
@@ -43,12 +37,9 @@ services:
     working_dir: /app
     volumes:
       - venv_data:/app/.venv
-      - ./src/.env:/app/.env
     environment:
       - REDIS_URL=redis://redis:6379/0
       - PYTHONPATH=/app
-    env_file:
-      - ./src/.env
     depends_on:
       - base
       - redis
