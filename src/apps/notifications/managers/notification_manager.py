@@ -106,10 +106,6 @@ class NotificationManager:
         if send_push and user.fcm_token is not None:
             try:
                 NotificationManager.send_push_notification(user.fcm_token, notification)
-            except messaging.ApiCallError as e:
-                logger.warning(f"Firebase API error for user {user.id}: {e.code} - {e.message}")
-                # Don't raise for FCM errors - continue with other notifications
-                pass
             except Exception as e:
                 logger.error(f"Error sending push notification to user {user.id}: {str(e)}")
                 # Don't raise for push notification errors - continue with other notifications
