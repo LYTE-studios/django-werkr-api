@@ -241,6 +241,6 @@ try:
     initialize_app(firebase_cred)
     logger.info("Firebase Admin SDK initialized successfully")
 except Exception as e:
-    logger.error(f"Failed to initialize Firebase Admin SDK: {str(e)}")
-    # Don't raise the error here - let the notification sending handle it
-    # This allows the app to start even if Firebase isn't properly configured
+    error_msg = f"Failed to initialize Firebase Admin SDK: {str(e)}"
+    logger.error(error_msg)
+    raise Exception(error_msg)

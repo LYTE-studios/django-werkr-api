@@ -176,9 +176,8 @@ class NotificationManager:
             else: 
                 logger.error(f"Error sending message: {response}")
                 raise Exception(f"Error sending message: {response}")
-                            
         except Exception as e:
-            error_message = f"Error sending push notification: {str(e)}"
+            error_message = f"Unexpected error sending push notification: {str(e)}"
             logger.error(error_message)
             raise Exception(error_message)
 
