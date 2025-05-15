@@ -141,6 +141,10 @@ class NotificationManager:
             ThirdPartyAuthError: If there's an authentication error with FCM/APNS
             Exception: For other errors during notification sending
         """
+
+        if not token:
+            return
+
         try:
             # Configure APNS with more detailed settings
             apns_config = messaging.APNSConfig(
