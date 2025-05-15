@@ -176,12 +176,7 @@ class NotificationManager:
             else: 
                 logger.error(f"Error sending message: {response}")
                 raise Exception(f"Error sending message: {response}")
-
-        except messaging.ApiCallError as firebase_error:
-            error_message = f"Firebase API error: {firebase_error.code} - {firebase_error.message}"
-            logger.error(error_message)
-            raise Exception(error_message)
-            
+                            
         except Exception as e:
             error_message = f"Error sending push notification: {str(e)}"
             logger.error(error_message)
