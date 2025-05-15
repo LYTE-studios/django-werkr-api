@@ -105,7 +105,11 @@ class NotificationManager:
 
         if send_push and user.fcm_token is not None:
             try:
-                NotificationManager.send_push_notification(user.fcm_token, notification)
+                result = NotificationManager.send_push_notification(user.fcm_token, notification)
+
+                if not result:
+                    user.fcm_token = None
+                    user.save()
             except Exception as e:
                 logger.error(f"Error sending push notification to user {user.id}: {str(e)}")
                 # Don't raise for push notification errors - continue with other notifications
@@ -173,13 +177,20 @@ class NotificationManager:
 
             if response:
                 logger.info(f"Successfully sent message: {response}")
+                return True
             else: 
                 logger.error(f"Error sending message: {response}")
                 raise Exception(f"Error sending message: {response}")
         except Exception as e:
-            error_message = f"Unexpected error sending push notification: {str(e)}"
-            logger.error(error_message)
-            raise Exception(error_message)
+            error = str(e)
+
+            if 'not found' in error:
+                error = f"Error sending push notification: FCM token not found for token {token}"
+                logger.error(error)
+                return False
+
+            logger.error( f"Unexpected error sending push notification: {error}")
+            raise Exception(error)
 
 def create_global_notification(title: str, description: str, image_url: str = None, user_id: str = None,
                                 send_push: bool = False, group_name: str = WORKERS_GROUP_NAME, send_mail: bool = False,
