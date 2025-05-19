@@ -192,6 +192,7 @@ class NotificationManager:
             logger.error( f"Unexpected error sending push notification: {error}")
             raise Exception(error)
 
+@async_task
 def create_global_notification(title: str, description: str, image_url: str = None, user_id: str = None,
                                 send_push: bool = False, group_name: str = WORKERS_GROUP_NAME, send_mail: bool = False,
                                 language: str = None) -> None:
