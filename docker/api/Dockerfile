@@ -1,5 +1,8 @@
 FROM werkr-base:latest
 
+# Install redis-cli
+RUN apt-get update && apt-get install -y redis-tools && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Copy only Pipfile and Pipfile.lock first to leverage Docker cache
