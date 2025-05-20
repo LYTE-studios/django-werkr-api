@@ -29,6 +29,9 @@ services:
     ports:
       - "6379:6379"
     restart: on-failure
+    command: redis-server --appendonly yes --replica-read-only no
+    volumes:
+      - redis_data:/data
 
   celery_worker:
     build:
@@ -49,6 +52,7 @@ services:
 
 volumes:
   venv_data:
+  redis_data:
 
 networks:
   default:
