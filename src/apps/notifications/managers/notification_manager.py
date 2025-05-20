@@ -245,28 +245,41 @@ def create_global_notification(title: str, description: str, image_url: str = No
         group_name (str): The name of the group. Defaults to WORKERS_GROUP_NAME.
         language (str): The language filter. Defaults to None.
     """
+    logger.info("[DEBUG] Starting create_global_notification")
+    logger.info(f"[DEBUG] Parameters: title={title}, description={description}, image_url={image_url}, user_id={user_id}")
+    logger.info(f"[DEBUG] send_push={send_push}, group_name={group_name}, send_mail={send_mail}, language={language}")
 
-    """
-    Create a global notification for all users in a group.
-    This is the task wrapper that calls the actual implementation.
+    # Create notification
+    notification = Notification.objects.create(title=title, description=description, pfp_url=image_url)
+    logger.info(f"[DEBUG] Created notification with ID: {notification.id}")
 
-    Args:
-        title (str): The title of the notification.
-        description (str): The description of the notification.
-        image_url (str): The URL of the image associated with the notification. Defaults to None.
-        user_id (str): The ID of the user to send the notification to. Defaults to None.
-        send_push (bool): Whether to send a push notification. Defaults to False.
-        group_name (str): The name of the group. Defaults to WORKERS_GROUP_NAME.
-        language (str): The language filter. Defaults to None.
-    """
-    return _create_global_notification_impl(
-        title=title,
-        description=description,
-        image_url=image_url,
-        user_id=user_id,
-        send_push=send_push,
-        group_name=group_name,
-        send_mail=send_mail,
-        language=language
-    )
+    if user_id:
+        try:
+            user = User.objects.get(id=user_id)
+            logger.info(f"[DEBUG] Found user with ID: {user_id}")
+        except User.DoesNotExist:
+            logger.error(f"[DEBUG] User not found: {user_id}")
+            raise Exception('User does not exist')
+        except Exception as e:
+            logger.error(f"[DEBUG] Error setting notification: {str(e)}")
+            raise e
+
+    users = NotificationManager.get_user_set(group_name, language)
+    logger.info(f"[DEBUG] Found {users.count()} users to notify")
+
+    for user in users:
+        try:
+            logger.info(f"[DEBUG] Processing user {user.id}")
+
+            if not hasattr(user, 'is_accepted') or not user.is_accepted():
+                logger.info(f"[DEBUG] Skipping user {user.id} - not accepted")
+                continue
+
+            NotificationManager.assign_notification(user, notification, send_push=send_push, send_mail=send_mail)
+            logger.info(f"[DEBUG] Successfully assigned notification to user {user.id}")
+        except Exception as e:
+            logger.error(f"[DEBUG] Error processing notification for user {user.id}: {str(e)}")
+            continue
+
+    logger.info("[DEBUG] Finished create_global_notification")
 
