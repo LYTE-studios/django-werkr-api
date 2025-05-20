@@ -1,9 +1,20 @@
 import os
 from celery import Celery
 from kombu import Connection
+import logging
 
-# Set the default Django settings module for the 'celery' program.
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'api.settings.base')
+logger = logging.getLogger(__name__)
+
+# Get the Django settings module from environment or use development as default
+django_env = os.getenv('DJANGO_ENV', 'development')
+settings_module = f'api.settings.{django_env}'
+
+logger.info(f"[DEBUG] Using Django settings module: {settings_module}")
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', settings_module)
+
+# Initialize Django before creating the Celery app
+import django
+django.setup()
 
 app = Celery('api')
 
@@ -32,3 +43,5 @@ app.autodiscover_tasks()
 
 # Configure Redis connection pool
 app.conf.broker_pool_limit = 3  # Number of connections to keep in the pool
+
+logger.info("[DEBUG] Celery app initialized successfully")
