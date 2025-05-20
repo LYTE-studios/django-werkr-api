@@ -192,23 +192,13 @@ class NotificationManager:
             logger.error( f"Unexpected error sending push notification: {error}")
             raise Exception(error)
 
-@async_task
-def create_global_notification(title: str, description: str, image_url: str = None, user_id: str = None,
+def _create_global_notification_impl(title: str, description: str, image_url: str = None, user_id: str = None,
                                 send_push: bool = False, group_name: str = WORKERS_GROUP_NAME, send_mail: bool = False,
                                 language: str = None) -> None:
     """
-    Create a global notification for all users in a group.
-
-    Args:
-        title (str): The title of the notification.
-        description (str): The description of the notification.
-        image_url (str): The URL of the image associated with the notification. Defaults to None.
-        user_id (str): The ID of the user to send the notification to. Defaults to None.
-        send_push (bool): Whether to send a push notification. Defaults to False.
-        group_name (str): The name of the group. Defaults to WORKERS_GROUP_NAME.
-        language (str): The language filter. Defaults to None.
+    Internal implementation of create_global_notification.
+    This function does the actual work without being wrapped in a task.
     """
-
     # Create notification
     notification = Notification.objects.create(title=title, description=description, pfp_url=image_url)
 
@@ -238,4 +228,45 @@ def create_global_notification(title: str, description: str, image_url: str = No
         except Exception as e:
             logger.error(f"Error processing notification for user {user.id}: {str(e)}")
             continue
+
+@async_task
+def create_global_notification(title: str, description: str, image_url: str = None, user_id: str = None,
+                                send_push: bool = False, group_name: str = WORKERS_GROUP_NAME, send_mail: bool = False,
+                                language: str = None) -> None:
+    """
+    Create a global notification for all users in a group.
+
+    Args:
+        title (str): The title of the notification.
+        description (str): The description of the notification.
+        image_url (str): The URL of the image associated with the notification. Defaults to None.
+        user_id (str): The ID of the user to send the notification to. Defaults to None.
+        send_push (bool): Whether to send a push notification. Defaults to False.
+        group_name (str): The name of the group. Defaults to WORKERS_GROUP_NAME.
+        language (str): The language filter. Defaults to None.
+    """
+
+    """
+    Create a global notification for all users in a group.
+    This is the task wrapper that calls the actual implementation.
+
+    Args:
+        title (str): The title of the notification.
+        description (str): The description of the notification.
+        image_url (str): The URL of the image associated with the notification. Defaults to None.
+        user_id (str): The ID of the user to send the notification to. Defaults to None.
+        send_push (bool): Whether to send a push notification. Defaults to False.
+        group_name (str): The name of the group. Defaults to WORKERS_GROUP_NAME.
+        language (str): The language filter. Defaults to None.
+    """
+    return _create_global_notification_impl(
+        title=title,
+        description=description,
+        image_url=image_url,
+        user_id=user_id,
+        send_push=send_push,
+        group_name=group_name,
+        send_mail=send_mail,
+        language=language
+    )
 
