@@ -604,7 +604,7 @@ class VerifyCodeView(BaseClientView):
         formatter = FormattingUtil(data=request.data)
 
         try:
-            email = formatter.get_value(k_email, required=True)
+            email = formatter.get_email(k_email, required=True)
             code = formatter.get_value(k_code, required=True)
         except Exception as e:
             return Response({k_message: e.args}, status=HTTPStatus.BAD_REQUEST)
