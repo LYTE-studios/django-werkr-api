@@ -1,6 +1,5 @@
 from mailjet_rest import Client
 from django.conf import settings
-import asyncio
 
 class MailTemplate:
 

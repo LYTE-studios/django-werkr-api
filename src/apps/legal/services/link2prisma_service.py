@@ -4,7 +4,6 @@ import tempfile
 from cryptography.hazmat.primitives.serialization import pkcs12
 from django.conf import settings
 from apps.notifications.managers.notification_manager import NotificationManager
-from asgiref.sync import async_to_sync
 
 
 def get_cert_and_key(pfx_path):
@@ -81,7 +80,7 @@ class Link2PrismaService:
                 error_msg = f"Link2Prisma API error: {response.status_code}"
                 details = f"Response: {response.text}"
                 print(f"{error_msg} - {details}")
-                async_to_sync(NotificationManager.notify_admin)('Link2Prisma API Error', error_msg[:256])
+                NotificationManager.notify_admin('Link2Prisma API Error', error_msg[:256])
                 raise Exception(error_msg)
             finally:
                 # Clean up temporary files
@@ -95,18 +94,18 @@ class Link2PrismaService:
             error_msg = "SSL Certificate error"
             details = f"Details: {str(e)}"
             print(f"{error_msg}. {details}")
-            async_to_sync(NotificationManager.notify_admin)('Link2Prisma SSL Error', error_msg[:256])
+            NotificationManager.notify_admin('Link2Prisma SSL Error', error_msg[:256])
             raise Exception(error_msg)
         except requests.exceptions.ConnectionError as e:
             error_msg = "Connection error with Link2Prisma service"
             details = str(e)
             print(f"{error_msg}: {details}")
-            async_to_sync(NotificationManager.notify_admin)('Link2Prisma Connection Error', error_msg[:256])
+            NotificationManager.notify_admin('Link2Prisma Connection Error', error_msg[:256])
             raise Exception(error_msg)
         except Exception as e:
             error_msg = f"Failed to make Link2Prisma API request: {str(e)}"
             print(error_msg)
-            async_to_sync(NotificationManager.notify_admin)('Link2Prisma API Error', error_msg)
+            NotificationManager.notify_admin('Link2Prisma API Error', error_msg)
             raise Exception(error_msg)
 
     @staticmethod
@@ -126,7 +125,7 @@ class Link2PrismaService:
             # If we get a response (even if worker doesn't exist), the connection works
             return isinstance(response, dict)
         except Exception as e:
-            async_to_sync(NotificationManager.notify_admin)('Link2Prisma Connection Test Failed', str(e))
+            NotificationManager.notify_admin('Link2Prisma Connection Test Failed', str(e))
             raise
 
     @staticmethod
@@ -165,7 +164,7 @@ class Link2PrismaService:
             error_msg = "Failed to fetch worker data from Link2Prisma"
             details = str(e)
             print(f"{error_msg}: {details}")
-            async_to_sync(NotificationManager.notify_admin)('Link2Prisma Worker Fetch Error', error_msg[:256])
+            NotificationManager.notify_admin('Link2Prisma WorkerFetch Error', error_msg[:256])
             return None
 
     @staticmethod
@@ -210,7 +209,7 @@ class Link2PrismaService:
             error_msg = "Failed to send job approval to Link2Prisma"
             details = str(e)
             print(f"{error_msg}: {details}")
-            async_to_sync(NotificationManager.notify_admin)('Link2Prisma Job Approval Error', error_msg[:256])
+            NotificationManager.notify_admin('Link2Prisma Job Approval Error', error_msg[:256])
             return False
 
     @staticmethod
@@ -239,7 +238,7 @@ class Link2PrismaService:
             error_msg = "Failed to send job cancellation to Link2Prisma"
             details = str(e)
             print(f"{error_msg}: {details}")
-            async_to_sync(NotificationManager.notify_admin)('Link2Prisma Job Cancellation Error', error_msg[:256])
+            NotificationManager.notify_admin('Link2Prisma Job Cancellation Error', error_msg[:256])
             return False
         
     
@@ -316,7 +315,7 @@ class Link2PrismaService:
             error_msg = f"Failed to sync worker {truncate(worker.email, 64)}"
             details = str(e)
             print(f"{error_msg}: {details}")
-            async_to_sync(NotificationManager.notify_admin)('Worker Sync Error', error_msg[:256])
+            NotificationManager.notify_admin('Worker Sync Error', error_msg[:256])
         
 
     @staticmethod
@@ -352,5 +351,5 @@ class Link2PrismaService:
             error_msg = "Worker sync task failed"
             details = str(e)
             print(f"{error_msg}: {details}")
-            async_to_sync(NotificationManager.notify_admin)('Worker Sync Failed', error_msg[:256])
+            NotificationManager.notify_admin('Worker Sync Failed', error_msg[:256])
             return False

@@ -4,7 +4,6 @@ import jwt
 import json
 from django.contrib.auth import get_user_model
 from django.conf import settings
-from asgiref.sync import sync_to_async
 
 from apps.core.decorators import async_task
 
