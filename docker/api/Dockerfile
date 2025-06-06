@@ -1,28 +1,21 @@
-FROM python:3.11.10-bullseye
+FROM werkr-base:latest
+
+# Install redis-cli
+RUN apt-get update && apt-get install -y redis-tools && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY . .
 
-RUN pip install pipenv 
+# Copy only Pipfile and Pipfile.lock first to leverage Docker cache
+COPY Pipfile Pipfile.lock ./
+
+# Create virtualenv in a specific location that we can volume mount
+ENV PIPENV_VENV_IN_PROJECT=1
 RUN pipenv sync
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    wget \
-    xz-utils \
-    libxrender1 \
-    libjpeg62-turbo \
-    fontconfig \
-    xfonts-base \
-    xfonts-75dpi \
-    && rm -rf /var/lib/apt/lists/*
-
-# Download and install wkhtmltopdf
-RUN wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.bullseye_amd64.deb \
-    && dpkg -i wkhtmltox_0.12.6.1-2.bullseye_amd64.deb \
-    && rm wkhtmltox_0.12.6.1-2.bullseye_amd64.deb
+# Copy the application
+COPY . .
 
 EXPOSE 8000
 
-# Command to run the Python script
-CMD ["pipenv", "run", "gunicorn", "-b", "0.0.0.0:80", "api.asgi:application", "-k", "uvicorn.workers.UvicornWorker"]
+# Command to run the Python script with more verbose logging and output capture
+CMD ["pipenv", "run", "gunicorn", "-b", "0.0.0.0:80", "api.asgi:application", "-k", "uvicorn.workers.UvicornWorker", "--log-level", "debug", "--capture-output", "--preload"]

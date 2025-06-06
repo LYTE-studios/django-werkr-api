@@ -42,7 +42,7 @@ class JobManager(models.Manager):
         selected_workers = JobManager.calculate_selected_workers(application)
 
         if (job.max_workers - selected_workers) > 0 and send_new_push:
-            JobManager._send_job_notification(job=job, title='New spot available!')
+            JobManager.send_job_notification(job=job, title='New spot available!')
 
         Link2PrismaService.handle_job_cancellation(application)
         
@@ -177,7 +177,7 @@ class JobManager(models.Manager):
         return application
 
     @staticmethod
-    def _send_job_notification(job: Job, title: str = 'New job available!', ) -> None:
+    def send_job_notification(job: Job, title: str = 'New job available!', ) -> None:
         
         """
         Handles notifications to workers about a new job.
@@ -309,6 +309,6 @@ class JobManager(models.Manager):
 
         # Only send notification if the job is not a draft
         if not job.is_draft:
-            JobManager._send_job_notification(job)
+            JobManager.send_job_notification(job)
 
         return job

@@ -12,16 +12,6 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'worker',
-#         'USER': 'root',
-#         'PASSWORD': 'root',
-#         'HOST': '127.0.0.1',
-#         'PORT': '3306',
-#     }
-# }
 
 # Email configuration for development
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

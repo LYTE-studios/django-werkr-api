@@ -3,14 +3,7 @@ from .base import *
 
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-# Add this line to include your trusted origin
-CSRF_TRUSTED_ORIGINS = ['https://staging.api.werkr.lytestudios.be']
-
-DIMONA_URL = "https://services-sim.socialsecurity.be/REST/dimona/v2"
-DIMONA_AUTH_URL = "https://services.socialsecurity.be/REST/oauth/v5/token"
-
-
-# Database
+# Override the database settings completely
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -27,3 +20,5 @@ LINK2PRISMA_EMPLOYER_REF = 'test_employer_ref'  # Test reference for staging env
 
 # Link2Prisma Settings
 LINK2PRISMA_EMPLOYER_REF = '999014'  # Test reference for staging environment
+# Add this line to include your trusted origin
+CSRF_TRUSTED_ORIGINS = ['https://staging.api.werkr.lytestudios.be']

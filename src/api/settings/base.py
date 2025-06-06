@@ -35,13 +35,6 @@ LOCAL_APPS = [
     'apps.legal'
 ]
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
@@ -139,6 +132,17 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
+
+# Celery Configuration
+CELERY_BROKER_URL = config('REDIS_URL', default='redis://redis:6379/0')
+CELERY_RESULT_BACKEND = config('REDIS_URL', default='redis://redis:6379/0')
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = False
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
+CELERY_TASK_EAGER_PROPAGATES = True
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -254,6 +258,6 @@ try:
     initialize_app(firebase_cred)
     logger.info("Firebase Admin SDK initialized successfully")
 except Exception as e:
-    logger.error(f"Failed to initialize Firebase Admin SDK: {str(e)}")
-    # Don't raise the error here - let the notification sending handle it
-    # This allows the app to start even if Firebase isn't properly configured
+    error_msg = f"Failed to initialize Firebase Admin SDK: {str(e)}"
+    logger.error(error_msg)
+    raise Exception(error_msg)

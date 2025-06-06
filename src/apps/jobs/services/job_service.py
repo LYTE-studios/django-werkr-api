@@ -61,6 +61,7 @@ class JobService:
     def update_job(job_id, data):
         job = get_object_or_404(Job, id=job_id)
         formatter = FormattingUtil(data=data)
+        current_max_workers = job.max_workers
 
         try:
             title = formatter.get_value(k_title)
@@ -117,6 +118,9 @@ class JobService:
                 job.tag = tag
             except Tag.DoesNotExist:
                 pass
+
+        if job.max_workers > current_max_workers:
+            JobManager.send_job_notification(job=job, title='New spot available!')
 
         job.save(update_fields=fields_to_update)
 
@@ -183,6 +187,7 @@ class JobService:
                 application_end_time__gte=current_time,
                 selected_workers__lt=F('max_workers'),
                 archived=False,
+                tag__in=user.worker_profile.tags.all(),
             ).exclude(
                 # Exclude jobs with Pending or Approved applications from the user
                 jobapplication__worker=user,

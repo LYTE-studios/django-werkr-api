@@ -276,45 +276,42 @@ class DimonaService:
         raise Exception('{} {}'.format(response.content, response.request.body))
 
 @async_task
-async def fetch_dimona(id: str, tries=0):
+def fetch_dimona(id: str, tries=0):
 
-    def fetch():
-        sleep(2)
+    sleep(2)
 
-        if tries > 5:
-            dimona = Dimona.objects.get(id=id)
-
-            dimona.success = False
-            dimona.reason = 'Dimona processing timed out. Contact support.'
-
-            dimona.save()
-
-            NotificationManager.notify_admin('Dimona declaration has failed', dimona.reason)
-
-            raise Exception('Dimona can\'t be fetched')
-
-        search = DimonaService._make_get(settings.DIMONA_URL + '/declarations/{}'.format(id))
-
-        if search.status_code == 404:
-            fetch_dimona(id=id, tries=tries + 1)
-            return
-
-        json_data = search.json()
-
+    if tries > 5:
         dimona = Dimona.objects.get(id=id)
 
-        if json_data['declarationStatus']['result'] == "A":
-            dimona.success = True
-            dimona.save()
-
-            return
-
         dimona.success = False
-        dimona.reason = json_data['declarationStatus']["anomalies"][0]["label"]["nl"]
+        dimona.reason = 'Dimona processing timed out. Contact support.'
 
         dimona.save()
 
         NotificationManager.notify_admin('Dimona declaration has failed', dimona.reason)
 
-    await sync_to_async(fetch)()
+        raise Exception('Dimona can\'t be fetched')
+
+    search = DimonaService._make_get(settings.DIMONA_URL + '/declarations/{}'.format(id))
+
+    if search.status_code == 404:
+        fetch_dimona(id=id, tries=tries + 1)
+        return
+
+    json_data = search.json()
+
+    dimona = Dimona.objects.get(id=id)
+
+    if json_data['declarationStatus']['result'] == "A":
+        dimona.success = True
+        dimona.save()
+
+        return
+
+    dimona.success = False
+    dimona.reason = json_data['declarationStatus']["anomalies"][0]["label"]["nl"]
+
+    dimona.save()
+
+    NotificationManager.notify_admin('Dimona declaration has failed', dimona.reason)
 

@@ -1,9 +1,75 @@
 services:
+  base:
+    image: werkr-base:latest
+    build:
+      context: .
+      dockerfile: docker/base/Dockerfile
+
   api:
-    network_mode: "host"
-    expose:
-      - "80"
     build:
       context: ./src/
       dockerfile: ../docker/api/Dockerfile
+    working_dir: /app
+    ports:
+      - "80:80"
+    volumes:
+      - venv_data:/app/.venv
+      - ./src/.env:/app/.env
     restart: on-failure
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
+    depends_on:
+      redis:
+        condition: service_healthy
+      base:
+        condition: service_started
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: on-failure
+    command: redis-server --appendonly yes --replica-read-only no
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  celery_worker:
+    build:
+      context: ./src/
+      dockerfile: ../docker/api/Dockerfile
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Waiting for Redis to be ready...' &&
+      while ! redis-cli -h redis ping; do
+        sleep 1;
+      done &&
+      echo 'Redis is ready!' &&
+      pipenv run celery -A api worker --loglevel=debug"
+    working_dir: /app
+    volumes:
+      - venv_data:/app/.venv
+      - ./src/.env:/app/.env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
+      - DJANGO_ENV=development
+    depends_on:
+      redis:
+        condition: service_healthy
+      base:
+        condition: service_started
+    restart: on-failure
+
+volumes:
+  venv_data:
+  redis_data:
+
+networks:
+  default:
+    driver: bridge

@@ -44,11 +44,21 @@ class UserManager:
     @staticmethod
     def create_customer_profile(user: User, tax_number: str = None, company_name: str = None,
                                 customer_address: Address = None, customer_billing_address: Address = None):
-        customer_profile = CustomerProfile(
+        # Get or update existing profile
+        customer_profile, created = CustomerProfile.objects.get_or_create(
             user=user,
-            tax_number=tax_number,
-            company_name=company_name,
-            customer_address=customer_address,
-            customer_billing_address=customer_billing_address
+            defaults={
+                'tax_number': tax_number,
+                'company_name': company_name,
+                'customer_address': customer_address,
+                'customer_billing_address': customer_billing_address
+            }
         )
-        customer_profile.save()
+        
+        if not created:
+            # Update existing profile
+            customer_profile.tax_number = tax_number or customer_profile.tax_number
+            customer_profile.company_name = company_name or customer_profile.company_name
+            customer_profile.customer_address = customer_address or customer_profile.customer_address
+            customer_profile.customer_billing_address = customer_billing_address or customer_profile.customer_billing_address
+            customer_profile.save()
