@@ -4,6 +4,7 @@ import tempfile
 from cryptography.hazmat.primitives.serialization import pkcs12
 from django.conf import settings
 from apps.notifications.managers.notification_manager import NotificationManager
+from src.apps.authentication.models.profiles.worker_profile import WorkerProfile
 
 
 def get_cert_and_key(pfx_path):
@@ -274,6 +275,10 @@ class Link2PrismaService:
         try:
             worker = job_application.worker
             job = job_application.job
+
+            if worker.worker_profile.worker_type == WorkerProfile.WorkerType.FREELANCER:
+                print("Skipping Dimona declaration for freelancer")
+                return True
 
             # First ensure worker exists in Link2Prisma
             Link2PrismaService.sync_worker(worker)
