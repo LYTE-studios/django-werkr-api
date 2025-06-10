@@ -67,7 +67,7 @@ urlpatterns = [
     path('reverse_geocode/<str:query>', ReverseGeocodeView.as_view(), name="reverse_geocode"),
     path('geocode/<str:query>', GeocodeView.as_view(), name="geocode"),
     path('autocomplete/<str:query>', AutocompleteView.as_view(), name="autocomplete"),
-
+    
     path('dimonas/<int:count>/<int:page>', DimonaListView.as_view(), name="dimonas-list"),
 
     path("exports", ExportsView.as_view()),

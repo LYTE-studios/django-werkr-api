@@ -57,11 +57,7 @@ class Command(BaseCommand):
 
             # Test connection first
             try:
-                if not Link2PrismaService.test_connection():
-                    self.stdout.write(
-                        self.style.ERROR('Failed to connect to Link2Prisma service. Check your settings and certificates.')
-                    )
-                    return
+                Link2PrismaService.test_connection()
             except Exception as e:
                 self.stdout.write(
                     self.style.ERROR(f'Connection error: {str(e)}')

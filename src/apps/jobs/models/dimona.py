@@ -13,7 +13,7 @@ class Dimona(models.Model):
     Each static method is documented with its purpose, paramaters and returns values.
     """
     
-    id = models.CharField(primary_key=True, null=False, max_length=32)
+    id = models.CharField(primary_key=True, null=False, max_length=64)  # Increased to handle Link2Prisma UniqueIdentifiers
 
     application = models.ForeignKey(JobApplication, on_delete=models.PROTECT, default=None)
 

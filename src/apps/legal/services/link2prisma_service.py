@@ -56,27 +56,99 @@ class Link2PrismaService:
             # Ensure employer ref is within limits
             employer_ref = truncate(settings.LINK2PRISMA_EMPLOYER_REF, 64)
 
-            headers = {
-                'Content-Type': 'application/json',
-                'Employer': employer_ref
-            }
-
             # Extract certificate and key
             cert_path, key_path = get_cert_and_key(settings.LINK2PRISMA_PFX_PATH)
             
-            response = requests.request(
-                method=method,
-                url=url,
-                json=data if data else None,
-                headers=headers,
-                cert=(cert_path, key_path),
-                verify=True
-            )
+            # For POST/PUT requests with data, send as raw JSON without content-type
+            if data and method in ['POST', 'PUT']:
+                import json
+                # Send as raw data without specifying content-type to let WCF handle it as "Raw"
+                headers = {
+                    'Employer': employer_ref
+                }
+                response = requests.request(
+                    method=method,
+                    url=url,
+                    data=json.dumps(data),  # Raw JSON string
+                    headers=headers,
+                    cert=(cert_path, key_path),
+                    verify=True
+                )
+            else:
+                # For GET requests or requests without data
+                headers = {
+                    'Employer': employer_ref
+                }
+                response = requests.request(
+                    method=method,
+                    url=url,
+                    headers=headers,
+                    cert=(cert_path, key_path),
+                    verify=True
+                )
 
             try:
+                print(f"Response status: {response.status_code}")
+                print(f"Response headers: {response.headers}")
+                print(f"Response content: {response.content}")
+                print(f"Response text: {response.text}")
+                
                 if response.ok:
+                    # For POST requests, check if we get a 202 Accepted with UniqueIdentifier
+                    if response.status_code == 202:
+                        # Link2Prisma returns 202 for async operations
+                        if response.content:
+                            try:
+                                return response.json()
+                            except:
+                                # If not JSON, return the text as UniqueIdentifier
+                                return {"UniqueIdentifier": response.text.strip()}
+                        else:
+                            return {"UniqueIdentifier": "no-id"}
+                    
                     return response.json() if response.content else None
                 
+                # Handle 400 status - Link2Prisma returns 400 with UniqueIdentifier for queued operations
+                if response.status_code == 400:
+                    if response.content:
+                        try:
+                            # Try to parse as JSON first
+                            json_response = response.json()
+                            return json_response
+                        except:
+                            # If not JSON, treat the text as UniqueIdentifier (common for async operations)
+                            unique_id = response.text.strip().replace('"', '')
+                            return {"UniqueIdentifier": unique_id}
+                    return None
+                
+                # Check for 202 Accepted even if not in response.ok
+                if response.status_code == 202:
+                    if response.content:
+                        try:
+                            return response.json()
+                        except:
+                            # If not JSON, return the text as UniqueIdentifier
+                            return {"UniqueIdentifier": response.text.strip()}
+                    else:
+                        return {"UniqueIdentifier": "no-id"}
+                
+                # Handle 412 status - Link2Prisma uses this for async operations
+                if response.status_code == 412:
+                    if response.content:
+                        try:
+                            # Try to parse as JSON first
+                            json_response = response.json()
+                            # If it's a worker exists response, return it
+                            if 'WorkerExists' in json_response:
+                                return json_response
+                            # Otherwise treat as UniqueIdentifier
+                            return {"UniqueIdentifier": str(json_response)}
+                        except:
+                            # If not JSON, treat the text as UniqueIdentifier
+                            unique_id = response.text.strip().replace('"', '')
+                            return {"UniqueIdentifier": unique_id}
+                    return None
+
                 error_msg = f"Link2Prisma API error: {response.status_code}"
                 details = f"Response: {response.text}"
                 print(f"{error_msg} - {details}")
@@ -107,6 +179,30 @@ class Link2PrismaService:
             print(error_msg)
             NotificationManager.notify_admin('Link2Prisma API Error', error_msg)
             raise Exception(error_msg)
+
+    @staticmethod
+    def _dict_to_xml(data: dict, root_tag: str = "worker") -> str:
+        """Convert dictionary to XML format for Link2Prisma API"""
+        def dict_to_xml_recursive(d, parent_tag=""):
+            xml_str = ""
+            for key, value in d.items():
+                if isinstance(value, dict):
+                    xml_str += f"<{key}>{dict_to_xml_recursive(value)}</{key}>"
+                elif isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, dict):
+                            xml_str += f"<{key}>{dict_to_xml_recursive(item)}</{key}>"
+                        else:
+                            xml_str += f"<{key}>{item}</{key}>"
+                else:
+                    # Escape XML special characters
+                    if value is not None:
+                        value = str(value).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                        xml_str += f"<{key}>{value}</{key}>"
+            return xml_str
+        
+        xml_content = dict_to_xml_recursive(data)
+        return f'<?xml version="1.0" encoding="utf-8"?><{root_tag}>{xml_content}</{root_tag}>'
 
     @staticmethod
     def test_connection():
@@ -140,6 +236,9 @@ class Link2PrismaService:
             dict: Worker data from Link2Prisma
             None: If worker not found
         """
+        if not ssn:
+            return None
+        
         try:
             # First check if worker exists
             exists_response = Link2PrismaService._make_request(
@@ -170,40 +269,78 @@ class Link2PrismaService:
     @staticmethod
     def handle_job_approval(job_application):
         """
-        Send job data to Link2Prisma when a job application is approved
+        Send Dimona declaration to Link2Prisma when a job application is approved
         """
         try:
             worker = job_application.worker
-
-            Link2PrismaService.sync_worker(worker)
-
             job = job_application.job
 
-            # Prepare job data according to Link2Prisma schema
-            job_data = {
+            # First ensure worker exists in Link2Prisma
+            Link2PrismaService.sync_worker(worker)
+
+            # Get worker number from Link2Prisma
+            worker_exists_response = Link2PrismaService._make_request(
+                method='GET',
+                endpoint=f'workerExists/{truncate(worker.worker_profile.ssn, 64)}'
+            )
+
+            if not worker_exists_response or not worker_exists_response.get('WorkerExists'):
+                raise Exception(f"Worker with SSN {worker.worker_profile.ssn} not found in Link2Prisma")
+
+            worker_number = worker_exists_response.get('WorkerNumber')
+
+            # Prepare Dimona data according to Link2Prisma API documentation
+            dimona_data = {
                 "NatureDeclaration": "DimonaIn",
-                "ContractType": "Normal",  # Can be mapped based on worker type
+                "ContractType": "Normal",
                 "Email": truncate(worker.email, 255),
                 "Name": truncate(worker.last_name, 255),
                 "Firstname": truncate(worker.first_name, 255),
                 "INSS": truncate(worker.worker_profile.ssn, 64),
                 "StartingDate": job.start_time.strftime("%Y%m%d"),
                 "EndingDate": job.end_time.strftime("%Y%m%d"),
-                "StartingHour": job.start_time.strftime("%Y%m%d%H%M"),
-                "EndingHour": job.end_time.strftime("%Y%m%d%H%M"),
+                "StartingHour": job.start_time.strftime("%H%M"),
+                "EndingHour": job.end_time.strftime("%H%M"),
                 "PlannedHoursNbr": int((job.end_time - job.start_time).total_seconds() / 3600),
                 "WorkerType": "STU" if worker.worker_profile.worker_type == "student" else "FLX",
                 "EmployerRef": truncate(settings.LINK2PRISMA_EMPLOYER_REF, 64)
             }
 
-            # Send job declaration to Link2Prisma
+            # Send Dimona declaration using the correct endpoint
             response = Link2PrismaService._make_request(
                 method='POST',
-                endpoint='declarations',
-                data=job_data
+                endpoint=f'worker/{worker_number}/dimona',
+                data=dimona_data
             )
 
-            return response.status_code == 200
+            if response:
+                # Handle both dict and string responses
+                if isinstance(response, dict) and response.get('UniqueIdentifier'):
+                    unique_id = response['UniqueIdentifier']
+                elif isinstance(response, dict) and 'UniqueIdentifier' in response:
+                    unique_id = response['UniqueIdentifier']
+                else:
+                    # Response might be a string UniqueIdentifier directly
+                    unique_id = str(response) if response else None
+                
+                if unique_id:
+                    print(f"Dimona declaration submitted with ID: {unique_id}")
+                
+                # Create Dimona record in local database
+                from apps.jobs.models.dimona import Dimona
+                from django.utils import timezone
+                
+                dimona = Dimona.objects.create(
+                    id=unique_id,
+                    application=job_application,
+                    success=None,  # Will be updated when we check the result
+                    reason="Dimona declaration submitted to Link2Prisma",
+                    created=timezone.now()
+                )
+                
+                return True
+
+            return False
 
         except Exception as e:
             error_msg = "Failed to send job approval to Link2Prisma"
@@ -215,22 +352,50 @@ class Link2PrismaService:
     @staticmethod
     def handle_job_cancellation(job_application):
         """
-        Cancel job in Link2Prisma when application is denied or job is deleted
+        Cancel Dimona declaration in Link2Prisma when application is denied or job is deleted
         """
         try:
+            # Find the Dimona record for this application
+            from apps.jobs.models.dimona import Dimona
+            
+            dimona = Dimona.objects.filter(application=job_application).first()
+            if not dimona:
+                print("No Dimona record found for this application")
+                return True
+
+            worker = job_application.worker
+
+            # Get worker number from Link2Prisma
+            worker_exists_response = Link2PrismaService._make_request(
+                method='GET',
+                endpoint=f'workerExists/{truncate(worker.worker_profile.ssn, 64)}'
+            )
+
+            if not worker_exists_response or not worker_exists_response.get('WorkerExists'):
+                print(f"Worker with SSN {worker.worker_profile.ssn} not found in Link2Prisma")
+                return False
+
+            worker_number = worker_exists_response.get('WorkerNumber')
+
             # Prepare cancellation data
             cancel_data = {
                 "NatureDeclaration": "DimonaCancel",
-                "DimonaPeriodId": truncate(str(job_application.id), 64),
-                "Email": truncate(job_application.worker.email, 255)
+                "DimonaPeriodId": dimona.id,
+                "Email": truncate(worker.email, 255)
             }
 
-            # Send cancellation to Link2Prisma
+            # Send cancellation using the correct endpoint
             response = Link2PrismaService._make_request(
                 method='POST',
-                endpoint='declarations',
+                endpoint=f'worker/{worker_number}/dimona',
                 data=cancel_data
             )
+
+            if response and response.get('UniqueIdentifier'):
+                # Update the Dimona record
+                dimona.success = False
+                dimona.reason = "Dimona declaration cancelled"
+                dimona.save()
 
             return True
 
@@ -251,7 +416,7 @@ class Link2PrismaService:
                 endpoint=f'workerExists/{truncate(worker.worker_profile.ssn, 64)}'
             )
 
-            # Prepare worker data according to Link2Prisma schema
+            # Prepare simplified worker data - complex nested data causes 412 errors
             worker_data = {
                 "Name": truncate(worker.last_name, 255),
                 "Firstname": truncate(worker.first_name, 255),
@@ -259,57 +424,66 @@ class Link2PrismaService:
                 "Sex": "M",  # TODO: Add gender field to WorkerProfile
                 "Birthdate": worker.worker_profile.date_of_birth.strftime("%Y%m%d") if worker.worker_profile.date_of_birth else None,
                 "Birthplace": truncate(worker.worker_profile.place_of_birth, 255),
-                "Language": "F",  # TODO: Add language preference to User/WorkerProfile
+                "Language": "F",  # French - TODO: Add language preference to User/WorkerProfile
                 "PayWay": "Transfer",
                 "BankAccount": truncate(worker.worker_profile.iban, 34),  # IBAN max length is 34
-                "EmployerRef": truncate(settings.LINK2PRISMA_EMPLOYER_REF, 64),
-                "address": [{
+                "EmployerRef": truncate(settings.LINK2PRISMA_EMPLOYER_REF, 64)
+            }
+            
+            # Add address data if available
+            if worker.worker_profile.worker_address:
+                worker_data["address"] = [{
                     "Startdate": worker.date_joined.strftime("%Y%m%d"),
                     "Street": truncate(worker.worker_profile.worker_address.street_name, 255),
                     "HouseNumber": truncate(worker.worker_profile.worker_address.house_number, 10),
                     "ZIPCode": truncate(worker.worker_profile.worker_address.zip_code, 10),
                     "City": truncate(worker.worker_profile.worker_address.city, 255),
-                    "Country": "00150"  # Default to Belgium
-                }] if worker.worker_profile.worker_address else [],
-                "contract": [{
-                    "Startdate": worker.date_joined.strftime("%Y%m%d"),
-                    "EmploymentStatus": "Employee",
-                    "Contract": "Usually",
-                    "WorkingTime": "PartTime",
-                    "WeekhoursWorker": worker.worker_profile.hours or 0,
-                    "WeekhoursEmployer": 38.0,  # Standard Belgian work week
-                    "Student": {
-                        "Exist": "Y" if worker.worker_profile.worker_type == "student" else "N",
-                        "SolidarityContribution": "Y"
-                    }
+                    "Country": "00150"  # Belgium
                 }]
-            }
+            
+            # Add basic contract data
+            worker_data["contract"] = [{
+                "Startdate": worker.date_joined.strftime("%Y%m%d"),
+                "EmploymentStatus": "Employee",
+                "Contract": "Usually",
+                "WorkingTime": "PartTime" if (worker.worker_profile.hours or 0) < 38 else "FullTime",
+                "WeekhoursWorker": float(worker.worker_profile.hours or 20),
+                "WeekhoursEmployer": 38.0
+            }]
+            
+            # Add family status (required field)
+            worker_data["familystatus"] = [{
+                "Startdate": worker.date_joined.strftime("%Y%m%d"),
+                "MaritalStatus": "Single",  # Default - TODO: Add to WorkerProfile
+                "NumberOfChildren": 0  # Default - TODO: Add to WorkerProfile
+            }]
 
-            if worker_exists_response.get("WorkerExists") == True:
-                # Update existing worker
-                response = Link2PrismaService._make_request(
-                    method='PUT',
-                    endpoint=f'worker/{worker_exists_response.get("WorkerNumber")}',
-                    data=worker_data
-                )
-
-                print(response)
+            if worker_exists_response and worker_exists_response.get("WorkerExists") == True:
+                # Worker already exists, no need to update
+                print(f"Worker already exists with WorkerNumber: {worker_exists_response.get('WorkerNumber')}")
+                print("Skipping worker update - using existing worker")
             else:
                 # Create new worker and wait for result
+                print(f"Creating worker with data: {worker_data}")
                 response = Link2PrismaService._make_request(
                     method='POST',
                     endpoint='worker',
                     data=worker_data
                 )
                 
+                print(f"Worker creation response: {response}")
+                
                 # Get the unique identifier from response
                 if response and response.get('UniqueIdentifier'):
+                    print(f"Worker creation submitted with ID: {response['UniqueIdentifier']}")
                     # Check result using the identifier
                     result = Link2PrismaService._make_request(
                         method='GET',
                         endpoint=f'Result/{response["UniqueIdentifier"]}'
                     )
                     print(f"Worker creation result: {result}")
+                else:
+                    print(f"No UniqueIdentifier in response: {response}")
 
         except Exception as e:
             error_msg = f"Failed to sync worker {truncate(worker.email, 64)}"
