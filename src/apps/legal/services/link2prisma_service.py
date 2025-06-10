@@ -4,7 +4,7 @@ import tempfile
 from cryptography.hazmat.primitives.serialization import pkcs12
 from django.conf import settings
 from apps.notifications.managers.notification_manager import NotificationManager
-from src.apps.authentication.models.profiles.worker_profile import WorkerProfile
+from apps.authentication.models.profiles.worker_profile import WorkerProfile
 
 
 def get_cert_and_key(pfx_path):
