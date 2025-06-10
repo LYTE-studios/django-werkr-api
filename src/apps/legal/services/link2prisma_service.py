@@ -100,10 +100,16 @@ class Link2PrismaService:
                         # Link2Prisma returns 202 for async operations
                         if response.content:
                             try:
-                                return response.json()
+                                json_response = response.json()
+                                # If the JSON response is a string, it's a UniqueIdentifier
+                                if isinstance(json_response, str):
+                                    return {"UniqueIdentifier": json_response}
+                                else:
+                                    return json_response
                             except:
                                 # If not JSON, return the text as UniqueIdentifier
-                                return {"UniqueIdentifier": response.text.strip()}
+                                unique_id = response.text.strip().replace('"', '')
+                                return {"UniqueIdentifier": unique_id}
                         else:
                             return {"UniqueIdentifier": "no-id"}
                     
@@ -251,14 +257,33 @@ class Link2PrismaService:
                 return None
 
             # Get worker details using their worker number
-            # Get current date for worker endpoint
-            from datetime import datetime
-            today = datetime.now().strftime("%Y%m%d")
-            
+            # Get worker data using correct endpoint format
             response = Link2PrismaService._make_request(
                 method='GET',
-                endpoint=f'worker/{exists_response["WorkerNumber"]}/{today}/{today}'
+                endpoint=f'worker/{exists_response["WorkerNumber"]}'
             )
+            
+            # Handle async response (Status 202 returns UniqueIdentifier)
+            if isinstance(response, dict) and response.get('UniqueIdentifier'):
+                unique_id = response['UniqueIdentifier']
+                print(f"Worker data request queued with ID: {unique_id}")
+                
+                # Check the result after a brief wait
+                import time
+                time.sleep(2)  # Wait for processing
+                
+                result = Link2PrismaService._make_request(
+                    method='GET',
+                    endpoint=f'Result/{unique_id}'
+                )
+                
+                if result and isinstance(result, dict):
+                    # Return the worker data from the result
+                    return result.get('Response', result)
+                else:
+                    print(f"Worker data still processing. Queue ID: {unique_id}")
+                    return {"status": "processing", "queue_id": unique_id}
+            
             return response
         except Exception as e:
             error_msg = "Failed to fetch worker data from Link2Prisma"
