@@ -21,7 +21,7 @@ class Dimona(models.Model):
 
     reason = models.CharField(max_length=256, null=True)
 
-    created = models.DateTimeField(null=True)
+    created = models.DateTimeField(auto_now_add=True, null=True)
 
 
     def to_model_view(self):
