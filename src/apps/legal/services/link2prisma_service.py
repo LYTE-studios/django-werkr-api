@@ -1,13 +1,15 @@
 import os
 import requests
 import tempfile
-from cryptography.hazmat.primitives.serialization import pkcs12
+from typing import Optional, Tuple
+from cryptography.hazmat.primitives.serialization import pkcs12, Encoding, PrivateFormat, NoEncryption
 from django.conf import settings
 from apps.notifications.managers.notification_manager import NotificationManager
 from apps.authentication.models.profiles.worker_profile import WorkerProfile
+from apps.jobs.models.dimona import Dimona
 
 
-def get_cert_and_key(pfx_path):
+def get_cert_and_key(pfx_path: str) -> Tuple[str, str]:
     """Extract certificate and private key from PFX file"""
     try:
         # Read PFX file
@@ -17,19 +19,22 @@ def get_cert_and_key(pfx_path):
         # Load PFX without password
         private_key, certificate, _ = pkcs12.load_key_and_certificates(pfx_data, None)
         
+        if private_key is None or certificate is None:
+            raise Exception("Failed to extract certificate or private key from PFX file")
+        
         # Create temporary files
         cert_temp = tempfile.NamedTemporaryFile(delete=False)
         key_temp = tempfile.NamedTemporaryFile(delete=False)
         
         # Write certificate
-        cert_temp.write(certificate.public_bytes(encoding=pkcs12.serialization.Encoding.PEM))
+        cert_temp.write(certificate.public_bytes(encoding=Encoding.PEM))
         cert_temp.close()
         
         # Write private key
         key_temp.write(private_key.private_bytes(
-            encoding=pkcs12.serialization.Encoding.PEM,
-            format=pkcs12.serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=pkcs12.serialization.NoEncryption()
+            encoding=Encoding.PEM,
+            format=PrivateFormat.PKCS8,
+            encryption_algorithm=NoEncryption()
         ))
         key_temp.close()
         
@@ -47,7 +52,7 @@ class Link2PrismaService:
     """Service for interacting with the Link2Prisma API for social secretary integration"""
 
     @staticmethod
-    def _make_request(method: str, endpoint: str, data: dict = None):
+    def _make_request(method: str, endpoint: str, data: Optional[dict] = None):
         """Make an authenticated request to the Link2Prisma API"""
         url = f"{settings.LINK2PRISMA_BASE_URL}/{endpoint}"
 
@@ -357,7 +362,6 @@ class Link2PrismaService:
                     print(f"Dimona declaration submitted with ID: {unique_id}")
                 
                 # Create Dimona record in local database
-                from apps.jobs.models.dimona import Dimona
                 from django.utils import timezone
                 
                 dimona = Dimona.objects.create(
@@ -386,8 +390,6 @@ class Link2PrismaService:
         """
         try:
             # Find the Dimona record for this application
-            from apps.jobs.models.dimona import Dimona
-            
             dimona = Dimona.objects.filter(application=job_application).first()
             if not dimona:
                 print("No Dimona record found for this application")
