@@ -1,0 +1,35 @@
+django~=4.2.5
+celery
+redis~=5.0.1
+djangorestframework~=3.15.2
+djangorestframework-simplejwt~=5.2.2
+django-filter
+drf-yasg
+swagger-spec-validator
+psycopg2-binary
+pymysql~=1.1.0
+asgiref~=3.7.2
+channels
+asyncio
+django-storages[ s3 ]~=1.13.2
+boto3
+python-decouple~=3.8
+requests~=2.31.0
+python-dateutil~=2.8.2
+pydantic
+numpy~=1.26.4
+sentry-sdk[ django ]~=1.29.2
+gunicorn~=20.1.0
+uvicorn
+mailjet-rest
+firebase-admin
+xhtml2pdf
+bcrypt
+django-cors-headers
+pandas
+xlsxwriter==3.1.6
+tabulate
+cryptography
+django-celery-beat
+pytest
+pyopenssl
